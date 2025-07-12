@@ -10,12 +10,20 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('Укажите адресс электронной почты')
         email = self.normalize_email(email)
+        if not password:
+            raise ValueError('Укажите пароль')
+
+        # extra_fields.setdefault('is_active', False)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
+
+        # self.send_confirmation_email(user)
+
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
@@ -51,6 +59,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         'Статус администратора',
         default=False,
         help_text='Если включено, пользователь может войти в админ-панель'
+    )
+    fav = models.ManyToManyField(
+        'store.Product',
+        related_name='fav_by',
+        verbose_name='Избранное',
+        blank=True,
+    )
+    cart = models.ManyToManyField(
+        'store.Product',
+        through='store.Cart',
+        related_name='in_cart_of',
+        verbose_name='Корзина',
+        blank=True,
     )
 
     objects = CustomUserManager()

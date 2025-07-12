@@ -12,8 +12,8 @@ class ProductImageInline(admin.TabularInline):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
-        'title'
+        'slug',
+        'title',
     )
     list_editable = (
         'title',

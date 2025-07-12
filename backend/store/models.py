@@ -3,6 +3,7 @@ from django.db import models
 
 from store.constants import (LONG_CHAR_MAX_LENGTH, MIN_VALUE,
                              SHORT_CHAR_MAX_LENGTH)
+from users.models import CustomUser
 
 
 class AbstractModel(models.Model):
@@ -21,6 +22,11 @@ class AbstractModel(models.Model):
 
 
 class Category(AbstractModel):
+    slug = models.SlugField(
+        'Слаг(ссылка)',
+        unique=True,
+    )
+
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
@@ -80,3 +86,25 @@ class ProductImage(models.Model):
     class Meta:
         verbose_name = 'изображение'
         verbose_name_plural = 'Изображения'
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='cart_items'
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name='Продукт'
+    )
+    quantity = models.PositiveIntegerField(
+        'Количество',
+        default=1
+    )
+
+    class Meta:
+        unique_together = ('user', 'product')
+        verbose_name = 'Корзина'
+        verbose_name_plural = 'Товары в корзине'
