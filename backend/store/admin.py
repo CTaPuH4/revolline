@@ -20,14 +20,16 @@ class CategoryAdmin(admin.ModelAdmin):
     )
     search_fields = ('title',)
 
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'title',
         'price',
-        'description'
+        'full_weight',
+        'product_weight',
     )
-    search_fields = ('title',)
-    list_filter = ('categories',)
+    search_fields = ('title', 'description')
+    list_filter = ('categories', 'country')
     inlines = (ProductImageInline,)

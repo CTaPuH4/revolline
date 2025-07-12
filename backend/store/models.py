@@ -1,13 +1,14 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from store.constants import MIN_VALUE, TITLE_MAX_LENGTH
+from store.constants import (LONG_CHAR_MAX_LENGTH, MIN_VALUE,
+                             SHORT_CHAR_MAX_LENGTH)
 
 
 class AbstractModel(models.Model):
     title = models.CharField(
         'Название',
-        max_length=TITLE_MAX_LENGTH,
+        max_length=LONG_CHAR_MAX_LENGTH,
         unique=True,
     )
 
@@ -34,6 +35,25 @@ class Product(AbstractModel):
         validators=(
             MinValueValidator(MIN_VALUE),
         )
+    )
+    ingridients = models.TextField(
+        'Состав',
+    )
+    country = models.CharField(
+        'Страна производства',
+        max_length=SHORT_CHAR_MAX_LENGTH
+    )
+    size = models.CharField(
+        'Размеры',
+        max_length=SHORT_CHAR_MAX_LENGTH
+    )
+    full_weight = models.FloatField(
+        'Вес',
+        validators=(MinValueValidator(MIN_VALUE),)
+    )
+    product_weight = models.FloatField(
+        'Вес/объём продукта',
+        validators=(MinValueValidator(MIN_VALUE),)
     )
     categories = models.ManyToManyField(
         Category,
