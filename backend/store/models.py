@@ -51,6 +51,11 @@ class Product(AbstractModel):
         blank=True,
         null=True
     )
+    is_new = models.BooleanField(
+        'Новинка',
+        help_text='Будет ли товар отображаться в блоке \"Новинки\"',
+        default=True,
+    )
     ingridients = models.TextField(
         'Состав',
     )

@@ -27,8 +27,13 @@ class ProductAdmin(admin.ModelAdmin):
         'id',
         'title',
         'price',
+        'discount_price',
         'full_weight',
         'product_weight',
+    )
+    list_editable = (
+        'price',
+        'discount_price',
     )
     search_fields = ('title', 'description')
     list_filter = ('categories', 'country')
