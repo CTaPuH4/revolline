@@ -62,6 +62,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     )
     fav = models.ManyToManyField(
         'store.Product',
+        through='store.Favorites',
         related_name='fav_by',
         verbose_name='Избранное',
         blank=True,

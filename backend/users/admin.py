@@ -3,12 +3,17 @@ from django.contrib.auth.admin import UserAdmin
 from django import forms
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
-from store.models import Cart
+from store.models import Cart, Favorites
 from users.models import CustomUser
 
 
 class CartInline(admin.TabularInline):
     model = Cart
+    extra = 0
+
+
+class FavoritesInline(admin.TabularInline):
+    model = Favorites
     extra = 0
 
 
@@ -50,7 +55,7 @@ class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('email', 'first_name', 'last_name', 'is_staff')
     list_filter = ('is_staff', 'is_superuser', 'is_active')
-    inlines = (CartInline,)
+    inlines = (CartInline, FavoritesInline)
     search_fields = ('email',)
     ordering = ('email', 'phone')
 
@@ -69,7 +74,6 @@ class CustomUserAdmin(UserAdmin):
             'user_permissions'
         )}),
         ('Даты', {'fields': ('last_login',)}),
-        ('Избранное', {'fields': ('fav',)}),
     )
 
     add_fieldsets = (

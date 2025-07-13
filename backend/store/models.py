@@ -24,7 +24,8 @@ class AbstractModel(models.Model):
 
 class Category(AbstractModel):
     slug = models.SlugField(
-        'Слаг(ссылка)',
+        'Слаг',
+        help_text='Ссылка/Адрес категории',
         unique=True,
     )
 
@@ -56,7 +57,7 @@ class Product(AbstractModel):
         help_text='Будет ли товар отображаться в блоке \"Новинки\"',
         default=True,
     )
-    ingridients = models.TextField(
+    ingredients = models.TextField(
         'Состав',
     )
     country = models.CharField(
@@ -120,14 +121,36 @@ class Cart(models.Model):
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        verbose_name='Продукт'
+        verbose_name='Продукт',
+        related_name='in_cart_by'
     )
     quantity = models.PositiveIntegerField(
         'Количество',
-        default=1
+        validators=(MinValueValidator(1),)
     )
 
     class Meta:
         unique_together = ('user', 'product')
         verbose_name = 'Корзина'
         verbose_name_plural = 'Товары в корзине'
+        ordering = ('pk',)
+
+
+class Favorites(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='favorite_products'
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name='Продукт',
+        related_name='favorite_by'
+    )
+
+    class Meta:
+        unique_together = ('user', 'product')
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные товары'
+        ordering = ('-pk',)
