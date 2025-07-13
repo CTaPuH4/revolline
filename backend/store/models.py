@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -42,6 +43,14 @@ class Product(AbstractModel):
             MinValueValidator(MIN_VALUE),
         )
     )
+    discount_price = models.IntegerField(
+        'Цена по скидке',
+        validators=(
+            MinValueValidator(MIN_VALUE),
+        ),
+        blank=True,
+        null=True
+    )
     ingridients = models.TextField(
         'Состав',
     )
@@ -66,6 +75,15 @@ class Product(AbstractModel):
         related_name='products',
         verbose_name='Категории'
     )
+
+    def clean(self):
+        super().clean()
+        if self.discount_price is not None and self.price is not None:
+            if self.discount_price > self.price:
+                raise ValidationError({
+                    'discount_price':
+                    'Цена по скидке не может быть больше основной цены.'
+                })
 
     class Meta:
         verbose_name = 'продукт'
