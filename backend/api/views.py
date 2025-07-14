@@ -1,4 +1,5 @@
-from rest_framework import mixins, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, viewsets
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 
@@ -21,6 +22,9 @@ class ProductViewSet(mixins.RetrieveModelMixin,
                      viewsets.GenericViewSet):
     queryset = Product.objects.prefetch_related('images', 'categories').all()
     serializer_class = ProductSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filterset_fields = ('is_new', 'country', 'categories',)
+    search_fields = ('title', 'description',)
 
 
 class CartViewSet(viewsets.ModelViewSet):

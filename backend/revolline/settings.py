@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'store.apps.StoreConfig',
     'users.apps.UsersConfig',
     'rest_framework',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -100,3 +101,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
