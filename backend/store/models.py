@@ -34,9 +34,25 @@ class Category(AbstractModel):
         verbose_name_plural = 'Категории'
 
 
+class Section(Category):
+    categories = models.ManyToManyField(
+        Category,
+        related_name='sections',
+        verbose_name='Категории'
+    )
+
+    class Meta:
+        verbose_name = 'раздел'
+        verbose_name_plural = 'Разделы'
+
+
 class Product(AbstractModel):
     description = models.TextField(
         'Описание',
+    )
+    type = models.CharField(
+        'Тип продукта',
+        max_length=LONG_CHAR_MAX_LENGTH
     )
     price = models.IntegerField(
         'Цена',
@@ -62,15 +78,39 @@ class Product(AbstractModel):
     )
     country = models.CharField(
         'Страна производства',
-        max_length=SHORT_CHAR_MAX_LENGTH
+        max_length=SHORT_CHAR_MAX_LENGTH,
+        blank=True,
+        null=True,
     )
     size = models.CharField(
         'Размеры',
-        max_length=SHORT_CHAR_MAX_LENGTH
+        max_length=SHORT_CHAR_MAX_LENGTH,
+        blank=True,
+        null=True
+    )
+    effect = models.CharField(
+        'Эффект',
+        max_length=SHORT_CHAR_MAX_LENGTH,
+        blank=True,
+        null=True
+    )
+    color = models.CharField(
+        'Цвет',
+        max_length=SHORT_CHAR_MAX_LENGTH,
+        blank=True,
+        null=True
+    )
+    collection = models.CharField(
+        'Коллекция',
+        max_length=SHORT_CHAR_MAX_LENGTH,
+        blank=True,
+        null=True
     )
     full_weight = models.FloatField(
         'Вес',
-        validators=(MinValueValidator(MIN_VALUE),)
+        validators=(MinValueValidator(MIN_VALUE),),
+        blank=True,
+        null=True
     )
     product_weight = models.FloatField(
         'Вес/объём продукта',

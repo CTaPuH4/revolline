@@ -4,8 +4,9 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 
 from api.serializers import (CartSerializer, CategorySerializer,
-                             FavoritesSerializer, ProductSerializer)
-from store.models import Cart, Category, Favorites, Product
+                             FavoritesSerializer, ProductSerializer,
+                             SectionSerializer)
+from store.models import Cart, Category, Favorites, Product, Section
 
 
 class CategoryViewSet(mixins.RetrieveModelMixin,
@@ -17,6 +18,15 @@ class CategoryViewSet(mixins.RetrieveModelMixin,
     pagination_class = None
 
 
+class SectionViewSet(mixins.RetrieveModelMixin,
+                     mixins.ListModelMixin,
+                     viewsets.GenericViewSet):
+    queryset = Section.objects.all()
+    serializer_class = SectionSerializer
+    lookup_field = 'slug'
+    pagination_class = None
+
+
 class ProductViewSet(mixins.RetrieveModelMixin,
                      mixins.ListModelMixin,
                      viewsets.GenericViewSet):
@@ -24,7 +34,7 @@ class ProductViewSet(mixins.RetrieveModelMixin,
     serializer_class = ProductSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     filterset_fields = ('is_new', 'country', 'categories',)
-    search_fields = ('title', 'description',)
+    search_fields = ('title', 'description', 'type')
 
 
 class CartViewSet(viewsets.ModelViewSet):

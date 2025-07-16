@@ -13,12 +13,12 @@ class CustomUserManager(BaseUserManager):
         if not password:
             raise ValueError('Укажите пароль')
 
-        # extra_fields.setdefault('is_active', False)
+        extra_fields.setdefault('is_active', False)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
 
-        # self.send_confirmation_email(user)
+        self.send_confirmation_email(user)
 
         return user
 
@@ -27,6 +27,9 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
+
+    def send_confirmations_email(self, user):
+        ...
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from store.models import Category, Product, ProductImage
+from store.models import Category, Product, ProductImage, Section
 
 
 class ProductImageInline(admin.TabularInline):
@@ -21,11 +21,24 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('title',)
 
 
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = (
+        'slug',
+        'title',
+    )
+    list_editable = (
+        'title',
+    )
+    search_fields = ('title',)
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'title',
+        'type',
         'price',
         'discount_price',
         'full_weight',
@@ -35,6 +48,6 @@ class ProductAdmin(admin.ModelAdmin):
         'price',
         'discount_price',
     )
-    search_fields = ('title', 'description')
-    list_filter = ('categories', 'country')
+    search_fields = ('title', 'description', 'type')
+    list_filter = ('categories', 'country', 'is_new')
     inlines = (ProductImageInline,)
