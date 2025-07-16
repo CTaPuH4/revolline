@@ -36,7 +36,9 @@ class CustomUserManager(BaseUserManager):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
-        activation_link = f"{settings.FRONTEND_URL}/api/activate/{uid}/{token}/"
+        activation_link = (
+            f"{settings.FRONTEND_URL}/api/activate/{uid}/{token}/"
+        )
 
         send_mail(
             subject='Подтверждение аккаунта',

@@ -33,7 +33,7 @@ class ActivateUserView(views.APIView):
 
 class UserViewSet(viewsets.GenericViewSet):
     '''
-    Вьюсет для GET и PATCH запросов к текущему пользователю.
+    Вьюсет модели пользователя (CustomUser)
     '''
     queryset = CustomUser.objects.all()
 
@@ -56,6 +56,9 @@ class UserViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
+        '''
+        Вьюсет для GET и PATCH запросов к текущему пользователю.
+        '''
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)

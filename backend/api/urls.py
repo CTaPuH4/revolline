@@ -1,8 +1,8 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from api.views import (CartViewSet, CategoryViewSet,
-                       FavoritesViewSet, ProductViewSet, SectionViewSet)
+from api.views import (CartViewSet, CategoryViewSet, FavoritesViewSet,
+                       ProductViewSet, SectionViewSet)
 from users.views import ActivateUserView, UserViewSet
 
 router = DefaultRouter()
