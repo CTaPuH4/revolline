@@ -6,11 +6,15 @@ from django.core.mail import send_mail
 from django.db import models
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from phonenumber_field.modelfields import PhoneNumberField
 
-from users.constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH, PHONE_MAX_LENGTH
+from users.constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
 
 
 class CustomUserManager(BaseUserManager):
+    '''
+    Менеджер кастомной модели пользователя.
+    '''
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Укажите адресс электронной почты')
@@ -52,6 +56,9 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    '''
+    Кастомная модель пользователя.
+    '''
     email = models.EmailField(
         'Email',
         max_length=EMAIL_MAX_LENGTH,
@@ -67,10 +74,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         max_length=NAME_MAX_LENGTH,
         blank=True,
     )
-    phone = models.CharField(
+    phone = PhoneNumberField(
         'Номер телефона',
-        max_length=PHONE_MAX_LENGTH,
+        null=True,
         blank=True,
+        unique=True
     )
     is_active = models.BooleanField(
         'Статус',

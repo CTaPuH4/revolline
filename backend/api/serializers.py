@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from store.models import (Cart, Category, Favorites, Product, ProductImage,
                           Section)
@@ -77,3 +79,13 @@ class FavoritesSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Favorites
         fields = ['id', 'product', 'product_data']
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if not self.user.is_active:
+            raise AuthenticationFailed(
+                'Аккаунт неактивен. Подтвердите почту.', code='user_inactive'
+            )
+        return data

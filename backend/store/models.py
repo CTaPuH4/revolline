@@ -23,6 +23,9 @@ class AbstractModel(models.Model):
 
 
 class Category(AbstractModel):
+    '''
+    Модель категорий.
+    '''
     slug = models.SlugField(
         'Слаг',
         help_text='Ссылка/Адрес категории',
@@ -35,6 +38,9 @@ class Category(AbstractModel):
 
 
 class Section(Category):
+    '''
+    Модель разделов.
+    '''
     categories = models.ManyToManyField(
         Category,
         related_name='sections',
@@ -47,6 +53,9 @@ class Section(Category):
 
 
 class Product(AbstractModel):
+    '''
+    Модель продуктов.
+    '''
     description = models.TextField(
         'Описание',
     )
@@ -137,6 +146,9 @@ class Product(AbstractModel):
 
 
 class ProductImage(models.Model):
+    '''
+    Модель изображений продуктов.
+    '''
     product = models.ForeignKey(
         Product,
         related_name='images',
@@ -153,6 +165,9 @@ class ProductImage(models.Model):
 
 
 class Cart(models.Model):
+    '''
+    Модель корзины.
+    '''
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
@@ -177,6 +192,9 @@ class Cart(models.Model):
 
 
 class Favorites(models.Model):
+    '''
+    Модель избранного.
+    '''
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
