@@ -100,9 +100,17 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'images')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
+FRONTEND_URL = 'http://localhost:8000'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '5/hour',
+    }
 }

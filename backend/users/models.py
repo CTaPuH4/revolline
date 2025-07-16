@@ -1,6 +1,11 @@
+from django.conf import settings
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.db import models
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from users.constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH, PHONE_MAX_LENGTH
 
@@ -19,7 +24,6 @@ class CustomUserManager(BaseUserManager):
         user.save()
 
         self.send_confirmation_email(user)
-
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
@@ -28,8 +32,21 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
-    def send_confirmations_email(self, user):
-        ...
+    def send_confirmation_email(self, user):
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        activation_link = f"{settings.FRONTEND_URL}/api/activate/{uid}/{token}/"
+
+        send_mail(
+            subject='Подтверждение аккаунта',
+            message=(
+                f'Cсылка для подтверждения email:\n{activation_link}'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
