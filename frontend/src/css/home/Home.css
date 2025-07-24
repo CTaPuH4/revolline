@@ -1,0 +1,15 @@
+.reviews {
+  text-align: center;
+  border-top: 1px solid #ccc;    /* тонкая серая верхняя линия */
+  border-bottom: 1px solid #ccc; /* тонкая серая нижняя линия */
+  padding: 20px 0; 
+}
+
+.reviews-title {
+  font-family: 'CarismaClassic';
+  font-size: 40px;
+  font-weight: 400;
+  font-style: normal;
+  margin: 0;
+  padding: 0;
+}

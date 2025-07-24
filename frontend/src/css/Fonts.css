@@ -1,0 +1,27 @@
+@font-face {
+  font-family: 'CarismaClassic';
+  src: url('../assets/fonts/CarismaClassic-300Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'CarismaClassic';
+  src: url('../assets/fonts/CarismaClassic-400Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'CarismaClassic';
+  src: url('../assets/fonts/CarismaClassic-500Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oksana';
+  src: url('../assets/fonts/LTOksana.ttf') format('ttf');
+  font-weight: 400;
+  font-style: normal;
+}

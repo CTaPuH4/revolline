@@ -1,58 +1,162 @@
 .footer {
   background-color: #aa0f4e;
-  color: white;
-  padding: 2.5rem 1.5rem;
+  color: white;  
   display: flex;
-  justify-content: space-between;
-  font-family: 'Montserrat', sans-serif;
+  justify-content: center;
+  flex-direction: row;
   flex-wrap: wrap;
   text-align: center;
+  margin: 0;
+  gap: 0 150px;
 }
 
-.footer > div {
-  flex: 1 1 100%;
-  margin-bottom: 2rem;
-}
 
 .revolline {
+  font-family: 'CarismaClassic';
   font-size: 64px;
   font-weight: 400;
-  margin-bottom: 0;
+  font-style: normal;
+  margin-bottom: 15px;
+  margin-top: 30px;
 }
 
 .foot-headers {
+  font-family: 'CarismaClassic';
   font-size: 54px;
   font-weight: 400;
-  margin-bottom: 0;
+  font-style: normal;
+  margin-bottom: 15px;
+  margin-top: 30px;
 }
 
-.foot-text {
+.foot-text, .foot-text-click {
+  font-family: 'CarismaClassic';
   font-size: 22px;
   font-weight: 400;
+  font-style: normal;
+  margin-top: 7px;
+  margin-bottom: 7px;
 }
 
-@media (min-width: 768px) {
-  .footer {
-    text-align: center;
-  }
-
-  .footer > div {
-    flex: 1;
-    margin-bottom: 0;
-  }
+.foot-text-click:hover{
+  transform: scale(1.15);
 }
+
+.foot-text-bottom {
+  font-family: 'CarismaClassic';
+  font-size: 22px;
+  font-weight: 400;
+  font-style: normal;
+  margin-top: 7px;
+  margin-bottom: 35px;
+}
+
 
 .social-icons {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  margin-top: 1rem; 
+  margin-top: 15px; 
+  margin-bottom: 35px;
 }
+
 .social-icons img {
   width: 32px;
   height: 32px;
 }
 
 .social-icons img:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
+}
+
+.click-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  background-color: #dcdcdc;
+  color: #aa0f4e;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  animation: fadeInOut 2s forwards;
+  z-index: 10;
+  font-family: 'CarismaClassic';
+  font-size: 22px;
+  font-weight: 300;
+  font-style: normal;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+@media (max-width: 769px) {
+  .footer {
+    flex-direction: column;
+    padding: 0 10px; /* Отступы с боков у всего футера */
+    max-width: 100vw; /* Чтобы не выходил за экран */
+    box-sizing: border-box;
+    width: 100%;
+    align-items: center; /* Центрируем содержимое внутри блока */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .revolline {
+    font-size: 36px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .foot-headers {
+    font-size: 28px;
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+
+  .foot-text, .foot-text-click {
+    font-size: 16px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+
+  .foot-text-bottom {
+    font-size: 16px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+  }
+
+  .social-icons img {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 0;
+  }
+
+  .social-icons {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
 }

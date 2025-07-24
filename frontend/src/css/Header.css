@@ -1,14 +1,19 @@
 .header {
+  position: fixed;
+  z-index: 1000;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 24px;
+  padding: 12px 0;
+  gap: 0 140px;
   border-bottom: 1px solid #e0e0e0;
-  font-family: 'Montserrat', sans-serif;
   background-color: #fff;
   flex-wrap: wrap;
-  font-size: 20px;
-  font-weight: 400;
+}
+
+.logo {
+  text-align: center;
 }
 
 .logo img {
@@ -21,19 +26,20 @@
 }
 
 .nav {
+  font-family: 'CarismaClassic';
+  font-size: 20px;
+  font-weight: 400;
+  font-style: normal;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 72px;
+  gap: 12px 70px;
   justify-content: center;
-  flex: 1;
   min-width: 200px;
 }
 
 .nav a {
   text-decoration: none;
   color: #000;
-  font-size: 16px;
-  font-weight: 500;
   transition: color 0.2s;
 }
 
@@ -45,6 +51,7 @@
 .icons {
   display: flex;
   gap: 16px;
+  justify-content: center;
 }
 
 .icon-button {
@@ -71,23 +78,66 @@
 
 /* Кастомный tooltip */
 .icon-button::after {
-  content: attr(title);
+  content: attr(data-tooltip);
   position: absolute;
-  top: -28px;
+  bottom: -28px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #333;
+  background-color: #aa0f4e;
   color: #fff;
   padding: 4px 8px;
-  font-size: 12px;
   white-space: nowrap;
   border-radius: 4px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
   z-index: 10;
+  font-family: 'CarismaClassic';
+  font-size: 14px;
+  font-weight: 500;
+  font-style: normal;
 }
 
 .icon-button:hover::after {
   opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+
+  .logo img {
+    height: 40px;
+  }
+
+  .nav {
+    order: 3; /* чтобы навигация была ниже */
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto; /* чтобы можно было скроллить по горизонтали */
+    max-width: 100%;
+    gap: 12px 24px;
+    margin: 8px 0 0 0;
+    font-size: 16px;
+    justify-content: center;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav a {
+    white-space: nowrap; /* чтобы ссылки не переносились */
+  }
+
+  .icons {
+    order: 2; /* иконки перед навигацией */
+    gap: 12px;
+  }
+
+  .icon-button img {
+    width: 18px;
+    height: 18px;
+  }
 }

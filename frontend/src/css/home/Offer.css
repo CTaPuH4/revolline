@@ -1,0 +1,89 @@
+.offer {
+  width: 90%;  
+  display: flex;
+  flex-direction: row; 
+  justify-content: center; 
+  gap: 0px 150px;      
+  margin: 0 auto;
+  padding: 0;
+  align-items: stretch;
+}
+
+.offer-photo {
+    display: flex;
+    align-items: flex-end;
+    text-align: center;
+    margin: 0;
+}
+
+.offer-textblock {
+    text-align: center;
+    max-width: 500px;
+    padding: 15px;
+}
+
+.offer p {
+  font-family: 'CarismaClassic';
+  font-weight: 400;
+  font-style: normal;
+}
+
+.offer-title { 
+  margin: 0;
+  font-size: 40px;
+  border: none;
+  outline: none;
+}
+
+.offer-text {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+.offer-link {
+  font-size: 16px;
+  color: #7B7B7B;
+  margin-top: 10px;
+  margin-bottom: 5x;
+}
+
+.offer-link:hover {
+  transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+  .offer {
+    flex-direction: column; /* Сначала текст, потом фото */
+    gap: 40px 0; /* вертикальный отступ между блоками */
+    align-items: center; /* центрируем по горизонтали */
+  }
+
+  .offer-photo {
+    order: 2; /* Явно указываем, что фото должно быть после текста */
+    justify-content: center;
+  }
+
+  .offer-textblock {
+    order: 1; /* Текст сверху */
+    padding: 10px;
+    text-align: center;
+  }
+
+  .offer-title {
+    margin: 0 auto;
+    font-size: 28px;
+  }
+
+  .offer-text {
+    font-size: 16px;
+  }
+
+  .offer-link {
+    font-size: 14px;
+  }
+
+  .offer-photo img {
+    max-width: 100%;
+    height: auto;
+  }
+}

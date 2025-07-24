@@ -19,16 +19,16 @@ const Header = () => (
       <a href="/partners">Партнерам</a>
     </nav>
     <div className="icons">
-      <Link to="/catalog?search=1" className="icon-button" title="Поиск">
+      <Link to="/catalog?search=1" className="icon-button" data-tooltip="Поиск">
         <img src={searchIcon} alt="" />
       </Link>
-      <Link to="/profile" className="icon-button" title="Профиль">
+      <Link to="/profile" className="icon-button" data-tooltip="Профиль">
         <img src={userIcon} alt="" />
       </Link>
-      <Link to="/favorites" className="icon-button" title="Избранное">
+      <Link to="/favorites" className="icon-button" data-tooltip="Избранное">
         <img src={heartIcon} alt="" />
       </Link>
-      <Link to="/cart" className="icon-button" title="Корзина">
+      <Link to="/cart" className="icon-button" data-tooltip="Корзина">
         <img src={cartIcon} alt="" />
       </Link>
     </div>
