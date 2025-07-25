@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from api.filters import ProductFilter
 from api.serializers import (CartSerializer, CategorySerializer,
                              CustomTokenObtainPairSerializer,
                              FavoritesSerializer, ProductSerializer,
@@ -36,9 +37,12 @@ class ProductViewSet(mixins.RetrieveModelMixin,
                      viewsets.GenericViewSet):
     queryset = Product.objects.prefetch_related('images', 'categories').all()
     serializer_class = ProductSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
-    filterset_fields = ('is_new', 'country', 'categories',)
+    filter_backends = (
+        DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter
+    )
+    filterset_class = ProductFilter
     search_fields = ('title', 'description', 'type')
+    ordering_fields = ('price',)
 
 
 class CartViewSet(viewsets.ModelViewSet):

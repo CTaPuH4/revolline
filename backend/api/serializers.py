@@ -45,6 +45,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'description', 'type', 'price',
                   'discount_price', 'is_new', 'is_fav',
                   'ingredients', 'country', 'size', 'full_weight',
+                  'color', 'effect', 'collection',
                   'product_weight', 'categories', 'images')
 
     def get_is_fav(self, obj):
