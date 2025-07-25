@@ -1,0 +1,17 @@
+.breadcrumbs {
+    font-family: 'CarismaClassic';
+    font-size: 20px;
+    font-weight: 400;
+    font-style: normal;
+    text-decoration: none;
+    color: #717171;
+}
+
+.breadcrumbs a{
+  font-family: 'CarismaClassic';
+  font-size: 20px;
+  font-weight: 400;
+  font-style: normal;
+  text-decoration: none;
+  color: #717171;
+}

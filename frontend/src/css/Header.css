@@ -1,5 +1,6 @@
 .header {
   position: fixed;
+  top: 0;
   z-index: 1000;
   width: 100%;
   display: flex;
@@ -35,15 +36,17 @@
   gap: 12px 70px;
   justify-content: center;
   min-width: 200px;
+  text-decoration: none;
 }
 
-.nav a {
+.nav-link {
+  display: inline-block;
   text-decoration: none;
   color: #000;
   transition: color 0.2s;
 }
 
-.nav a:hover {
+.nav-link:hover {
   color: #aa0f4e;
   transform: scale(1.15);
 }
@@ -100,6 +103,11 @@
 
 .icon-button:hover::after {
   opacity: 1;
+}
+
+.catalog-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
 @media (max-width: 768px) {

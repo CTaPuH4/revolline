@@ -6,7 +6,7 @@ import Layout from './components/Layout';
 const Home = lazy(() => import('./pages/Home'));
 const Catalog = lazy(() => import('./pages/Catalog'));
 const New = lazy(() => import('./pages/New'));
-const Promotions = lazy(() => import('./pages/Promotions'));
+const Sales = lazy(() => import('./pages/Sales'));
 const About = lazy(() => import('./pages/About'));
 const Partners = lazy(() => import('./pages/Partners'));
 const Cart = lazy(() => import('./pages/Cart'));
@@ -23,7 +23,7 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> }, // вместо path: "", используем index
       { path: 'catalog', element: <Catalog /> },
       { path: 'new', element: <New /> },
-      { path: 'promotions', element: <Promotions /> },
+      { path: 'sales', element: <Sales /> },
       { path: 'about', element: <About /> },
       { path: 'cart', element: <Cart /> },
       { path: 'partners', element: <Partners /> },

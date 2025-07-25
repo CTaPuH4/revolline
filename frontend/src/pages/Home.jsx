@@ -12,7 +12,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className='home-page'>
+    <main>
       <BannerSlider/> {/* Блок баннеров */}
       <Advantages/> {/* Блок с достижениями */}
       <Shops/> {/* Ссылки на магазины */}
