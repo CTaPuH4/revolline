@@ -47,3 +47,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
         )
         return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    new_password2 = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password2']:
+            raise serializers.ValidationError("Новые пароли не совпадают.")
+
+        try:
+            validate_password(attrs['new_password'],
+                              self.context['request'].user)
+        except ValidationError as e:
+            raise serializers.ValidationError(
+                {'new_password': list(e.messages)})
+        return attrs

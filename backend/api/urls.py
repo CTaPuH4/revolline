@@ -3,9 +3,9 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 from api.views import (CartViewSet, CategoryViewSet, CountryListView,
-                       CustomTokenObtainPairView, FavoritesViewSet, LogoutView,
-                       ProductViewSet, SectionViewSet)
-from users.views import ActivateUserView, UserViewSet
+                       FavoritesViewSet, ProductViewSet, SectionViewSet)
+from users.views import (ActivateUserView, ChangePasswordView, CustomTokenObtainPairView,
+                         LogoutView, UserViewSet)
 
 router = DefaultRouter()
 router.register('sections', SectionViewSet, basename='sections')
@@ -31,6 +31,9 @@ urlpatterns = [
     path('logout/',
          LogoutView.as_view(),
          name='logout'),
+    path('users/me/change_password/',
+         ChangePasswordView.as_view(),
+         name='change_password'),
     path('countries/',
          CountryListView.as_view(),
          name='country-list'),

@@ -1,14 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, status, views, viewsets
+from rest_framework import filters, mixins, views, viewsets
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.filters import ProductFilter
 from api.serializers import (CartSerializer, CategorySerializer,
-                             CustomTokenObtainPairSerializer,
                              FavoritesSerializer, ProductSerializer,
                              SectionSerializer)
 from store.models import Cart, Category, Favorites, Product, Section
@@ -88,28 +85,6 @@ class FavoritesViewSet(mixins.RetrieveModelMixin,
             product=serializer.validated_data['product'],
         )
         return favorite_item
-
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
-
-
-class LogoutView(views.APIView):
-    '''
-    Вью для добавления рефреш токена в блэклист.
-    '''
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request):
-        try:
-            refresh_token = request.data["refresh"]
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-
-            return Response(status=status.HTTP_205_RESET_CONTENT)
-        except (KeyError, TokenError):
-            return Response({"detail": "Invalid refresh token."},
-                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CountryListView(views.APIView):
