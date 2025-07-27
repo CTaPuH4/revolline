@@ -110,3 +110,19 @@ class LogoutView(views.APIView):
         except (KeyError, TokenError):
             return Response({"detail": "Invalid refresh token."},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class CountryListView(views.APIView):
+    '''
+    Возвращает список всех стран, указанных в продуктах.
+    '''
+    def get(self, request):
+        countries = (
+            Product.objects
+            .exclude(country__isnull=True)
+            .exclude(country__exact="")
+            .values_list("country", flat=True)
+            .distinct()
+        )
+        countries = sorted(set(map(str.strip, countries)))
+        return Response(countries)

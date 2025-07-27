@@ -58,9 +58,11 @@
 
 ### Просмотр продуктов
 Возвращает все продукты. Возможен запрос к конкретному продукту по id.
-- Фильтрация по полям ['is_new', 'country', 'categories', 'price_min', 'price_max'].
+- Фильтрация по полям ['is_new', 'country', 'categories', 'price_min', 'has_discount', 'price_max'].
 - Поиск (?search) по полям ('title', 'description', 'type').
 - Сортировка (?ordering) по полю price.
+
+Полный список стран для фильтрации можно получить с помощью http://127.0.0.1:8000/api/countries/
 #### Пример запроса:
 **GET** ***"http://127.0.0.1:8000/api/products/?is_new=&country=&categories=second&search=Описание&ordering=-price"***
 #### Пример ответа: 200 OK
