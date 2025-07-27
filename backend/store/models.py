@@ -37,10 +37,15 @@ class Category(AbstractModel):
         verbose_name_plural = 'Категории'
 
 
-class Section(Category):
+class Section(AbstractModel):
     '''
     Модель разделов.
     '''
+    slug = models.SlugField(
+        'Слаг',
+        help_text='Ссылка/Адрес категории',
+        unique=True,
+    )
     categories = models.ManyToManyField(
         Category,
         related_name='sections',
