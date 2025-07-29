@@ -1,0 +1,67 @@
+.user-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.user-dropdown {
+  font-family: 'CarismaClassic';
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  min-width: 150px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+  display: block;
+  padding: 5px 0;
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+}
+
+.user-dropdown a {
+  color: #646464;
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.user-dropdown button {
+  color: #000000;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  margin-top: 10px;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; /* расстояние между иконкой и текстом */
+  background: none;
+  border: none;
+  color: #000;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.user-email {
+  color:#000;
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+  margin-bottom: 10px;
+}

@@ -34,7 +34,7 @@
   font-size: 22px;
   font-weight: 400;
   font-style: normal;
-  margin-top: 7px;
+  margin-top: 0px;
   margin-bottom: 7px;
 }
 
@@ -51,23 +51,6 @@
   margin-bottom: 35px;
 }
 
-
-.social-icons {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-top: 15px; 
-  margin-bottom: 35px;
-}
-
-.social-icons img {
-  width: 32px;
-  height: 32px;
-}
-
-.social-icons img:hover {
-  transform: scale(1.2);
-}
 
 .click-wrapper {
   position: relative;
@@ -146,17 +129,6 @@
   .foot-text-bottom {
     font-size: 16px;
     margin-top: 5px;
-    margin-bottom: 20px;
-  }
-
-  .social-icons img {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 0;
-  }
-
-  .social-icons {
-    margin-top: 10px;
     margin-bottom: 20px;
   }
 }

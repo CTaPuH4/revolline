@@ -29,7 +29,7 @@ const router = createBrowserRouter([
       { path: 'partners', element: <Partners /> },
       { path: 'favorites', element: <Favorites /> },
       { path: 'profile', element: <Profile /> },
-      { path: 'policy', element: <PrivacyPolicy /> },
+      { path: 'privacy-policy', element: <PrivacyPolicy /> },
       { path: '*', element: <NotFound /> },
     ],
   },
@@ -37,8 +37,10 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
+
     <Suspense fallback={<div>Загрузка...</div>}>
       <RouterProvider router={router} />
     </Suspense>
-  ) 
+
+  );
 }

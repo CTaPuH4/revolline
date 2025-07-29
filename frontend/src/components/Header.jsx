@@ -3,14 +3,15 @@ import { useState, useRef, forwardRef } from "react";
 import '../css/Header.css'
 import logo from '../assets/logo.png';
 import searchIcon from '../assets/icons/search-icon.svg';
-import userIcon from '../assets/icons/profile-icon.svg';
+
 import heartIcon from '../assets/icons/favorites-icon.svg';
 import cartIcon from '../assets/icons/cart-icon.svg';
 
+import UserMenu from './UserMenu';
 import CatalogDropdown from './catalog/CatalogDropdown';
 
 const Header = forwardRef((props, ref) => {
-  const [showDropdown, setShowDropdown] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
   const timeoutRef = useRef(null);
 
   const handleMouseEnter = () => {
@@ -19,7 +20,7 @@ const Header = forwardRef((props, ref) => {
   };
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setShowDropdown(false), 150);
+    timeoutRef.current = setTimeout(() => setShowDropdown(false), 70);
   };
 
   return (
@@ -45,9 +46,7 @@ const Header = forwardRef((props, ref) => {
       <Link to="/catalog?search=1" className="icon-button" data-tooltip="Поиск">
         <img src={searchIcon} alt="" />
       </Link>
-      <Link to="/profile" className="icon-button" data-tooltip="Профиль">
-        <img src={userIcon} alt="" />
-      </Link>
+      <UserMenu />
       <Link to="/favorites" className="icon-button" data-tooltip="Избранное">
         <img src={heartIcon} alt="" />
       </Link>
