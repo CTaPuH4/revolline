@@ -1,48 +1,93 @@
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import "../../css/catalog/CatalogDropdown.css";
 
-const categories = {
-  "Волосы": [
-    { name: "Шампунь", path: "/catalog/hair/shampoo" },
-    { name: "Бальзам", path: "/catalog/hair/balm" },
-    { name: "Маски", path: "/catalog/hair/masks" },
-  ],
-  "Лицо": [
-    { name: "Кремы", path: "/catalog/face/creams" },
-    { name: "Скрабы", path: "/catalog/face/scrubs" },
-    { name: "Маски", path: "/catalog/face/masks" },
-  ],
-};
-
 export default function CatalogDropdown() {
-  const [selectedCategory, setSelectedCategory] = useState(Object.keys(categories)[0]);
+    const [sections, setSections] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  return (
-    <div className="dropdown">
-      <div className="dropdown-left">
-        <ul>
-          {Object.keys(categories).map((cat) => (
-            <li
-              key={cat}
-              className={cat === selectedCategory ? "active" : ""}
-              onMouseEnter={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </li>
-          ))}
-        </ul>
-      </div>
+    useEffect(() => {
+        const fetchSections = async () => {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/api/sections/");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
 
-      <div className="dropdown-right">
-        <ul>
-          {categories[selectedCategory].map(({ name, path }) => (
-            <li key={name}>
-              <Link to={path}>{name}</Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
+                // Гарантируем, что данные - массив
+                if (Array.isArray(data)) {
+                    setSections(data);
+                    // Устанавливаем первый раздел при наличии данных
+                    if (data.length > 0) {
+                        setSelectedCategory(data[0].slug);
+                    }
+                } else {
+                    throw new Error("Invalid API response: expected array");
+                }
+            } catch (err) {
+                console.error("Ошибка загрузки разделов:", err);
+                setError(err.message);
+                setSections([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSections();
+    }, []);
+
+    // Обработка состояний загрузки и ошибок
+    if (isLoading) {
+        return <div className="dropdown">Загрузка каталога...</div>;
+    }
+
+    if (error) {
+        return <div className="dropdown">Ошибка: {error}</div>;
+    }
+
+    // Если нет разделов
+    if (sections.length === 0) {
+        return <div className="dropdown">Нет доступных разделов</div>;
+    }
+
+    // Находим активный раздел
+    const activeSection = sections.find(section => section.slug === selectedCategory) || sections[0];
+
+    return (
+        <div className="dropdown">
+            <div className="dropdown-left">
+                <ul>
+                    {sections.map((section) => (
+                        <li
+                            key={section.slug}
+                            className={section.slug === activeSection.slug ? "active" : ""}
+                            onClick={() => setSelectedCategory(section.slug)} // клик вместо hover
+                        >
+                            {section.title}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="dropdown-right">
+                <ul>
+                    {activeSection.categories?.map((cat) => (
+                        <li key={cat.slug}>
+                            <Link to={`/catalog/${activeSection.slug}/${cat.slug}`}>
+                                {cat.title}
+                            </Link>
+                        </li>
+                    ))}
+
+                    {/* Запасной вариант при отсутствии категорий */}
+                    {activeSection.categories?.length === 0 && (
+                        <li>Нет доступных категорий</li>
+                    )}
+                </ul>
+            </div>
+        </div>
+    );
 }

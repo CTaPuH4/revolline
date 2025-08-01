@@ -1,64 +1,62 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../../css/catalog/CatalogSidebar.css';
-
-const categories = [
-  {
-    name: 'Волосы',
-    path: '/catalog/hair',
-    subcategories: [
-      { name: 'Шампуни', path: '/catalog/hair/shampoo' },
-      { name: 'Бальзамы', path: '/catalog/hair/balm' },
-    ],
-  },
-  {
-    name: 'Лицо',
-    path: '/catalog/face',
-    subcategories: [
-      { name: 'Очищение', path: '/catalog/face/clean' },
-      { name: 'Крема', path: '/catalog/face/cream' },
-    ],
-  },
-  {
-    name: 'Тело',
-    path: '/catalog/body',
-    subcategories: [],
-  },
-];
 
 export default function SidebarCatalog() {
   const { pathname } = useLocation();
   const [hovered, setHovered] = useState(null);
+  const [sections, setSections] = useState([]);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/sections/")
+        .then((res) => res.json())
+        .then((data) => setSections(data))
+        .catch((err) => console.error("Ошибка загрузки разделов:", err));
+  }, []);
 
   return (
-    <aside className="sidebar-catalog">
-      <ul>
-        {categories.map((cat, idx) => (
-          <li
-            key={cat.path}
-            className={`category-item ${pathname === cat.path ? 'active' : ''}`}
-            onMouseEnter={() => setHovered(idx)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <div className="category-link">
-              <Link to={cat.path}>{cat.name}</Link>
-              {cat.subcategories?.length > 0 && (
-                <span className="arrow">▼</span>
-              )}
-            </div>
+      <aside className="sidebar-catalog">
+        <ul>
+          {Array.isArray(sections) && sections.map((section, idx) => {
+            const sectionPath = `/catalog/${section.slug}`;
+            const isActive = pathname === sectionPath || pathname.startsWith(`${sectionPath}/`);
 
-            {hovered === idx && cat.subcategories?.length > 0 && (
-              <ul className="subcategory-list">
-                {cat.subcategories.map((sub) => (
-                  <li key={sub.path}>
-                    <Link to={sub.path}>{sub.name}</Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </aside>
+            return (
+                <li
+                    key={section.slug}
+                    className={`category-item ${isActive ? 'active' : ''}`}
+                    onMouseEnter={() => setHovered(idx)}
+                    onMouseLeave={() => setHovered(null)}
+                >
+                  <div className="category-link">
+                    <Link to={sectionPath}>{section.title}</Link>
+                    {section.categories?.length > 0 && (
+                        <div className="arrow-container">
+                          <svg className="arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
+                            <path d="M1 1L5 5L9 1" stroke="#626161" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                    )}
+                  </div>
+
+                  {/* Тонкая линия под разделом */}
+                  <div className="divider"></div>
+
+                  {hovered === idx && section.categories?.length > 0 && (
+                      <ul className="subcategory-list">
+                        {section.categories.map((cat) => (
+                            <li key={cat.slug}>
+                              <Link to={`${sectionPath}/${cat.slug}`}>
+                                {cat.title}
+                              </Link>
+                            </li>
+                        ))}
+                      </ul>
+                  )}
+                </li>
+            );
+          })}
+        </ul>
+      </aside>
   );
 }

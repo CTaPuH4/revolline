@@ -13,15 +13,31 @@ const Cart = lazy(() => import('./pages/Cart'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
     children: [
-      { index: true, element: <Home /> }, // вместо path: "", используем index
-      { path: 'catalog', element: <Catalog /> },
+      { index: true, element: <Home /> },
+      {
+        path: 'catalog',
+        children: [
+          // /catalog
+          { index: true, element: <Catalog /> },
+          // /catalog/:sectionSlug
+          {
+            path: ':sectionSlug',
+            element: <Catalog />,
+          },
+          // /catalog/:sectionSlug/:categorySlug
+          {
+            path: ':sectionSlug/:categorySlug',
+            element: <Catalog />,
+          },
+        ],
+      },
       { path: 'new', element: <New /> },
       { path: 'sales', element: <Sales /> },
       { path: 'about', element: <About /> },
@@ -29,7 +45,7 @@ const router = createBrowserRouter([
       { path: 'partners', element: <Partners /> },
       { path: 'favorites', element: <Favorites /> },
       { path: 'profile', element: <Profile /> },
-      { path: 'privacy-policy', element: <PrivacyPolicy /> },
+      { path: 'policy', element: <PrivacyPolicy /> },
       { path: '*', element: <NotFound /> },
     ],
   },
@@ -37,10 +53,8 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-
     <Suspense fallback={<div>Загрузка...</div>}>
       <RouterProvider router={router} />
     </Suspense>
-
-  );
+  ) 
 }
