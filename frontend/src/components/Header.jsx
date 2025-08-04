@@ -1,3 +1,4 @@
+// src/components/Header.jsx
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, forwardRef } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -7,7 +8,7 @@ import "../css/Header.css";
 
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search-icon.svg";
-import closeIcon from "../assets/icons/close-icon.png"
+import closeIcon from "../assets/icons/close-icon.png";
 import heartIcon from "../assets/icons/favorites-icon.svg";
 import cartIcon from "../assets/icons/cart-icon.svg";
 
@@ -53,106 +54,88 @@ const Header = forwardRef((props, ref) => {
         <>
             <header ref={ref} className="header">
                 <div className="header-content">
-                {/* Логотип */}
-                <Link to="/" className="logo">
-                    <img src={logo} alt="ReVolline cosmetics logo" />
-                </Link>
+                    {/* Логотип */}
+                    <Link to="/" className="logo">
+                        <img src={logo} alt="ReVolline cosmetics logo" />
+                    </Link>
 
-                {/* Навигация */}
-                <nav className={!searchOpen ? "nav" : "nav nav--hidden"}>
-                    <div
-                        className="catalog-wrapper"
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                    >
-                        <Link to="/catalog" className="nav-link">
-                            Каталог
-                        </Link>
-                        {showDropdown && <CatalogDropdown/>}
-                    </div>
-                    <Link to="/new" className="nav-link">
-                        Новинки
-                    </Link>
-                    <Link to="/sales" className="nav-link">
-                        Акции
-                    </Link>
-                    <Link to="/about" className="nav-link">
-                        О компании
-                    </Link>
-                    <Link to="/partners" className="nav-link">
-                        Партнерам
-                    </Link>
-                </nav>
-
-                {/* Поисковый блок */}
-                {searchOpen && (
-                <div className="search-wrapper">
-                    
-                    {/* Поле поиска */}
-                    <div className={`search-container ${searchOpen ? "open" : "closed"}`}>
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="Поиск"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyPress={onKeyPress}
-                            autoFocus={searchOpen}
-                        />
-
-                         {/* Кнопка поиска */}
-                        <button
-                            className="search-button"
-                            onClick={doSearch}
-                            aria-label="Найти"
+                    {/* Навигация */}
+                    <nav className={!searchOpen ? "nav" : "nav nav--hidden"}>
+                        <div
+                            className="catalog-wrapper"
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
                         >
-                            <img src={searchIcon} alt="Найти" />
-                        </button>
-                    </div>
+                            <Link to="/catalog" className="nav-link">
+                                Каталог
+                            </Link>
+                            {showDropdown && <CatalogDropdown />}
+                        </div>
+                        <Link to="/new" className="nav-link">Новинки</Link>
+                        <Link to="/sales" className="nav-link">Акции</Link>
+                        <Link to="/about" className="nav-link">О компании</Link>
+                        <Link to="/partners" className="nav-link">Партнерам</Link>
+                    </nav>
 
-                    {/* Кнопка закрытия */}
-                    {searchOpen && (
-                        <button
-                        className="search-close-button"
-                        onClick={() => setSearchOpen(false)}
-                        aria-label="Закрыть поиск"
-                        >
-                        <img src={closeIcon} alt="Закрыть" />
-                        </button>
-                    )}
-                </div>
-                )}
-                {/* Иконки или кнопка «Войти» */}
-                <div className="icons">
-                    {!searchOpen && (
-                        <button
-                            className="search-toggle"
-                            onClick={() => setSearchOpen(true)}
-                            aria-label="Открыть поиск"
-                        >
-                            <img src={searchIcon} alt="Открыть поиск" />
-                        </button>
-                    )}
-                    {user ? (
-                        <>
-                            <Link
-                                to="/favorites"
-                                className="icon-button"
-                                data-tooltip="Избранное"
+                    {/* Поисковый блок (в DOM всегда) */}
+                    <div className={`search-wrapper ${searchOpen ? "open" : "closed"}`}>
+                        {/* Поле поиска */}
+                        <div className={`search-container ${searchOpen ? "open" : "closed"}`}>
+                            <input
+                                type="text"
+                                className="search-input"
+                                placeholder="Поиск"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyPress={onKeyPress}
+                                autoFocus={searchOpen}
+                            />
+                            <button
+                                className="search-button"
+                                onClick={doSearch}
+                                aria-label="Найти"
                             >
-                                <img src={heartIcon} alt="Избранное" />
-                            </Link>
-                            <Link to="/cart" className="icon-button" data-tooltip="Корзина">
-                                <img src={cartIcon} alt="Корзина" />
-                            </Link>
-                            <UserMenu />
-                        </>
-                    ) : (
-                        <button className="login-button" onClick={() => setShowAuth(true)}>
-                            Войти
+                                <img src={searchIcon} alt="Найти" />
+                            </button>
+                        </div>
+
+                        {/* Кнопка закрытия */}
+                        <button
+                            className="search-close-button"
+                            onClick={() => setSearchOpen(false)}
+                            aria-label="Закрыть поиск"
+                        >
+                            <img src={closeIcon} alt="Закрыть" />
                         </button>
-                    )}
-                </div>
+                    </div>
+
+                    {/* Иконки или кнопка «Войти» */}
+                    <div className="icons">
+                        {!searchOpen && (
+                            <button
+                                className="search-toggle"
+                                onClick={() => setSearchOpen(true)}
+                                aria-label="Открыть поиск"
+                            >
+                                <img src={searchIcon} alt="Открыть поиск" />
+                            </button>
+                        )}
+                        {user ? (
+                            <>
+                                <Link to="/favorites" className="icon-button" data-tooltip="Избранное">
+                                    <img src={heartIcon} alt="Избранное" />
+                                </Link>
+                                <Link to="/cart" className="icon-button" data-tooltip="Корзина">
+                                    <img src={cartIcon} alt="Корзина" />
+                                </Link>
+                                <UserMenu />
+                            </>
+                        ) : (
+                            <button className="login-button" onClick={() => setShowAuth(true)}>
+                                Войти
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 

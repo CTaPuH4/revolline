@@ -5,7 +5,7 @@ import CatalogSidebar from "../components/catalog/CatalogSidebar.jsx";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
 import "../css/catalog/Catalog.css";
 
-import ProductCard from "../components/catalog/ProductCard.jsx";
+import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 
 const HeartIcon = ({ filled, onClick }) => (
     <span
@@ -94,7 +94,7 @@ export default function Catalog() {
                     ) : (
                         <div className="products">
                             {products.map((product) => (
-                                <ProductCard
+                                <ProductCardMini
                                     key={product.id}
                                     product={product}
                                     onToggleFav={toggleFav}

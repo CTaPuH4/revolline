@@ -13,6 +13,7 @@ const Favorites = lazy(() => import('./pages/Favorites'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const ProductPage = lazy(() => import('./pages/ProductPage')); // добавьте это
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
             element: <Catalog />,
           },
         ],
+      },
+      {
+        path: 'product/:id',
+        element: <ProductPage />,
       },
       { path: 'new', element: <New /> },
       { path: 'sales', element: <Sales /> },

@@ -8,6 +8,17 @@
   background-color: #fff;
   flex-wrap: wrap;
 }
+.catalog-wrapper {
+  position: relative;   /* контейнер-родитель для абсолютного позиционирования */
+}
+.catalog-wrapper .catalog-dropdown {
+  position: absolute;
+  top: 100%;            /* прилепить к нижней границе родителя */
+  left: 50%;            /* отступ слева — половина ширины родителя */
+  transform: translateX(-50%); /* центрирование по горизонтали */
+  margin-top: 8px;      /* отступ сверху, чтобы не прилипало впритык */
+  z-index: 100;         /* выше остальных элементов */
+}
 
 .header-content {
   display: flex;
@@ -125,6 +136,13 @@
   border: none;
   cursor: pointer;
   padding: 0;
+}
+.search-wrapper.closed .search-close-button {
+  display: none;
+}
+
+.search-wrapper.open .search-close-button {
+  display: block;
 }
 
 .search-close-button img {

@@ -1,0 +1,210 @@
+/* Обёртка */
+.product-card-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+    background: #fff;
+    font-family: 'CarismaClassic', sans-serif;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 20px;
+}
+.breadcrumbs a {
+    color: #555;
+    text-decoration: none;
+}
+.breadcrumbs .current {
+    color: #000;
+}
+.breadcrumbs span {
+    margin: 0 8px;
+}
+
+/* Сама карточка: две колонки */
+.product-card {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+/* Изображения */
+.product-images {
+    display: flex;
+    flex: 1;
+    min-width: 300px;
+    max-width: 400px;
+}
+.thumbnail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+.thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+}
+.thumbnail:hover {
+    transform: scale(1.05);
+}
+.thumbnail.selected {
+    border-color: #aa0f4e;
+}
+.main-image {
+    flex: 1;
+    max-width: calc(100% - 72px);
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+/* Информация */
+.product-info {
+    flex: 2;
+    min-width: 300px;
+}
+.product-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.product-type {
+    font-size: 18px;
+    color: #888;
+    margin-bottom: 16px;
+}
+.product-description {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Цена */
+.product-price {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.old-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 18px;
+}
+.price {
+    color: #aa0f4e;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+/* Кнопка и иконки */
+.actions {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.add-to-cart {
+    width: 100%;
+    padding: 10px;
+    background-color: #aa0f4e;
+    color: #fff;
+    font-size: 16px;
+    border: 2px solid transparent;
+    border-radius: 20px 6px 20px 6px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+.add-to-cart:hover {
+    background-color: #fff;
+    color: #aa0f4e;
+    border-color: #aa0f4e;
+}
+.icons {
+    display: flex;
+    gap: 16px;
+    margin-left: 24px;
+}
+.icon {
+    font-size: 22px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.icon:hover,
+.icon.heart.active {
+    color: #aa0f4e;
+}
+
+/* Табы */
+.product-tabs {
+    border-top: 1px solid #eee;
+    padding-top: 24px;
+}
+.tabs-nav {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 16px;
+    list-style: none;
+    padding: 0;
+}
+.tab {
+    font-size: 20px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 8px;
+}
+.tab.active {
+    color: #aa0f4e;
+}
+.tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background-color: #aa0f4e;
+}
+.tab-content {
+    font-size: 16px;
+    color: #444;
+}
+.tab-content p,
+.tab-content ul li {
+    margin-bottom: 6px;
+}
+.tab-content ul {
+    padding-left: 20px;
+}
+
+
+/* CSS-анимации для react-transition-group */
+.fade-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+.fade-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms ease, transform 300ms ease;
+}
+.fade-exit {
+    opacity: 1;
+    transform: translateY(0);
+}
+.fade-exit-active {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 300ms ease, transform 300ms ease;
+}
