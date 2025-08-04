@@ -2,18 +2,22 @@
   position: fixed;
   top: 0;
   z-index: 1000;
+  max-width: 100%;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 0;
-  gap: 0 140px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fff;
   flex-wrap: wrap;
 }
 
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 5% 12px 5%;
+}
+
 .logo {
+  display: inline-block;
   text-align: center;
 }
 

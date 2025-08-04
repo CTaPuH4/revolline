@@ -25,6 +25,7 @@ const Header = forwardRef((props, ref) => {
 
   return (
   <header ref={ref} className="header">
+    <div className='header-content'>
     <Link to="/" className="logo">
       <img src={logo} alt="ReVolline cosmetics logo" />
     </Link>
@@ -53,6 +54,7 @@ const Header = forwardRef((props, ref) => {
       <Link to="/cart" className="icon-button" data-tooltip="Корзина">
         <img src={cartIcon} alt="" />
       </Link>
+    </div>
     </div>
   </header>
   );
