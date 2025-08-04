@@ -7,7 +7,7 @@ import "../css/Header.css";
 
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search-icon.svg";
-import closeIcon from "../assets/icons/close-icon.svg";
+import closeIcon from "../assets/icons/close-icon.png"
 import heartIcon from "../assets/icons/favorites-icon.svg";
 import cartIcon from "../assets/icons/cart-icon.svg";
 
@@ -52,6 +52,7 @@ const Header = forwardRef((props, ref) => {
     return (
         <>
             <header ref={ref} className="header">
+                <div className="header-content">
                 {/* Логотип */}
                 <Link to="/" className="logo">
                     <img src={logo} alt="ReVolline cosmetics logo" />
@@ -84,17 +85,10 @@ const Header = forwardRef((props, ref) => {
                 </nav>
 
                 {/* Поисковый блок */}
+                {searchOpen && (
                 <div className="search-wrapper">
-                    {/* эта кнопка всегда видна и открывает/закрывает поиск */}
-                    <button
-                        className="search-toggle"
-                        onClick={() => setSearchOpen((o) => !o)}
-                        aria-label={searchOpen ? "Закрыть поиск" : "Открыть поиск"}
-                    >
-                        <img src={searchOpen ? closeIcon : searchIcon} alt="" />
-                    </button>
-
-                    {/* само поле с анимацией */}
+                    
+                    {/* Поле поиска */}
                     <div className={`search-container ${searchOpen ? "open" : "closed"}`}>
                         <input
                             type="text"
@@ -105,18 +99,40 @@ const Header = forwardRef((props, ref) => {
                             onKeyPress={onKeyPress}
                             autoFocus={searchOpen}
                         />
+
+                         {/* Кнопка поиска */}
                         <button
                             className="search-button"
                             onClick={doSearch}
                             aria-label="Найти"
                         >
-                            <img src={searchIcon} alt="" />
+                            <img src={searchIcon} alt="Найти" />
                         </button>
                     </div>
-                </div>
 
+                    {/* Кнопка закрытия */}
+                    {searchOpen && (
+                        <button
+                        className="search-close-button"
+                        onClick={() => setSearchOpen(false)}
+                        aria-label="Закрыть поиск"
+                        >
+                        <img src={closeIcon} alt="Закрыть" />
+                        </button>
+                    )}
+                </div>
+                )}
                 {/* Иконки или кнопка «Войти» */}
                 <div className="icons">
+                    {!searchOpen && (
+                        <button
+                            className="search-toggle"
+                            onClick={() => setSearchOpen(true)}
+                            aria-label="Открыть поиск"
+                        >
+                            <img src={searchIcon} alt="Открыть поиск" />
+                        </button>
+                    )}
                     {user ? (
                         <>
                             <Link
@@ -136,6 +152,7 @@ const Header = forwardRef((props, ref) => {
                             Войти
                         </button>
                     )}
+                </div>
                 </div>
             </header>
 

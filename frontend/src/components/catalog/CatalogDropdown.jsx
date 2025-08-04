@@ -64,7 +64,7 @@ export default function CatalogDropdown() {
                         <li
                             key={section.slug}
                             className={section.slug === activeSection.slug ? "active" : ""}
-                            onClick={() => setSelectedCategory(section.slug)} // клик вместо hover
+                            onMouseEnter={() => setSelectedCategory(section.slug)} // клик вместо hover
                         >
                             {section.title}
                         </li>

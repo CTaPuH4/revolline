@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
 import CatalogSidebar from "../components/catalog/CatalogSidebar.jsx";
-import MobileSidebarToggle from "../components/MobileSidebarToggle.jsx";
+import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
 import "../css/catalog/Catalog.css";
+
+import ProductCard from "../components/catalog/ProductCard.jsx";
 
 const HeartIcon = ({ filled, onClick }) => (
     <span
@@ -69,7 +71,7 @@ export default function Catalog() {
         );
 
     return (
-        <main>
+        <main className="catalog-page">
             <div className="catalog-header">
                 <h1>Каталог</h1>
                 <Breadcrumbs />
@@ -92,43 +94,11 @@ export default function Catalog() {
                     ) : (
                         <div className="products">
                             {products.map((product) => (
-                                <div key={product.id} className="product-card">
-                                    <div className="product-image-wrapper">
-                                        <HeartIcon
-                                            filled={product.is_fav}
-                                            onClick={() => toggleFav(product.id)}
-                                        />
-                                        {product.images?.[0]?.image ? (
-                                            <img
-                                                src={product.images[0].image}
-                                                alt={product.title}
-                                                className="product-image"
-                                            />
-                                        ) : (
-                                            <div className="no-image">
-                                                Нет фото
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="product-title">{product.title}</div>
-                                    <div className="product-type">{product.type}</div>
-                                    <div className="product-price">
-                                        {product.discount_price ? (
-                                            <>
-                                                <span className="old-price">
-                                                    {product.price}₽
-                                                </span>
-                                                <span className="new-price">
-                                                    {product.discount_price}₽
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className="new-price">
-                                                {product.price}₽
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onToggleFav={toggleFav}
+                                />
                             ))}
                         </div>
                     )}

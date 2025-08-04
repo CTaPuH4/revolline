@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import './catalog/CatalogSidebar.jsx';
-import '../css/MobileSidebar.css';
+import './CatalogSidebar.jsx';
+import '../../css/catalog/MobileSidebar.css'
 
 export default function MobileSidebarToggle() {
     const [open, setOpen] = useState(false);

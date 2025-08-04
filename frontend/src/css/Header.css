@@ -3,14 +3,18 @@
   top: 0;
   z-index: 1000;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 12px 0;
-  gap: 10px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fff;
   flex-wrap: wrap;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5%;
+  padding-right: 5%;
 }
 
 .logo img {
@@ -54,6 +58,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 /* Кнопка toggle (лупа/крестик) */
@@ -74,12 +79,11 @@
   display: flex;
   align-items: center;
   overflow: hidden;
-  width: 0;
   opacity: 0;
   transition: width 0.3s ease, opacity 0.3s ease;
 }
 .search-container.open {
-  width: 300px; /* подберите нужную */
+  width: 500px; /* подберите нужную */
   opacity: 1;
 }
 .search-container.closed {
@@ -100,7 +104,6 @@
   box-sizing: border-box;
 }
 
-/* Кнопка поиска внутри поля */
 .search-button {
   position: absolute;
   top: 50%;
@@ -111,10 +114,29 @@
   padding: 0;
   cursor: pointer;
 }
+
 .search-button img {
   width: 24px;
   height: 24px;
 }
+
+.search-close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.search-close-button img {
+  width: 24px;
+  height: 24px;
+}
+
+.search-button img:hover,
+.search-close-button img:hover {
+  transform: scale(1.15);
+}
+
 
 .icons {
   display: flex;

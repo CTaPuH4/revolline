@@ -1,9 +1,8 @@
 /* CatalogSidebar.css */
 .sidebar-catalog {
   width: 240px;
-  padding: 16px;
+  padding: 16px 0px;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
 }
 
 .sidebar-catalog ul {
@@ -26,7 +25,7 @@
 }
 
 .category-link a {
-  color: #626161;
+  color: #000;
   text-decoration: none;
   font-family: 'CarismaClassic';
   font-size: 22px;
@@ -35,13 +34,16 @@
 }
 
 .category-item.active .category-link a {
-  color: #000000;
   font-weight: 500;
 }
 
 .category-item:hover .category-link a {
-  color: #000000;
   font-weight: 500;
+}
+
+.category-item:hover .subcategory-list {
+  display: block;
+  max-height: 500px;
 }
 
 .arrow-container {
@@ -66,21 +68,19 @@
 
 .divider {
   height: 1px;
-  background-color: #eee;
+  background-color: #c2c2c2;
   margin: 8px 0;
 }
 
 .subcategory-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  display: none;
   background: #fff;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: 200px;
+  width: 240px;
   z-index: 10;
   padding: 8px 0;
+  margin-top: 5px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
 }
 
 .subcategory-list li {
@@ -91,7 +91,7 @@
 .subcategory-list li a {
   display: block;
   padding: 8px 16px;
-  font-size: 18px;
+  font-size: 20px;
   color: #555;
   text-decoration: none;
   font-family: 'CarismaClassic';
@@ -99,8 +99,7 @@
 }
 
 .subcategory-list li a:hover {
-  background: #f5f5f5;
-  color: #e6007e;
+  color: #000;
   transform: scale(1.05);
   padding-left: 20px;
 }
