@@ -1,7 +1,10 @@
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './css/Fonts.css'
+import { AuthProvider } from './context/AuthContext.jsx';
+import './css/Fonts.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
+    <AuthProvider>
+        <App />
+    </AuthProvider>
 );

@@ -2,30 +2,22 @@
   position: fixed;
   top: 0;
   z-index: 1000;
-  max-width: 100%;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  gap: 10px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fff;
   flex-wrap: wrap;
 }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 5% 12px 5%;
-}
-
-.logo {
-  display: inline-block;
-  text-align: center;
-}
-
 .logo img {
   height: 55px;
   width: auto;
+  transition: transform 0.2s;
 }
-
 .logo img:hover {
   transform: scale(1.15);
 }
@@ -34,31 +26,99 @@
   font-family: 'CarismaClassic';
   font-size: 20px;
   font-weight: 400;
-  font-style: normal;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 70px;
+  gap: 10px 70px;
   justify-content: center;
   min-width: 200px;
-  text-decoration: none;
+  transition: opacity 0.3s ease;
 }
+
+.nav--hidden {
+  display: none;
+}
+
 
 .nav-link {
-  display: inline-block;
-  text-decoration: none;
   color: #000;
-  transition: color 0.2s;
+  text-decoration: none;
+  transition: color 0.2s, transform 0.2s;
 }
-
 .nav-link:hover {
   color: #aa0f4e;
   transform: scale(1.15);
 }
 
+/* Обёртка поиска */
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Кнопка toggle (лупа/крестик) */
+.search-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+}
+.search-toggle img {
+  width: 24px;
+  height: 24px;
+}
+
+/* Анимированный контейнер поля */
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  width: 0;
+  opacity: 0;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+.search-container.open {
+  width: 300px; /* подберите нужную */
+  opacity: 1;
+}
+.search-container.closed {
+  width: 0;
+  opacity: 0;
+}
+
+.search-input {
+  flex: 1;
+  height: 40px;
+  padding: 4px 40px 4px 12px;
+  border: 1px solid #000;
+  border-radius: 10px;
+  font-family: 'CarismaClassic';
+  font-size: 20px;
+  line-height: 24px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* Кнопка поиска внутри поля */
+.search-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.search-button img {
+  width: 24px;
+  height: 24px;
+}
+
 .icons {
   display: flex;
   gap: 16px;
-  justify-content: center;
 }
 
 .icon-button {
@@ -66,24 +126,16 @@
   border: none;
   padding: 4px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
   transition: transform 0.2s ease;
 }
-
 .icon-button:hover {
   transform: scale(1.15);
 }
-
 .icon-button img {
   width: 20px;
   height: 20px;
-  position: relative;
 }
-
-/* Кастомный tooltip */
 .icon-button::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -102,54 +154,40 @@
   font-family: 'CarismaClassic';
   font-size: 14px;
   font-weight: 500;
-  font-style: normal;
 }
-
 .icon-button:hover::after {
   opacity: 1;
 }
 
-.catalog-wrapper {
-  position: relative;
-  display: inline-block;
+.login-button {
+  background: #aa0f4e;
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 4px 20px;
+  font-family: 'CarismaClassic';
+  font-size: 20px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.login-button:hover {
+  background: #900b42;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
-  .header {
-    flex-wrap: wrap;
-    padding: 10px 16px;
-  }
-
-  .logo img {
-    height: 40px;
-  }
-
+  .header { flex-wrap: wrap; padding: 10px 16px; }
+  .logo img { height: 40px; }
   .nav {
-    order: 3; /* чтобы навигация была ниже */
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto; /* чтобы можно было скроллить по горизонтали */
-    max-width: 100%;
-    gap: 12px 24px;
-    margin: 8px 0 0 0;
-    font-size: 16px;
-    justify-content: center;
+    order: 3; width: 100%; flex-wrap: nowrap;
+    overflow-x: auto; max-width: 100%;
+    gap: 12px 24px; margin: 8px 0 0 0;
+    font-size: 16px; justify-content: center;
     padding-bottom: 8px;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
   }
-
-  .nav a {
-    white-space: nowrap; /* чтобы ссылки не переносились */
-  }
-
-  .icons {
-    order: 2; /* иконки перед навигацией */
-    gap: 12px;
-  }
-
-  .icon-button img {
-    width: 18px;
-    height: 18px;
-  }
+  .nav a { white-space: nowrap; }
+  .search-container.open { width: 200px; }
+  .icons { order: 2; gap: 12px; }
+  .icon-button img { width: 18px; height: 18px; }
 }
