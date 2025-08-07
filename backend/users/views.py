@@ -1,16 +1,22 @@
+from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import permissions, status, views, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import (TokenObtainPairView,
+                                            TokenRefreshView)
 
 from api.serializers import CustomTokenObtainPairSerializer
 from users.models import CustomUser
 from users.permissions import IsAnonymous
 from users.serializers import (ChangePasswordSerializer,
                                UserRegistrationSerializer, UserSerializer)
+from users.utils import set_jwt_cookies
 
 
 class ActivateUserView(views.APIView):
@@ -75,7 +81,56 @@ class UserViewSet(viewsets.GenericViewSet):
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    '''
+    Вью для получения токенов в виде HttpOnly cookie.
+    '''
     serializer_class = CustomTokenObtainPairSerializer
+    authentication_classes = ()
+    permission_classes = ()
+
+    def post(self, request: Request, *args, **kwargs) -> Response:
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code == 200:
+            access_token = response.data.get('access')
+            refresh_token = response.data.get('refresh')
+
+            if access_token and refresh_token:
+                response = set_jwt_cookies(
+                    response, access_token, refresh_token)
+                del response.data['access']
+                del response.data['refresh']
+
+        return response
+
+
+class CustomTokenRefreshView(JWTAuthentication, TokenRefreshView):
+    '''
+    Вью для обновления токенов.
+    '''
+    def post(self, request: Request, *args, **kwargs) -> Response:
+        raw_refresh_token = request.COOKIES.get(
+            settings.SIMPLE_JWT['REFRESH_COOKIE']) or None
+        data = {'refresh': raw_refresh_token}
+
+        serializer = self.get_serializer(data=data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        response = Response(
+            serializer.validated_data, status=status.HTTP_200_OK)
+
+        access_token = response.data.get('access')
+        refresh_token = response.data.get('refresh')
+
+        if access_token and refresh_token:
+            response = set_jwt_cookies(response, access_token, refresh_token)
+            del response.data['access']
+            del response.data['refresh']
+
+        return response
 
 
 class LogoutView(views.APIView):
@@ -85,18 +140,31 @@ class LogoutView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
-        try:
-            refresh_token = request.data["refresh"]
-            token = RefreshToken(refresh_token)
-            token.blacklist()
+        raw_refresh_token = request.COOKIES.get(
+            settings.SIMPLE_JWT['REFRESH_COOKIE'])
 
-            return Response(status=status.HTTP_205_RESET_CONTENT)
-        except (KeyError, TokenError):
-            return Response({"detail": "Invalid refresh token."},
+        if not raw_refresh_token:
+            return Response({'detail': 'Refresh token cookie not found.'},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = RefreshToken(raw_refresh_token)
+            token.blacklist()
+        except TokenError:
+            return Response({'detail': 'Invalid refresh token.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        response = Response(status=status.HTTP_205_RESET_CONTENT)
+
+        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'])
+        response.delete_cookie(settings.SIMPLE_JWT['REFRESH_COOKIE'])
+        return response
 
 
 class ChangePasswordView(views.APIView):
+    '''
+    Вью для смены пароля.
+    '''
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
@@ -111,12 +179,12 @@ class ChangePasswordView(views.APIView):
 
         if not user.check_password(old_password):
             return Response(
-                {"old_password": "Старый пароль неверен."},
+                {'old_password': 'Старый пароль неверен.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         user.set_password(serializer.validated_data['new_password'])
         user.save()
 
-        return Response({"detail": "Пароль успешно изменён."},
+        return Response({'detail': 'Пароль успешно изменён.'},
                         status=status.HTTP_200_OK)

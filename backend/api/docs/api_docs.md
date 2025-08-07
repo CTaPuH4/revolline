@@ -171,44 +171,26 @@
 }
 ```
 #### Пример ответа: 200 OK
-```
-{
-    "refresh": "refresh-token",
-    "access": "access-token"
-}
-```
+Токены устанавливаются в HttpOnly cookie 'access_token' и 'refresh_token'.
 
 ---
 
 ### Удаление JWT-токена
 *Доступно только авторизованным пользователям.*
 
-Отправляет refresh-токен в blacklist.
+Отправляет refresh-токен из cookie в blacklist, удаляет токены из cookie.
 #### Пример запроса:
 **POST** ***"http://127.0.0.1:8000/api/logout/"***
-```
-{
-    "refresh": "refresh-token"
-}
-```
+
 #### Пример ответа: 205 Reset Content
 ---
 
 ### Обновление JWT-токенов
 #### Пример запроса:
 **POST** ***"http://127.0.0.1:8000/api/token/refresh/"***
-```
-{
-    "refresh": "refresh-token"
-}
-```
+
 #### Пример ответа: 200 OK
-```
-{
-    "refresh": "refresh-token",
-    "access": "access-token"
-}
-```
+Токены обнвляются и устанавливаются в HttpOnly cookie 'access_token' и 'refresh_token'.
 
 ---
 
