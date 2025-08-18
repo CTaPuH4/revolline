@@ -3,11 +3,15 @@ from django_filters import rest_framework as filters
 from store.models import Product
 
 
+class CharInFilter(filters.BaseInFilter, filters.CharFilter):
+    pass
+
+
 class ProductFilter(filters.FilterSet):
     price_min = filters.NumberFilter(field_name="price", lookup_expr='gte')
     price_max = filters.NumberFilter(field_name="price", lookup_expr='lte')
-    categories = filters.CharFilter(
-        field_name="categories__slug", lookup_expr='exact'
+    categories = CharInFilter(
+        field_name="categories__slug", lookup_expr='in'
     )
     has_discount = filters.BooleanFilter(method='filter_has_discount')
 
