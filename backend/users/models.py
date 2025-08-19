@@ -45,7 +45,7 @@ class CustomUserManager(BaseUserManager):
         )
 
         send_mail(
-            subject='Подтверждение аккаунта',
+            subject='Revolline. Подтверждение аккаунта.',
             message=(
                 f'Cсылка для подтверждения email:\n{activation_link}'
             ),

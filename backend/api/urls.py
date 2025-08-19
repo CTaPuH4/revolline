@@ -5,7 +5,8 @@ from api.views import (CartViewSet, CategoryViewSet, CountryListView,
                        FavoritesViewSet, ProductViewSet, SectionViewSet)
 from users.views import (ActivateUserView, ChangePasswordView,
                          CustomTokenObtainPairView, CustomTokenRefreshView,
-                         LogoutView, UserViewSet)
+                         LogoutView, PasswordResetConfirmView,
+                         PasswordResetRequestView, UserViewSet)
 
 router = DefaultRouter()
 router.register('sections', SectionViewSet, basename='sections')
@@ -19,6 +20,9 @@ router.register('users', UserViewSet, basename='users')
 urlpatterns = [
     path('activate/<uidb64>/<token>/',
          ActivateUserView.as_view(), name='activate-user'),
+    path('reset/request/',
+         PasswordResetRequestView.as_view(), name='reset-request'),
+    path('reset/', PasswordResetConfirmView.as_view(), name='reset-confirm'),
     path('login/',
          CustomTokenObtainPairView.as_view(),
          name='token_obtain_pair'),

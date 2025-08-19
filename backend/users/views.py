@@ -1,6 +1,10 @@
 from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -15,13 +19,15 @@ from api.serializers import CustomTokenObtainPairSerializer
 from users.models import CustomUser
 from users.permissions import IsAnonymous
 from users.serializers import (ChangePasswordSerializer,
+                               PasswordResetConfirmSerializer,
+                               PasswordResetRequestSerializer,
                                UserRegistrationSerializer, UserSerializer)
 from users.utils import set_jwt_cookies
 
 
 class ActivateUserView(views.APIView):
     '''
-    Вьюсет активации пользователя
+    Вью активации пользователя.
     '''
     def get(self, request, uidb64, token):
         try:
@@ -41,9 +47,91 @@ class ActivateUserView(views.APIView):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
+class PasswordResetRequestView(views.APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {'message': 'Письмо восстановления отправленно.'},
+                    status=status.HTTP_200_OK
+                )
+
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            reset_link = (
+                f"{settings.FRONTEND_URL}/api/reset?uid={uid}&token={token}/"
+            )
+
+            send_mail(
+                subject='Revolline. Восстановление пароля.',
+                message=(
+                    f'Cсылка для восстановления пароля:\n{reset_link}'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+
+            return Response(
+                    {'message': 'Письмо восстановления отправленно.'},
+                    status=status.HTTP_200_OK
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetConfirmView(views.APIView):
+    '''
+    Вью восстановления пароля.
+    '''
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        uidb64 = serializer.validated_data['uid']
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = CustomUser.objects.get(pk=uid)
+        except (CustomUser.DoesNotExist, ValueError, TypeError, OverflowError):
+            return Response(
+                {'error': 'Неверный UID'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not default_token_generator.check_token(user, token):
+            return Response(
+                {'error': 'Неверный или просроченный токен'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            validate_password(new_password, user)
+        except ValidationError as e:
+            return Response(
+                {'new_password': list(e.messages)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response(
+            {'message': 'Пароль успешно изменён'}, status=status.HTTP_200_OK
+        )
+
+
 class UserViewSet(viewsets.GenericViewSet):
     '''
-    Вьюсет модели пользователя (CustomUser)
+    Вьюсет модели пользователя (CustomUser).
     '''
     queryset = CustomUser.objects.all()
 
