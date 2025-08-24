@@ -11,6 +11,11 @@
 .catalog-wrapper {
   position: relative;   /* контейнер-родитель для абсолютного позиционирования */
 }
+
+.catalog-wrapper:hover {
+  transform: scale(1.15);
+}
+
 .catalog-wrapper .catalog-dropdown {
   position: absolute;
   top: 100%;            /* прилепить к нижней границе родителя */
@@ -24,8 +29,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: 5%;
-  padding-right: 5%;
+  padding-left: 7%;
+  padding-right: 7%;
 }
 
 .logo img {

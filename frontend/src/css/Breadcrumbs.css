@@ -1,10 +1,10 @@
 .breadcrumbs {
-    font-family: 'CarismaClassic';
-    font-size: 18px;
-    font-weight: 400;
-    font-style: normal;
-    text-decoration: none;
-    color: #717171;
+  font-family: 'CarismaClassic';
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+  text-decoration: none;
+  color: #717171;
 }
 
 .breadcrumbs a{
@@ -14,4 +14,17 @@
   font-style: normal;
   text-decoration: none;
   color: #717171;
+}
+
+.breadcrumbs span{
+  font-family: 'CarismaClassic';
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+  text-decoration: none;
+  color: #717171;
+}
+
+nav.breadcrumbs {
+  margin: 0;
 }

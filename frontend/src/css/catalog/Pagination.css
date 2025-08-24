@@ -1,0 +1,39 @@
+.pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  background-color: #ffffff;
+  border: none;
+  font-family: 'CarismaClassic';
+  font-weight: 400;
+  font-size: 20px;
+  transition: transform 0.2s ease, font-weight 0.2s ease;
+}
+
+.pagination button.active {
+  font-weight: 500;
+}
+
+.pagination button:hover {
+  transform: scale(1.1); /* увеличиваем на 20% */
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none; 
+}
+
+.pagination .dots {
+  padding: 6px 12px;
+}
+
+

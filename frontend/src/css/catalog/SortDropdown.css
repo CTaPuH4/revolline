@@ -1,0 +1,48 @@
+.sort-container {
+  position: relative;
+  display: inline-block;
+}
+
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.sort .arrow {
+  transition: transform 0.2s ease;
+}
+.sort .arrow.open {
+  transform: rotate(180deg);
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin-top: 6px;
+  list-style: none;
+  padding: 8px 0;
+  width: max-content;
+  min-width: 200px;
+  z-index: 100;
+
+  font-family: 'CarismaClassic';
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sort-dropdown li {
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sort-dropdown li:hover {
+  background: #f5f5f5;
+}

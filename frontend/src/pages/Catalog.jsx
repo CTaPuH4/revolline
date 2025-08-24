@@ -3,8 +3,11 @@ import { useParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
 import CatalogSidebar from "../components/catalog/CatalogSidebar.jsx";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
+import Pagination from "../components/catalog/Pagination.jsx";
 import "../css/catalog/Catalog.css";
 
+import filterIcon from "../assets/icons/filter-icon.png";
+import SortDropdown from "../components/catalog/SortDropdown.jsx";
 import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 
 export default function Catalog() {
@@ -12,26 +15,25 @@ export default function Catalog() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // fetchProducts принимает queryString без начального "?"
-  // Например: "categories=slug1&slug2&slug3" или "categories=single"
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 16; // 16 товаров на странице
+
   const fetchProducts = async (queryString = "") => {
     setLoading(true);
     try {
-      const all = [];
+      let allProducts = [];
       let url = `http://127.0.0.1:8000/api/products/${queryString ? `?${queryString}` : ""}`;
 
       while (url) {
         const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`HTTP error ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
 
         if (data && Array.isArray(data.results)) {
-          all.push(...data.results);
+          allProducts.push(...data.results);
           url = data.next;
         } else if (Array.isArray(data)) {
-          all.push(...data);
+          allProducts.push(...data);
           url = null;
         } else {
           console.warn("Unexpected products response format", data);
@@ -39,24 +41,27 @@ export default function Catalog() {
         }
       }
 
-      setProducts(all);
+      setProducts(allProducts);
     } catch (err) {
       console.error("Ошибка загрузки продуктов:", err);
       setProducts([]);
     } finally {
       setLoading(false);
+      setCurrentPage(1); // сброс на первую страницу при новой загрузке
     }
   };
 
   useEffect(() => {
-    // 1) Если есть categorySlug — запрашиваем по одной категории
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
+  useEffect(() => {
     if (categorySlug) {
       const qs = `categories=${encodeURIComponent(categorySlug)}`;
       fetchProducts(qs);
       return;
     }
 
-    // 2) Если есть sectionSlug — формируем query через & для всех категорий
     if (sectionSlug) {
       setLoading(true);
       fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`)
@@ -75,10 +80,7 @@ export default function Catalog() {
             return;
           }
 
-          // Формируем строку: categories=slug1&slug2&slug3
-          const encodedSlugs = cats.map(s => encodeURIComponent(s));
-          const qs = "categories=" + encodedSlugs.join(",");
-
+          const qs = "categories=" + cats.join(",");
           fetchProducts(qs);
         })
         .catch((err) => {
@@ -86,47 +88,86 @@ export default function Catalog() {
           setProducts([]);
           setLoading(false);
         });
-
       return;
     }
 
-    // 3) Ни sectionSlug, ни categorySlug — загружаем все товары
     fetchProducts();
   }, [sectionSlug, categorySlug]);
 
   const toggleFav = (id) =>
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
+    setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
+
+  // пагинация
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentProducts = products.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(products.length / itemsPerPage);
 
   return (
     <main className="catalog-page">
-      <div className="catalog-header">
-        <h1>Каталог</h1>
+      <div className="breadcrumbs">
         <Breadcrumbs />
       </div>
 
-      <div className="catalog-container">
-        <MobileSidebarToggle />
-
-        <div className="sidebar-wrapper">
-          <CatalogSidebar />
+      <div className="catalog-content">
+        <div>
+          <div className="catalog-header">
+            <h1>Каталог</h1>
+          </div>
+          <MobileSidebarToggle />
+          <div className="sidebar-wrapper">
+            <CatalogSidebar />
+          </div>
         </div>
 
-        <div className="catalog-scrollable">
-          {loading ? (
-            <div className="loading-indicator">Загрузка товаров...</div>
-          ) : products.length === 0 ? (
-            <p className="no-products">Товаров не найдено</p>
-          ) : (
-            <div className="products">
-              {products.map((product) => (
-                <ProductCardMini
-                  key={product.id}
-                  product={product}
-                  onToggleFav={toggleFav}
+        <div className="products-section">
+          <div className="filters">
+            <SortDropdown />
+            <div className="sort">
+              <img src={filterIcon} alt="filter" />
+              <p>Фильтры</p>
+              <svg
+                width="20"
+                height="10"
+                viewBox="0 0 10 6"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1 1L5 5L9 1"
+                  stroke="#626161"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
-              ))}
+              </svg>
             </div>
-          )}
+          </div>
+
+          <div className="catalog-scrollable">
+            {loading ? (
+              <div className="loading-indicator">Загрузка товаров...</div>
+            ) : currentProducts.length === 0 ? (
+              <p className="no-products">Товаров не найдено</p>
+            ) : (
+              <div className="products">
+                {currentProducts.map(product => (
+                  <ProductCardMini
+                    key={product.id}
+                    product={product}
+                    onToggleFav={toggleFav}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Компонент пагинации */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
     </main>
