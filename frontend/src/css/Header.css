@@ -65,8 +65,11 @@
 }
 
 /* Обёртка поиска */
-.search-wrapper {
-  position: relative;
+.search-wrapper.closed {
+  display: none;
+}
+
+.search-wrapper.open {
   display: flex;
   align-items: center;
   gap: 10px;
