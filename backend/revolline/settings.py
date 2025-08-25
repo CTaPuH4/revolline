@@ -9,13 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # ТОЛЬКО ДЛЯ ОТЛАДКИ!!! В ПРОДЕ ПРОПИСАТЬ КОНКРЕТНЫЕ ДОМЕНЫ!!!
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-CORS_ALLOW_CREDENTIALS = True
-
+CORS_ALLOW_ALL_ORIGINS = True
 
 DEBUG = True
 
@@ -139,5 +133,5 @@ SIMPLE_JWT = {
     'AUTH_COOKIE': 'access_token',
     'AUTH_COOKIE_SECURE': False,  # (True для production)
     'AUTH_COOKIE_HTTP_ONLY': True,
-    'AUTH_COOKIE_SAMESITE': 'Lax', # (Strict для production)
+    'AUTH_COOKIE_SAMESITE': 'Strict',
 }
