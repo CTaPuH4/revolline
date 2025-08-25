@@ -1,0 +1,312 @@
+.cart-page {
+  padding-left: 8%;
+  padding-right: 8%;
+  margin-bottom: 40px;  
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start; /* чтобы блоки выровнялись сверху */
+  gap: 100px;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.items-count {
+  background-color: #e4e4e4;
+  color: rgb(0, 0, 0);
+  font-family: 'CarismaClassic';
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cart-header {
+  font-family: 'CarismaClassic';
+  font-size: 35px;
+  font-weight: 500;
+  color: #aa0f4e;
+  margin-bottom: 20px;
+
+  position: relative;
+  display: inline-block;
+}
+
+.cart-items-count {
+  font-size: 0.6em; /* уменьшенный размер */
+  vertical-align: super; /* верхний индекс */
+  margin-left: 2px; /* небольшой отступ от слова */
+  color: #8f8f8f; /* цвет, если нужно */
+}
+
+.cart-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-clear-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #aa0f4e;
+  transition: transform 0.2s ease;
+  z-index: 90;
+}
+
+.cart-clear-btn img {
+  width: 32px;
+  height: 32px;
+}
+
+.cart-clear-btn:hover {
+  transform: scale(1.2);
+}
+
+.cart-products {
+    flex: 1;
+}
+
+.cart-summary {
+    width: 400px;
+}
+
+/* Общий стиль для обоих блоков */
+.cart-box {
+  margin-top: 40px;
+  background: #fff;
+  border: 1px solid #ddd;        /* светло-серая граница */
+  border-radius: 10px;           /* скругленные углы */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* лёгкая тень */
+  padding: 20px;
+  font-family: 'CarismaClassic';
+}
+
+.promo-code {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.promo-code input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 20px 6px 6px 6px;
+  font-family: 'CarismaClassic';
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.promo-code button {
+  padding: 8px 16px;
+  background-color: #ccc;
+  color: #fff;
+  border: none;
+  border-radius: 6px 6px 20px 6px;
+  cursor: pointer;
+  font-family: 'CarismaClassic';
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.promo-code button:hover {
+  transform: scale(1.15);
+}
+
+/* Линии итогов */
+.summary-line,
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.summary-line span:last-child {
+  font-weight: 500;
+}
+
+.summary-divider {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 15px 0;
+}
+
+.summary-total {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+/* Кнопка заказа */
+.checkout-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #aa0f4e;
+  color: #fff;
+  border: none;
+  border-radius: 20px 6px 20px 6px;
+  font-family: 'CarismaClassic';
+  font-size: 19px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: transform 0.2s ease;
+}
+
+.checkout-btn:hover {
+  background-color: #ffffff;
+  color: #aa0f4e;
+  border: 1px solid #aa0f4e;
+  transform: scale(1.03);
+}
+
+.cart-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+  gap: 15px;
+}
+
+
+.cart-item-img {
+  width: 80px;
+  height: 80px;
+   object-fit: contain;
+  border-radius: 8px;
+}
+
+.cart-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-item-title {
+  font-size: 19px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+.cart-item-type {
+  font-weight: 400;
+  font-size: 16px;
+  color: #777;
+  margin-bottom: 15px;
+  margin-top: 0;
+}
+
+.cart-item-prices {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.cart-item-oldprice {
+  font-size: 14px;
+  color: #888;
+  text-decoration: line-through;
+}
+
+.cart-item-remove {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 20px;
+  height: 20px;
+  background: none;
+  border: none;
+  color: #575757;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.cart-item-qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  bottom: 10px;
+  right: 15px;
+  
+}
+
+.cart-item-qty button {
+  font-family: 'CarismaClassic';
+  font-weight: 400;
+  font-size: 24px;
+  text-decoration: none;
+  background-color: #ffffff;
+  border: none;
+}
+
+.custom-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.custom-checkbox input {
+  opacity: 0; /* скрываем системный чекбокс */
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #aa0f4e;
+  border-radius: 6px; /* ← тут скругляем */
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+/* При наведении */
+.custom-checkbox:hover .checkmark {
+  background-color: #f9e3eb;
+}
+
+/* Когда включен */
+.custom-checkbox input:checked ~ .checkmark {
+  background-color: #aa0f4e;
+  border-color: #aa0f4e;
+}
+
+/* Галочка */
+.checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.custom-checkbox input:checked ~ .checkmark::after {
+  display: block;
+}

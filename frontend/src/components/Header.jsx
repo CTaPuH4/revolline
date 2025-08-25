@@ -6,7 +6,6 @@ import RegisterModal from "../modals/Register/RegisterModal";
 import "../css/Header.css";
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search-icon.svg";
-import closeIcon from "../assets/icons/close-icon.png";
 import heartIcon from "../assets/icons/favorites-icon.svg";
 import cartIcon from "../assets/icons/cart-icon.svg";
 import UserMenu from "./UserMenu";
@@ -136,7 +135,17 @@ const Header = forwardRef((props, ref) => {
                             className="search-close-button"
                             onClick={() => setSearchOpen(false)}
                         >
-                            <img src={closeIcon} alt="Закрыть"/>
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                >
+                                <line x1="1" y1="1" x2="15" y2="15" stroke="#181818ff" strokeWidth="2" strokeLinecap="round"/>
+                                <line x1="15" y1="1" x2="1" y2="15" stroke="#181818ff" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
+
                         </button>
                     </div>
 

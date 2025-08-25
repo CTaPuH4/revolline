@@ -82,6 +82,7 @@
 .search-wrapper {
   position: relative;
   z-index: 40;
+  border-bottom: 1px solid #000;
 }
 
 /* Закрытое состояние — прячем полностью */
@@ -134,8 +135,8 @@
   flex: 1;
   height: 40px;
   padding: 4px 40px 4px 12px;
-  border: 1px solid #000;
-  border-radius: 10px;
+  border: none;
+  outline: none;
   font-family: 'CarismaClassic';
   font-size: 20px;
   line-height: 24px;
