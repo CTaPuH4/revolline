@@ -1,19 +1,18 @@
-// src/components/Header.jsx
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useRef, forwardRef } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
 import RegisterModal from "../modals/Register/RegisterModal";
 import "../css/Header.css";
-
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search-icon.svg";
 import closeIcon from "../assets/icons/close-icon.png";
 import heartIcon from "../assets/icons/favorites-icon.svg";
 import cartIcon from "../assets/icons/cart-icon.svg";
-
 import UserMenu from "./UserMenu";
 import CatalogDropdown from "./catalog/CatalogDropdown";
+
+const API_BASE = "http://127.0.0.1:8000/api";
 
 const Header = forwardRef((props, ref) => {
     const { user } = useAuth();
@@ -28,6 +27,11 @@ const Header = forwardRef((props, ref) => {
     const [showAuth, setShowAuth] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
 
+    // --- Новое: подсказки и загрузка ---
+    const [suggestions, setSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+    const debounceRef = useRef(null);
+
     const handleMouseEnter = () => {
         clearTimeout(timeoutRef.current);
         setShowDropdown(true);
@@ -40,6 +44,7 @@ const Header = forwardRef((props, ref) => {
         if (searchQuery.trim()) {
             navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
             setSearchOpen(false);
+            setSuggestions([]);
         }
     };
 
@@ -50,26 +55,47 @@ const Header = forwardRef((props, ref) => {
         }
     };
 
+    // --- Новое: запрос подсказок с debounce ---
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setSuggestions([]);
+            return;
+        }
+
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        debounceRef.current = setTimeout(async () => {
+            try {
+                setLoadingSuggestions(true);
+                const res = await fetch(`${API_BASE}/products/?search=${encodeURIComponent(searchQuery)}&page_size=5`);
+                const data = await res.json();
+                setSuggestions(data.results || data); // зависит от API
+            } catch (err) {
+                console.error("Ошибка загрузки подсказок", err);
+            } finally {
+                setLoadingSuggestions(false);
+            }
+        }, 1000); // задержка 300мс
+    }, [searchQuery]);
+
     return (
         <>
             <header ref={ref} className="header">
                 <div className="header-content">
-                    {/* Логотип */}
                     <Link to="/" className="logo">
-                        <img src={logo} alt="ReVolline cosmetics logo" />
+                        <img src={logo} alt="ReVolline cosmetics logo"/>
                     </Link>
 
-                    {/* Навигация */}
                     <nav className={!searchOpen ? "nav" : "nav nav--hidden"}>
                         <div
                             className="catalog-wrapper"
                             onMouseEnter={handleMouseEnter}
                             onMouseLeave={handleMouseLeave}
                         >
-                            <Link to="/catalog" className="nav-link">
-                                Каталог
-                            </Link>
-                            {showDropdown && <CatalogDropdown />}
+                            <Link to="/catalog" className="nav-link">Каталог</Link>
+                            {showDropdown && <CatalogDropdown/>}
                         </div>
                         <Link to="/new" className="nav-link">Новинки</Link>
                         <Link to="/sales" className="nav-link">Акции</Link>
@@ -77,9 +103,8 @@ const Header = forwardRef((props, ref) => {
                         <Link to="/partners" className="nav-link">Партнерам</Link>
                     </nav>
 
-                    {/* Поисковый блок (в DOM всегда) */}
+                    {/* Поиск */}
                     <div className={`search-wrapper ${searchOpen ? "open" : "closed"}`}>
-                        {/* Поле поиска */}
                         <div className={`search-container ${searchOpen ? "open" : "closed"}`}>
                             <input
                                 type="text"
@@ -90,45 +115,52 @@ const Header = forwardRef((props, ref) => {
                                 onKeyPress={onKeyPress}
                                 autoFocus={searchOpen}
                             />
-                            <button
-                                className="search-button"
-                                onClick={doSearch}
-                                aria-label="Найти"
-                            >
-                                <img src={searchIcon} alt="Найти" />
+                            <button className="search-button" onClick={doSearch}>
+                                <img src={searchIcon} alt="Найти"/>
                             </button>
                         </div>
 
-                        {/* Кнопка закрытия */}
+                        {/* Подсказки */}
+                        {searchOpen && suggestions.length > 0 && (
+                            <ul className="search-suggestions">
+                                {loadingSuggestions && <li>Загрузка...</li>}
+                                {suggestions.map((p) => (
+                                    <li key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
+                                        {p.title}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
                         <button
                             className="search-close-button"
                             onClick={() => setSearchOpen(false)}
-                            aria-label="Закрыть поиск"
                         >
-                            <img src={closeIcon} alt="Закрыть" />
+                            <img src={closeIcon} alt="Закрыть"/>
                         </button>
                     </div>
 
-                    {/* Иконки или кнопка «Войти» */}
+                    {/* Иконки */}
                     <div className="icons">
                         {!searchOpen && (
                             <button
-                                className="search-toggle"
+                                className="search-toggle  icon-button"
                                 onClick={() => setSearchOpen(true)}
                                 aria-label="Открыть поиск"
+                                data-tooltip="Поиск"
                             >
-                                <img src={searchIcon} alt="Открыть поиск" />
+                                <img src={searchIcon} alt="Открыть поиск"/>
                             </button>
                         )}
                         {user ? (
                             <>
                                 <Link to="/favorites" className="icon-button" data-tooltip="Избранное">
-                                    <img src={heartIcon} alt="Избранное" />
+                                    <img src={heartIcon} alt="Избранное"/>
                                 </Link>
                                 <Link to="/cart" className="icon-button" data-tooltip="Корзина">
-                                    <img src={cartIcon} alt="Корзина" />
+                                    <img src={cartIcon} alt="Корзина"/>
                                 </Link>
-                                <UserMenu />
+                                <UserMenu/>
                             </>
                         ) : (
                             <button className="login-button" onClick={() => setShowAuth(true)}>
@@ -140,24 +172,14 @@ const Header = forwardRef((props, ref) => {
             </header>
 
             {/* Модалки */}
-            {showAuth && (
-                <AuthModal
-                    onClose={() => setShowAuth(false)}
-                    onRegisterClick={() => {
-                        setShowAuth(false);
-                        setShowRegister(true);
-                    }}
-                />
-            )}
-            {showRegister && (
-                <RegisterModal
-                    onClose={() => setShowRegister(false)}
-                    onBack={() => {
-                        setShowRegister(false);
-                        setShowAuth(true);
-                    }}
-                />
-            )}
+            {showAuth && <AuthModal onClose={() => setShowAuth(false)} onRegisterClick={() => {
+                setShowAuth(false);
+                setShowRegister(true);
+            }}/>}
+            {showRegister && <RegisterModal onClose={() => setShowRegister(false)} onBack={() => {
+                setShowRegister(false);
+                setShowAuth(true);
+            }}/>}
         </>
     );
 });

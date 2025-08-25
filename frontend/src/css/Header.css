@@ -1,3 +1,6 @@
+/* Header.css - полный файл для шапки и подсказок */
+
+/* --- Шапка --- */
 .header {
   position: fixed;
   top: 0;
@@ -8,6 +11,8 @@
   background-color: #fff;
   flex-wrap: wrap;
 }
+
+/* --- Каталог --- */
 .catalog-wrapper {
   position: relative;   /* контейнер-родитель для абсолютного позиционирования */
 }
@@ -19,12 +24,13 @@
 .catalog-wrapper .catalog-dropdown {
   position: absolute;
   top: 100%;            /* прилепить к нижней границе родителя */
-  left: 50%;            /* отступ слева — половина ширины родителя */
-  transform: translateX(-50%); /* центрирование по горизонтали */
-  margin-top: 8px;      /* отступ сверху, чтобы не прилипало впритык */
-  z-index: 100;         /* выше остальных элементов */
+  left: 50%;            /* центрирование по горизонтали */
+  transform: translateX(-50%);
+  margin-top: 8px;
+  z-index: 100;
 }
 
+/* --- Контент шапки --- */
 .header-content {
   display: flex;
   align-items: center;
@@ -33,6 +39,7 @@
   padding-right: 7%;
 }
 
+/* --- Логотип --- */
 .logo img {
   height: 55px;
   width: auto;
@@ -42,6 +49,7 @@
   transform: scale(1.15);
 }
 
+/* --- Навигация --- */
 .nav {
   font-family: 'CarismaClassic';
   font-size: 20px;
@@ -58,7 +66,6 @@
   display: none;
 }
 
-
 .nav-link {
   color: #000;
   text-decoration: none;
@@ -69,13 +76,22 @@
   transform: scale(1.15);
 }
 
-/* Обёртка поиска */
+/* --- Обёртка поиска --- */
+/* Базовое состояние wrapper — позиционирующий контекст.
+   Управление отображением идёт через .open/.closed */
+.search-wrapper {
+  position: relative;
+  z-index: 40;
+}
+
+/* Закрытое состояние — прячем полностью */
 .search-wrapper.closed {
   display: none;
 }
 
+/* Открытое состояние — inline-flex чтобы wrapper подстраивался по ширине поля поиска */
 .search-wrapper.open {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
 }
@@ -92,7 +108,7 @@
   height: 24px;
 }
 
-/* Анимированный контейнер поля */
+/* --- Анимированный контейнер поля --- */
 .search-container {
   position: relative;
   display: flex;
@@ -100,9 +116,12 @@
   overflow: hidden;
   opacity: 0;
   transition: width 0.3s ease, opacity 0.3s ease;
+  box-sizing: border-box;
 }
+
+/* Настройки для открытого/закрытого состояний (ширина можно подогнать) */
 .search-container.open {
-  width: 500px; /* подберите нужную */
+  width: 500px; /* подстрой под дизайн, или используй max-width в media queries */
   opacity: 1;
 }
 .search-container.closed {
@@ -110,6 +129,7 @@
   opacity: 0;
 }
 
+/* Инпут поиска */
 .search-input {
   flex: 1;
   height: 40px;
@@ -121,8 +141,10 @@
   line-height: 24px;
   background: #fff;
   box-sizing: border-box;
+  min-width: 0; /* важно для корректной сворачиваемости */
 }
 
+/* Кнопка поиска (лупа) — абсолютная внутри контейнера */
 .search-button {
   position: absolute;
   top: 50%;
@@ -139,6 +161,7 @@
   height: 24px;
 }
 
+/* Кнопка закрытия поля поиска */
 .search-close-button {
   background: none;
   border: none;
@@ -148,11 +171,9 @@
 .search-wrapper.closed .search-close-button {
   display: none;
 }
-
 .search-wrapper.open .search-close-button {
   display: block;
 }
-
 .search-close-button img {
   width: 24px;
   height: 24px;
@@ -163,7 +184,7 @@
   transform: scale(1.15);
 }
 
-
+/* --- Иконки справа --- */
 .icons {
   display: flex;
   gap: 16px;
@@ -207,6 +228,7 @@
   opacity: 1;
 }
 
+/* Кнопка входа */
 .login-button {
   background: #aa0f4e;
   color: #fff;
@@ -223,19 +245,111 @@
   background: #900b42;
 }
 
-/* Responsive */
+/* --- Выпадающие подсказки --- */
+/* Позиционируются относительно .search-wrapper (теперь wrapper подстраивается под ширину поля) */
+.search-suggestions {
+  font-family: 'CarismaClassic', sans-serif;
+  position: absolute;
+  top: calc(100% + 8px); /* чуть ниже поля */
+  left: 0;
+  width: 100%;           /* строго ограничено шириной wrapper / поля поиска */
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #cfcfcf; /* серая обводка */
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 100;
+  list-style: none;
+  margin: 6px 0 0 0;
+  padding: 6px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: suggestions-slide 160ms ease-out both;
+}
+
+/* Элементы подсказок */
+.search-suggestions li {
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'CarismaClassic';
+  font-size: 16px;
+  line-height: 1.2;
+  user-select: none;
+}
+
+/* Разделитель между пунктами */
+.search-suggestions li + li {
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Hover состояние пункта */
+.search-suggestions li:hover,
+.search-suggestions li:focus {
+  background: #f7f7f7;
+}
+
+/* --- Анимация появления подсказок --- */
+@keyframes suggestions-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Responsive --- */
 @media (max-width: 768px) {
   .header { flex-wrap: wrap; padding: 10px 16px; }
   .logo img { height: 40px; }
   .nav {
-    order: 3; width: 100%; flex-wrap: nowrap;
-    overflow-x: auto; max-width: 100%;
-    gap: 12px 24px; margin: 8px 0 0 0;
-    font-size: 16px; justify-content: center;
+    order: 3;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    gap: 12px 24px;
+    margin: 8px 0 0 0;
+    font-size: 16px;
+    justify-content: center;
     padding-bottom: 8px;
   }
   .nav a { white-space: nowrap; }
   .search-container.open { width: 200px; }
   .icons { order: 2; gap: 12px; }
   .icon-button img { width: 18px; height: 18px; }
+
+  /* Подсказки занимают всю ширину на мобильных */
+  .search-wrapper.open {
+    display: flex; /* на мобилке удобно, чтобы заняло ширину контейнера */
+    width: 100%;
+  }
+  .search-container.open { width: 100%; }
+  .search-suggestions {
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 8px;
+    top: calc(100% + 6px);
+  }
+}
+
+/* --- Мелкие улучшения --- */
+/* Гарантируем, что при уменьшении инпута flex-basis не ломает вид */
+.search-container .search-input {
+  min-width: 0;
+}
+
+/* Предохранитель: если где-то задано другое поведение, этот стиль поможет корректно считать ширины */
+.search-suggestions,
+.search-container {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
 }

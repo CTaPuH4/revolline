@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../css/UserProfile.css";
@@ -18,7 +18,7 @@ export default function UserProfile() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    phone: "",
+    phone: "+7",
   });
   const [passwordData, setPasswordData] = useState({
     password: "",
@@ -26,6 +26,9 @@ export default function UserProfile() {
     new_password2: "",
   });
   const [message, setMessage] = useState("");
+
+  const phoneInputRef = useRef(null);
+  const PREFIX = "+7";
 
   // Если не авторизованы — редиректим
   useEffect(() => {
@@ -38,16 +41,106 @@ export default function UserProfile() {
   // Когда подтянулся контекстный user — заполняем поля
   useEffect(() => {
     if (user) {
+      // Приводим телефон к формату "+7" + digits after leading 7/8 (если есть)
+      const rawPhone = user.phone ?? "";
+      const digits = String(rawPhone).replace(/\D/g, "");
+      let rest = "";
+      if (digits.length === 0) {
+        rest = "";
+      } else if (digits.startsWith("8")) {
+        rest = digits.slice(1);
+      } else if (digits.startsWith("7")) {
+        rest = digits.slice(1);
+      } else {
+        // если номер начинается не с 7/8 — просто возьмём все цифры
+        rest = digits;
+      }
+
       setFormData({
         first_name: user.first_name || "",
         last_name: user.last_name || "",
-        phone: user.phone || "",
+        phone: PREFIX + rest,
       });
     }
   }, [user]);
 
-  const handleChange = (e) =>
-      setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // общий обработчик для полей кроме телефона
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "phone") {
+      // телефон обрабатывается специальным обработчиком
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Специальная логика для телефона:
+  const handlePhoneChange = (e) => {
+    const raw = e.target.value || "";
+    // Удаляем всё, кроме цифр из введённого
+    const digits = raw.replace(/\D/g, "");
+
+    let rest = digits;
+    // Если пользователь вставил или ввёл полный номер с ведущей 7/8, убираем её — мы добавим +7 сами
+    if (digits.startsWith("8") || digits.startsWith("7")) {
+      rest = digits.slice(1);
+    }
+
+    // Собираем окончательное значение
+    const newVal = PREFIX + rest;
+    setFormData((prev) => ({ ...prev, phone: newVal }));
+  };
+
+  // Запрет на удаление префикса +7 (Backspace/Delete), если курсор в префиксе
+  const handlePhoneKeyDown = (e) => {
+    const selStart = e.target.selectionStart ?? 0;
+    const selEnd = e.target.selectionEnd ?? 0;
+
+    // Если пытаются удалить символы в префиксе — блокируем
+    if (
+        (e.key === "Backspace" && selStart <= PREFIX.length) ||
+        (e.key === "Delete" && selStart < PREFIX.length)
+    ) {
+      // Разрешаем, если выделен диапазон, закрывающий часть вне префикса
+      if (selEnd > PREFIX.length) {
+        // allow (user is deleting a selection that includes beyond prefix)
+      } else {
+        e.preventDefault();
+      }
+    }
+  };
+
+  // При фокусе/клике не даём поставить курсор в префикс
+  const ensureCaretAfterPrefix = () => {
+    requestAnimationFrame(() => {
+      const input = phoneInputRef.current;
+      if (!input) return;
+      const start = input.selectionStart ?? 0;
+      if (start < PREFIX.length) {
+        input.setSelectionRange(PREFIX.length, PREFIX.length);
+      }
+    });
+  };
+
+  // Очистка вставки: оставляем только цифры, затем формируем +7...
+  const handlePhonePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text") || "";
+    const digits = pasted.replace(/\D/g, "");
+    let rest = digits;
+    if (digits.startsWith("8") || digits.startsWith("7")) rest = digits.slice(1);
+    const newVal = PREFIX + rest;
+    setFormData((prev) => ({ ...prev, phone: newVal }));
+
+    // поставить каретку в конец
+    requestAnimationFrame(() => {
+      const input = phoneInputRef.current;
+      if (input) {
+        const pos = newVal.length;
+        input.setSelectionRange(pos, pos);
+      }
+    });
+  };
 
   const handlePasswordChange = (e) =>
       setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -85,7 +178,7 @@ export default function UserProfile() {
   const handleSave = async () => {
     setMessage("");
     try {
-      // Передаём и имя, и фамилию, и телефон
+      // Передаём и имя, и фамилию, и телефон (phone уже в формате "+7...")
       await updateProfile(formData);
       setMessage("Данные успешно обновлены.");
     } catch (err) {
@@ -156,10 +249,15 @@ export default function UserProfile() {
           <div className="user-info-field">
             <label>Телефон</label>
             <input
+                ref={phoneInputRef}
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
+                onChange={handlePhoneChange}
+                onKeyDown={handlePhoneKeyDown}
+                onFocus={ensureCaretAfterPrefix}
+                onClick={ensureCaretAfterPrefix}
+                onPaste={handlePhonePaste}
             />
           </div>
         </div>
