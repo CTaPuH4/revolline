@@ -1,4 +1,3 @@
-// src/components/UserProfile.js
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -53,6 +52,36 @@ export default function UserProfile() {
   const handlePasswordChange = (e) =>
       setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  // format backend error to readable string
+  const formatError = (err) => {
+    if (!err) return "Ошибка";
+    // If our AuthContext throws an error with .response (payload) - prefer it
+    const payload = err.response ?? err?.data ?? null;
+
+    if (payload) {
+      if (typeof payload === "string") return payload;
+      if (payload.detail) {
+        return Array.isArray(payload.detail)
+            ? payload.detail.join(" ")
+            : String(payload.detail);
+      }
+      // collect any nested values (arrays / objects -> strings)
+      const collected = [];
+      const collect = (v) => {
+        if (v == null) return;
+        if (Array.isArray(v)) return v.forEach(collect);
+        if (typeof v === "object") return Object.values(v).forEach(collect);
+        collected.push(String(v));
+      };
+      collect(payload);
+      if (collected.length) return collected.join(" ");
+    }
+
+    // fallback to message
+    if (err.message) return err.message;
+    return "Неизвестная ошибка";
+  };
+
   const handleSave = async () => {
     setMessage("");
     try {
@@ -60,7 +89,7 @@ export default function UserProfile() {
       await updateProfile(formData);
       setMessage("Данные успешно обновлены.");
     } catch (err) {
-      setMessage(err.message || "Ошибка обновления данных.");
+      setMessage(formatError(err));
     }
   };
 
@@ -75,7 +104,7 @@ export default function UserProfile() {
       setPasswordData({ password: "", new_password: "", new_password2: "" });
       setMessage("Пароль успешно изменён.");
     } catch (err) {
-      setMessage(err.message || "Ошибка при смене пароля.");
+      setMessage(formatError(err));
     }
   };
 
@@ -93,7 +122,7 @@ export default function UserProfile() {
         {message && (
             <div
                 className={
-                  message.includes("успешно")
+                  message.toLowerCase().includes("успешно")
                       ? "success-message"
                       : "error-message"
                 }
@@ -101,7 +130,9 @@ export default function UserProfile() {
               {message}
             </div>
         )}
-        {error && <div className="error-message">{error}</div>}
+
+        {/* keep context error (if any) but prefer message */}
+        {!message && error && <div className="error-message">{error}</div>}
 
         <div className="user-info-group">
           <div className="user-info-field">
