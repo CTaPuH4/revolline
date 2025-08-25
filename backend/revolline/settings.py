@@ -133,5 +133,5 @@ SIMPLE_JWT = {
     'AUTH_COOKIE': 'access_token',
     'AUTH_COOKIE_SECURE': False,  # (True для production)
     'AUTH_COOKIE_HTTP_ONLY': True,
-    'AUTH_COOKIE_SAMESITE': 'Strict',
+    'AUTH_COOKIE_SAMESITE': 'Lax',
 }
