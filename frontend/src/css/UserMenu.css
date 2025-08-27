@@ -17,7 +17,9 @@
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   z-index: 10;
 }
-
+.dropdown-link{
+  font-family: 'CarismaClassic';
+}
 .user-dropdown a,
 .user-dropdown button {
   display: block;
@@ -46,6 +48,7 @@
 }
 
 .logout-btn {
+  font-family: 'CarismaClassic';
   display: flex;
   align-items: center;
   justify-content: center;

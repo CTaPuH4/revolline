@@ -1,0 +1,266 @@
+/* Favorites.css — обновлённый и адаптивный */
+.favorites-page {
+    padding: 32px 8%;
+    margin-bottom: 40px;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start; /* чтобы блоки выровнялись сверху */
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.favorites-products {
+    flex: 1 1 620px;
+    min-width: 320px;
+}
+
+.favorites-summary {
+    width: 360px;
+    min-width: 280px;
+    flex: 0 0 360px;
+}
+
+/* Header / counts */
+.favorites-header-row,
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.favorites-header {
+    font-family: 'CarismaClassic';
+    font-size: 35px;
+    font-weight: 500;
+    color: #aa0f4e;
+    margin-bottom: 20px;
+
+    position: relative;
+    display: inline-block;
+}
+.favorites-clear-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #aa0f4e;
+    transition: transform 0.2s ease;
+    z-index: 90;
+}
+.favorites-add-to-cart {
+    margin-left: auto;
+    width: 15%;
+    font-family: 'CarismaClassic';
+    padding: 10px;
+    background-color: #aa0f4e;
+    color: #fff;
+    font-size: 16px;
+    border: 2px solid transparent;
+    border-radius: 20px 6px 20px 6px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+.favorites-add-to-cart:hover {
+    background-color: #fff;
+    color: #aa0f4e;
+    border-color: #aa0f4e;
+}
+.favorites-items-count {
+    font-family: 'CarismaClassic';
+    font-size: 0.6em; /* уменьшенный размер */
+    vertical-align: super; /* верхний индекс */
+    margin-left: 2px; /* небольшой отступ от слова */
+    color: #8f8f8f; /* цвет, если нужно */
+}
+
+
+/* Box wrapper */
+.favorites-box {
+    margin-top: 40px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    font-family: 'CarismaClassic';
+}
+
+/* items list */
+.favorites-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.favorites-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 12px;
+    gap: 12px;
+    min-height: 100px;
+}
+
+/* image */
+.favorites-item-img {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    border-radius: 8px;
+    flex: 0 0 96px;
+    background: #fafafa;
+    padding: 6px;
+}
+
+/* info */
+.favorites-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.favorites-item-title {
+    color: inherit;
+    text-decoration: none;
+    font-size: 18px;
+    font-family: 'CarismaClassic';
+    font-weight: 600;
+    margin: 0 0 6px 0;
+}
+.favorites-item-type {
+    font-weight: 400;
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 10px 0;
+}
+.favorites-item-price {
+    font-family: 'CarismaClassic';
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 600;
+}
+.favorites-item-oldprice {
+    font-family: 'CarismaClassic';
+    font-size: 14px;
+    color: #888;
+    text-decoration: line-through;
+    font-weight: 400;
+}
+
+/* actions at the right bottom */
+.favorites-item-qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+}
+.favorites-item-qty button {
+    background: none;
+    border: 1px solid #ddd;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+}
+.favorites-item-qty span {
+    min-width: 22px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* remove button */
+.favorites-item-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    color: #777;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* checkbox */
+.custom-checkbox {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+    flex: 0 0 20px;
+}
+.custom-checkbox input { opacity: 0; position: absolute; width: 0; height: 0; }
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #aa0f4e;
+    border-radius: 6px; /* ← тут скругляем */
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+/* При наведении */
+.custom-checkbox:hover .checkmark {
+    background-color: #f9e3eb;
+}
+
+/* Когда включен */
+.custom-checkbox input:checked ~ .checkmark {
+    background-color: #aa0f4e;
+    border-color: #aa0f4e;
+}
+
+/* Галочка */
+.checkmark::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.custom-checkbox input:checked ~ .checkmark::after { display: block; }
+
+/* responsive tweaks */
+@media (max-width: 900px) {
+    .favorites-page { padding: 20px 5%; }
+    .favorites-summary { flex-basis: 100%; width: 100%; order: 2; margin-top: 16px; }
+    .favorites-products { flex-basis: 100%; width: 100%; order: 1; }
+}
+/* цвет текста заголовка (родителя), который будет наследовать ссылка */
+.favorites-item-title {
+    color: #111;
+}
+
+/* убираем синий/фиолетовый и подчёркивание для всех состояний ссылки в блоке избранного */
+.favorites-page .favorites-item a:any-link,
+.favorites-page .favorites-item a:link,
+.favorites-page .favorites-item a:visited {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* поведение при hover/active — по желанию */
+.favorites-page .favorites-item a:hover,
+.favorites-page .favorites-item a:active {
+    text-decoration: underline;
+}

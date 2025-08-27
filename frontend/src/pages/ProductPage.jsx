@@ -10,7 +10,9 @@ export default function ProductPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get(`http://127.0.0.1:8000/api/products/${id}/`)
+        axios.get(`http://127.0.0.1:8000/api/products/${id}/`, {
+            withCredentials: true, // <-- добавлено
+        })
             .then((res) => setProduct(res.data))
             .catch((err) => console.error("Ошибка загрузки продукта:", err))
             .finally(() => setLoading(false));

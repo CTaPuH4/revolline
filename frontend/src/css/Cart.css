@@ -39,6 +39,7 @@
 }
 
 .cart-items-count {
+  font-family: 'CarismaClassic';
   font-size: 0.6em; /* уменьшенный размер */
   vertical-align: super; /* верхний индекс */
   margin-left: 2px; /* небольшой отступ от слова */
@@ -52,6 +53,7 @@
 }
 
 .cart-clear-btn {
+  font-family: 'CarismaClassic';
   background: none;
   border: none;
   font-size: 22px;
@@ -193,6 +195,7 @@
 }
 
 .cart-item-title {
+  font-family: 'CarismaClassic';
   font-size: 19px;
   font-weight: 500;
   margin-bottom: 5px;
@@ -207,7 +210,8 @@
   margin-top: 0;
 }
 
-.cart-item-prices {
+.cart-item-price {
+  font-family: 'CarismaClassic';
   display: flex;
   align-items: center;
   gap: 10px;
@@ -217,6 +221,7 @@
 }
 
 .cart-item-oldprice {
+  font-family: 'CarismaClassic';
   font-size: 14px;
   color: #888;
   text-decoration: line-through;
@@ -309,4 +314,22 @@
 
 .custom-checkbox input:checked ~ .checkmark::after {
   display: block;
+}
+/* общий цвет текста для названий товаров */
+.cart-item-title {
+  color: #111;
+}
+
+/* убираем дефолтный синий/фиолетовый цвет и подчёркивание у ссылок в корзине */
+.cart-page .cart-item a:any-link,
+.cart-page .cart-item a:link,
+.cart-page .cart-item a:visited {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+/* эффект при наведении/клике */
+.cart-page .cart-item a:hover,
+.cart-page .cart-item a:active {
+  text-decoration: underline;
 }

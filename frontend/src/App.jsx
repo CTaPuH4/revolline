@@ -24,25 +24,20 @@ const router = createBrowserRouter([
       {
         path: 'catalog',
         children: [
-          // /catalog
           { index: true, element: <Catalog /> },
-          // /catalog/:sectionSlug
-          {
-            path: ':sectionSlug',
-            element: <Catalog />,
-          },
-          // /catalog/:sectionSlug/:categorySlug
-          {
-            path: ':sectionSlug/:categorySlug',
-            element: <Catalog />,
-          },
+          { path: ':sectionSlug', element: <Catalog /> },
+          { path: ':sectionSlug/:categorySlug', element: <Catalog /> },
         ],
       },
+      { path: 'product/:id', element: <ProductPage /> },
       {
-        path: 'product/:id',
-        element: <ProductPage />,
+        path: 'new',
+        children: [
+          { index: true, element: <New /> }, // /new
+          { path: ':sectionSlug', element: <New /> }, // /new/:sectionSlug
+          { path: ':sectionSlug/:categorySlug', element: <New /> }, // /new/:sectionSlug/:categorySlug
+        ],
       },
-      { path: 'new', element: <New /> },
       { path: 'sales', element: <Sales /> },
       { path: 'about', element: <About /> },
       { path: 'cart', element: <Cart /> },
@@ -54,6 +49,7 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
 
 export default function App() {
   return (

@@ -25,7 +25,7 @@ export default function Catalog() {
       let url = `http://127.0.0.1:8000/api/products/${queryString ? `?${queryString}` : ""}`;
 
       while (url) {
-        const res = await fetch(url);
+        const res = await fetch(url, { credentials: "include" });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
 
@@ -56,46 +56,50 @@ export default function Catalog() {
   }, [currentPage]);
 
   useEffect(() => {
-    if (categorySlug) {
-      const qs = `categories=${encodeURIComponent(categorySlug)}`;
-      fetchProducts(qs);
-      return;
-    }
-
-    if (sectionSlug) {
+    const fetchData = async () => {
       setLoading(true);
-      fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`)
-        .then((res) => {
+      try {
+        if (categorySlug) {
+          const qs = `categories=${encodeURIComponent(categorySlug)}`;
+          await fetchProducts(qs);
+          return;
+        }
+
+        if (sectionSlug) {
+          const res = await fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`, {
+            credentials: "include",
+          });
           if (!res.ok) throw new Error("Раздел не найден");
-          return res.json();
-        })
-        .then((section) => {
+          const section = await res.json();
+
           const cats = Array.isArray(section.categories)
-            ? section.categories.map(c => c.slug).filter(Boolean)
-            : [];
+              ? section.categories.map(c => c.slug).filter(Boolean)
+              : [];
 
           if (cats.length === 0) {
             setProducts([]);
-            setLoading(false);
             return;
           }
 
           const qs = "categories=" + cats.join(",");
-          fetchProducts(qs);
-        })
-        .catch((err) => {
-          console.error("Ошибка загрузки раздела:", err);
-          setProducts([]);
-          setLoading(false);
-        });
-      return;
-    }
+          await fetchProducts(qs);
+          return;
+        }
 
-    fetchProducts();
+        await fetchProducts();
+      } catch (err) {
+        console.error("Ошибка загрузки раздела:", err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [sectionSlug, categorySlug]);
 
   const toggleFav = (id) =>
-    setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
+      setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
 
   // пагинация
   const indexOfLast = currentPage * itemsPerPage;
@@ -104,72 +108,71 @@ export default function Catalog() {
   const totalPages = Math.ceil(products.length / itemsPerPage);
 
   return (
-    <main className="catalog-page">
-      <div className="breadcrumbs">
-        <Breadcrumbs />
-      </div>
-
-      <div className="catalog-content">
-        <div>
-          <div className="catalog-header">
-            <h1>Каталог</h1>
-          </div>
-          <MobileSidebarToggle />
-          <div className="sidebar-wrapper">
-            <CatalogSidebar />
-          </div>
+      <main className="catalog-page">
+        <div className="breadcrumbs">
+          <Breadcrumbs />
         </div>
 
-        <div className="products-section">
-          <div className="filters">
-            <SortDropdown />
-            <div className="sort">
-              <img src={filterIcon} alt="filter" />
-              <p>Фильтры</p>
-              <svg
-                width="20"
-                height="10"
-                viewBox="0 0 10 6"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M1 1L5 5L9 1"
-                  stroke="#626161"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+        <div className="catalog-content">
+          <div>
+            <div className="catalog-header">
+              <h1>Каталог</h1>
+            </div>
+            <MobileSidebarToggle />
+            <div className="sidebar-wrapper">
+              <CatalogSidebar />
             </div>
           </div>
 
-          <div className="catalog-scrollable">
-            {loading ? (
-              <div className="loading-indicator">Загрузка товаров...</div>
-            ) : currentProducts.length === 0 ? (
-              <p className="no-products">Товаров не найдено</p>
-            ) : (
-              <div className="products">
-                {currentProducts.map(product => (
-                  <ProductCardMini
-                    key={product.id}
-                    product={product}
-                    onToggleFav={toggleFav}
+          <div className="products-section">
+            <div className="filters">
+              <SortDropdown />
+              <div className="sort">
+                <img src={filterIcon} alt="filter" />
+                <p>Фильтры</p>
+                <svg
+                    width="20"
+                    height="10"
+                    viewBox="0 0 10 6"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                      d="M1 1L5 5L9 1"
+                      stroke="#626161"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                   />
-                ))}
+                </svg>
               </div>
-            )}
+            </div>
 
-            {/* Компонент пагинации */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            <div className="catalog-scrollable">
+              {loading ? (
+                  <div className="loading-indicator">Загрузка товаров...</div>
+              ) : currentProducts.length === 0 ? (
+                  <p className="no-products">Товаров не найдено</p>
+              ) : (
+                  <div className="products">
+                    {currentProducts.map(product => (
+                        <ProductCardMini
+                            key={product.id}
+                            product={product}
+                            onToggleFav={toggleFav}
+                        />
+                    ))}
+                  </div>
+              )}
+
+              <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
   );
 }

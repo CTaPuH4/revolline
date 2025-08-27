@@ -185,7 +185,6 @@ export default function UserProfile() {
       setMessage(formatError(err));
     }
   };
-
   const handleChangePassword = async () => {
     setMessage("");
     try {
@@ -196,10 +195,18 @@ export default function UserProfile() {
       );
       setPasswordData({ password: "", new_password: "", new_password2: "" });
       setMessage("Пароль успешно изменён.");
+
+      setTimeout(() => {
+        logout()
+            .then(() => navigate("/"))
+            .catch((e) => console.error("Ошибка при выходе:", e));
+      }, 2000);
+
     } catch (err) {
       setMessage(formatError(err));
     }
   };
+
 
   if ((loading && !user) || !user) {
     return <div className="loading-indicator">Загрузка...</div>;
@@ -296,6 +303,7 @@ export default function UserProfile() {
           <button
               className="change-password-button"
               onClick={handleChangePassword}
+
           >
             Изменить пароль
           </button>
