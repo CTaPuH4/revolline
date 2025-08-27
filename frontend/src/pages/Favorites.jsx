@@ -43,7 +43,7 @@ export default function Favorites() {
     // Кнопка "В корзину" с логикой
     function AddToCartButton({ productId }) {
         const [inCart, setInCart] = useState(false);
-        const [cartItemId, setCartItemId] = useState(null);
+        const [setCartItemId] = useState(null);
         const [addingToCart, setAddingToCart] = useState(false);
 
         useEffect(() => {
