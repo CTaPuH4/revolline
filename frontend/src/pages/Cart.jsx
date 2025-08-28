@@ -3,6 +3,7 @@ import '../css/Cart.css'
 import deleteIcon from "../assets/icons/delete-icon.png"
 import plusIcon from "../assets/icons/plus.png"
 import minusIcon from "../assets/icons/minus.png"
+import exapmle1 from "../assets/example1.jpg"
 
 
 // В этой версии явно прописан BASE URL API — чтобы fetch уходил на backend, а не на dev-server (5173).
@@ -141,6 +142,30 @@ export default function Cart() {
   const totalDiscountPrice = selectedItems.reduce((sum, item) => sum + item.discount_price * item.quantity, 0);
   const totalDiscount = totalPrice - totalDiscountPrice;
   const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const addToCart = async (productId, quantity = 1) => {
+    try {
+      const data = await apiFetch('/api/cart/', {
+        method: 'POST',
+        body: JSON.stringify({ product: productId, quantity }),
+      });
+      if (data && (data.id || data.product_data)) {
+        if (!data.id) {
+          await fetchCart();
+          return;
+        }
+        const transformed = transformServerItem(data);
+        setItems(prev => [...prev, transformed]);
+        setCheckedItems(prev => [...prev, transformed.cartItemId]);
+      } else {
+        await fetchCart();
+      }
+    } catch (err) {
+      console.error('addToCart failed', err);
+      setError('Не удалось добавить товар в корзину.');
+    }
+  };
+
   return (
       <main className='cart-page'>
         {/* UI остался без изменений */}

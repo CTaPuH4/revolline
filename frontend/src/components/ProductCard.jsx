@@ -46,12 +46,28 @@ export default function ProductCard({ product }) {
         try { return await res.json(); } catch { return null; }
     };
 
+    // Проверяем корзину на сервере
+    const fetchCart = async () => {
+        try {
+            const data = await apiFetch("/api/cart/");
+            const list = Array.isArray(data) ? data : data.results || [];
+            const found = list.find(
+                (c) => (c.product_data && c.product_data.id === product.id) || (c.product && c.product.id === product.id)
+            );
+            setInCart(Boolean(found));
+        } catch (err) {
+            console.warn("fetchCart failed", err);
+        }
+    };
+
     useEffect(() => {
         setIsFav(Boolean(product.is_fav));
-    }, [product.is_fav]);
+        fetchCart();
+    }, [product.id, product.is_fav]);
 
     const addToCart = async () => {
         setError(null);
+
         if (!isAuthenticated) {
             setShowAuth(true);
             return;
@@ -70,6 +86,8 @@ export default function ProductCard({ product }) {
             });
             if (data && data.id) {
                 setInCart(true);
+            } else {
+                await fetchCart();
             }
             setTimeout(() => setAddingToCart(false), 700);
         } catch (err) {
@@ -90,12 +108,10 @@ export default function ProductCard({ product }) {
 
         try {
             if (prev) {
-                // удаляем из избранного по product.id
-                await apiFetch(`/api/favorites/${product.id}/`, {
-                    method: "DELETE",
-                });
+                // Удаляем из избранного по product.id
+                await apiFetch(`/api/favorites/${product.id}/`, { method: "DELETE" });
             } else {
-                // добавляем в избранное
+                // Добавляем в избранное
                 await apiFetch("/api/favorites/", {
                     method: "POST",
                     body: JSON.stringify({ product: product.id }),
