@@ -88,6 +88,15 @@ div.breadcrumbs {
   color: #7B7B7B;
 }
 @media screen and (max-width: 768px) {
+  .catalog-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .catalog-header h1 {
+    display: none;
+  }
+  
+
   /* Sidebar */
   .sidebar-catalog {
     display: none;

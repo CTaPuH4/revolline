@@ -12,6 +12,11 @@
   transition: box-shadow 0.3s ease;
   overflow: hidden;
 
+  display: flex;
+  flex-direction: column;   /* расположение блоков сверху вниз */
+  justify-content: space-between; /* равномерное распределение */          /* карточка растягивается по высоте контейнера */
+  box-sizing: border-box;
+
 }
 
 .product-mini-card:hover {
@@ -38,8 +43,8 @@
 }
 
 .product-mini-image {
-  width: 100%;
-  height: 100%;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
   display: block;
   margin: 0 auto;
