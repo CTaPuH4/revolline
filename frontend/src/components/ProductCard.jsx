@@ -13,7 +13,6 @@ export default function ProductCard({ product }) {
     const [activeTab, setActiveTab] = useState("Описание");
     const [selectedIdx, setSelectedIdx] = useState(0);
     const tabContentRef = useRef(null);
-
     const [isFav, setIsFav] = useState(Boolean(product.is_fav));
     const [inCart, setInCart] = useState(false);
     const [addingToCart, setAddingToCart] = useState(false);
@@ -109,12 +108,16 @@ export default function ProductCard({ product }) {
         try {
             if (prev) {
                 // Удаляем из избранного по product.id
-                await apiFetch(`/api/favorites/${product.id}/`, { method: "DELETE" });
+                await fetch(`${API_BASE}/api/favorites/delete/?product=${product.id}`, {
+                    method: "DELETE",
+                    credentials: "include",
+                });
             } else {
                 // Добавляем в избранное
                 await apiFetch("/api/favorites/", {
                     method: "POST",
                     body: JSON.stringify({ product: product.id }),
+                    credentials: "include",
                 });
             }
         } catch (err) {
