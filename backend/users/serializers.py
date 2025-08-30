@@ -1,6 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from phonenumber_field.serializerfields import PhoneNumberField
 
 from users.models import CustomUser
@@ -11,9 +12,14 @@ class UserSerializer(serializers.ModelSerializer):
     Сериализатор модели пользователя (CustomUser).
     '''
     phone = PhoneNumberField(
+        validators=[
+            UniqueValidator(
+                queryset=CustomUser.objects.all(),
+                message="Номер телефона уже используется."
+            )
+        ],
         error_messages={
             'invalid': 'Некорректный номер телефона.',
-            'unique': 'Номер телефона уже используется.'
         }
     )
 
