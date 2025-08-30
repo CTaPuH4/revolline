@@ -4,11 +4,9 @@ import { useParams, Link, useLocation } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
 import Pagination from "../components/catalog/Pagination.jsx";
-import SortDropdown from "../components/catalog/SortDropdown.jsx";
 import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 import "../css/catalog/Catalog.css";
 import "../css/catalog/CatalogSidebar.css";
-import filterIcon from "../assets/icons/filter-icon.png";
 
 export default function NewProducts() {
     const { sectionSlug, categorySlug } = useParams();
