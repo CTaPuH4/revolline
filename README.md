@@ -28,6 +28,19 @@ python manage.py createsuperuser
 ```
 python manage.py runserver
 ```
+---
+## ⚙️ Запуск фронтэнда
+Клонировать репозиторий и перейти в папку frontend в командной строке.
+
+Установить сторонние библиотеки:
+```
+npm install
+```
+
+Запустить проект:
+```
+npm run dev -- --host 127.0.0.1
+```
 
 ---
 
