@@ -39,16 +39,12 @@ export default function ResetPasswordModal({ onClose, onShowLogin }) {
             const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                // Попробуем показать читаемое сообщение
                 const text = data?.message || data?.detail || data || `Ошибка ${res.status}`;
                 setStatus("error");
                 setMessage(typeof text === "string" ? text : JSON.stringify(text));
             } else {
                 setStatus("ok");
                 setMessage(data?.message || "Письмо восстановления отправлено. Проверьте почту.");
-                // Не закрываем модалку автоматически — даём пользователю увидеть сообщение.
-                // Можно закрыть автоматически через таймаут, если нужно:
-                // setTimeout(() => onClose && onClose(), 2000);
             }
         } catch (err) {
             console.error("reset request error", err);
@@ -60,14 +56,12 @@ export default function ResetPasswordModal({ onClose, onShowLogin }) {
     };
 
     return (
-        <div className="auth-overlay">
-            <div className="auth-modal">
+        <div className="auth-overlay" onClick={onClose}>
+            <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="auth-close" onClick={() => onClose && onClose()}>
                     &times;
                 </button>
-
                 <h2 className="auth-title">Восстановление пароля</h2>
-
                 <div className="auth-field">
                     <div className="auth-input-wrapper">
                         <span className="auth-placeholder">Укажите ваш email:</span>
@@ -89,28 +83,6 @@ export default function ResetPasswordModal({ onClose, onShowLogin }) {
                     {loading ? "Отправка..." : "Отправить письмо"}
                 </button>
 
-                <div style={{ marginTop: 12, display: "flex", gap: 12, justifyContent: "center" }}>
-                    <button
-                        className="auth-link"
-                        onClick={() => {
-                            // показать модалку логина (если есть обработчик)
-                            if (onShowLogin) onShowLogin();
-                            else if (onClose) onClose();
-                        }}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#aa0f4e" }}
-                    >
-                        Вернуться к входу
-                    </button>
-
-                    <button
-                        className="auth-link"
-                        onClick={() => onClose && onClose()}
-                        style={{ background: "none", border: "none", cursor: "pointer" }}
-                    >
-                        Закрыть
-                    </button>
-                </div>
-
                 {status === "ok" && (
                     <div style={{ marginTop: 12, color: "green", textAlign: "center" }}>{message}</div>
                 )}
@@ -121,12 +93,12 @@ export default function ResetPasswordModal({ onClose, onShowLogin }) {
                 <p className="auth-disclaimer" style={{ marginTop: 16 }}>
                     Продолжая, вы соглашаетесь с{" "}
                     <span className="auth-link-inline" onClick={openSalesPolicy} style={{ cursor: "pointer" }}>
-                        правилами продажи
-                    </span>{" "}
+            правилами продажи
+          </span>{" "}
                     и{" "}
                     <span className="auth-link-inline" onClick={openPrivacyPolicy} style={{ cursor: "pointer" }}>
-                        политикой обработки персональных данных
-                    </span>
+            политикой обработки персональных данных
+          </span>
                 </p>
 
                 {showSalesPolicy && <SalesPolicy onClose={closeSalesPolicy} />}
