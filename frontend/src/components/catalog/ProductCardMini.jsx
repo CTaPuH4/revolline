@@ -42,7 +42,7 @@ export default function ProductCardMini({ product }) {
         try {
             if (prevFav) {
                 // Удаляем из избранного
-                await fetch(`${API_BASE}/api/favorites/${product.id}/`, {
+                await fetch(`${API_BASE}/api/favorites/delete/?product=${product.id}`, {
                     method: "DELETE",
                     credentials: "include",
                 });
