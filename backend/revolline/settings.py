@@ -10,6 +10,11 @@ SECRET_KEY = config('SECRET_KEY')
 
 # ТОЛЬКО ДЛЯ ОТЛАДКИ!!! В ПРОДЕ ПРОПИСАТЬ КОНКРЕТНЫЕ ДОМЕНЫ!!!
 CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+CORS_ALLOW_CREDENTIALS = True
 
 
 DEBUG = True

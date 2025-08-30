@@ -64,7 +64,7 @@ class PasswordResetRequestView(views.APIView):
             token = default_token_generator.make_token(user)
 
             reset_link = (
-                f"{settings.FRONTEND_URL}/api/reset?uid={uid}&token={token}/"
+                f"{settings.FRONTEND_URL}/api/reset/?uid={uid}&token={token}/"
             )
 
             send_mail(

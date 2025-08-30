@@ -90,3 +90,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'Аккаунт неактивен. Подтвердите почту.', code='user_inactive'
             )
         return data
+
+
+class FavDeleteSerializer(serializers.Serializer):
+    product = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(),
+        required=True
+    )

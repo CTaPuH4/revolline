@@ -1,5 +1,6 @@
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, views, viewsets
+from rest_framework import decorators, filters, mixins, status, views, viewsets
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -85,6 +86,23 @@ class FavoritesViewSet(mixins.RetrieveModelMixin,
             product=serializer.validated_data['product'],
         )
         return favorite_item
+
+    @decorators.action(detail=False, methods=('delete',))
+    def delete(self, request):
+        user = request.user
+        product_id = request.query_params.get('product')
+
+        if not product_id:
+            return Response(
+                {'product': ['Обязательное поле.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        product = get_object_or_404(Product, id=product_id)
+        favorite = get_object_or_404(Favorites, user=user, product=product)
+
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CountryListView(views.APIView):
