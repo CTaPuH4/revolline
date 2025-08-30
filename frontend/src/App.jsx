@@ -13,7 +13,7 @@ const Favorites = lazy(() => import('./pages/Favorites'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const ProductPage = lazy(() => import('./pages/ProductPage')); // добавьте это
+const ProductPage = lazy(() => import('./pages/ProductPage'));
 
 const router = createBrowserRouter([
   {
@@ -38,7 +38,14 @@ const router = createBrowserRouter([
           { path: ':sectionSlug/:categorySlug', element: <New /> }, // /new/:sectionSlug/:categorySlug
         ],
       },
-      { path: 'sales', element: <Sales /> },
+      {
+        path: 'sales',
+        children: [
+          { index: true, element: <Sales /> }, // /sales
+          { path: ':sectionSlug', element: <Sales /> }, // /sales/:sectionSlug
+          { path: ':sectionSlug/:categorySlug', element: <Sales /> }, // /sales/:sectionSlug/:categorySlug
+        ],
+      },
       { path: 'about', element: <About /> },
       { path: 'cart', element: <Cart /> },
       { path: 'partners', element: <Partners /> },
@@ -50,11 +57,10 @@ const router = createBrowserRouter([
   },
 ]);
 
-
 export default function App() {
   return (
-    <Suspense fallback={<div>Загрузка...</div>}>
-      <RouterProvider router={router} />
-    </Suspense>
-  ) 
+      <Suspense fallback={<div>Загрузка...</div>}>
+        <RouterProvider router={router} />
+      </Suspense>
+  );
 }

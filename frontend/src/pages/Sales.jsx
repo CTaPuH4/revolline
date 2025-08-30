@@ -1,17 +1,211 @@
-import { Link } from 'react-router-dom';
+// src/pages/Sales.jsx
+import { useEffect, useState } from "react";
+import { useParams, Link, useLocation } from "react-router-dom";
+import Breadcrumbs from "../components/Breadcrumbs";
+import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
+import Pagination from "../components/catalog/Pagination.jsx";
+import SortDropdown from "../components/catalog/SortDropdown.jsx";
+import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
+import "../css/catalog/Catalog.css";
+import "../css/catalog/CatalogSidebar.css";
+import filterIcon from "../assets/icons/filter-icon.png";
 
-export default function Home() {
+export default function Sales() {
+    const { sectionSlug, categorySlug } = useParams();
+    const { pathname } = useLocation();
 
-  return (
-    <>
-        <h1>Добро пожаловать в наш магазин!</h1>
-        <nav className="navigation">
-          <Link to="/catalog">Каталог</Link>
-          <Link to="/new">Новинки</Link>
-          <Link to="/promotions">Акции</Link>
-          <Link to="/cart">Корзина</Link>
-        </nav>
-      
-    </>
-  );
-};
+    const [products, setProducts] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 16;
+
+    // Получение товаров (фильтр: has_discount=true)
+    const fetchProducts = async (query = "") => {
+        setLoading(true);
+        try {
+            let allProducts = [];
+            // если query передан — он уже содержит нужные параметры, иначе default has_discount=true
+            let url = `http://127.0.0.1:8000/api/products/${query ? `?${query}` : "?has_discount=true"}`;
+
+            while (url) {
+                const res = await fetch(url, { credentials: "include" });
+                if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+                const data = await res.json();
+
+                if (data && Array.isArray(data.results)) {
+                    allProducts.push(...data.results);
+                    url = data.next;
+                } else if (Array.isArray(data)) {
+                    allProducts.push(...data);
+                    url = null;
+                } else {
+                    console.warn("Unexpected products response format", data);
+                    url = null;
+                }
+            }
+
+            setProducts(allProducts);
+            setCurrentPage(1);
+        } catch (err) {
+            console.error("Ошибка загрузки акций:", err);
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Получение разделов для сайдбара
+    const fetchSections = async () => {
+        try {
+            const res = await fetch("http://127.0.0.1:8000/api/sections/", { credentials: "include" });
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+            const data = await res.json();
+            setSections(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Ошибка загрузки разделов:", err);
+            setSections([]);
+        }
+    };
+
+    useEffect(() => {
+        fetchSections();
+
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                if (categorySlug) {
+                    // конкретная категория в разделе sales
+                    const qs = `categories=${encodeURIComponent(categorySlug)}&has_discount=true`;
+                    await fetchProducts(qs);
+                    return;
+                }
+
+                if (sectionSlug) {
+                    // раздел: получаем категории раздела и подставляем их в фильтр
+                    const res = await fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`, {
+                        credentials: "include",
+                    });
+                    if (!res.ok) throw new Error("Раздел не найден");
+                    const section = await res.json();
+                    const cats = Array.isArray(section.categories)
+                        ? section.categories.map(c => c.slug).filter(Boolean)
+                        : [];
+
+                    if (cats.length === 0) {
+                        setProducts([]);
+                        return;
+                    }
+
+                    const qs = `categories=${cats.join(",")}&has_discount=true`;
+                    await fetchProducts(qs);
+                    return;
+                }
+
+                // все товары по акции
+                await fetchProducts("has_discount=true");
+            } catch (err) {
+                console.error("Ошибка загрузки акций:", err);
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [sectionSlug, categorySlug]);
+
+    const toggleFav = (id) =>
+        setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
+
+    const handleToggle = (idx) => {
+        setExpanded(prev => (prev === idx ? null : idx));
+    };
+
+    // пагинация
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentProducts = products.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(products.length / itemsPerPage);
+
+    return (
+        <main className="catalog-page">
+            <div className="breadcrumbs">
+                <Breadcrumbs />
+            </div>
+
+            <div className="catalog-content">
+                <div>
+                    <div className="catalog-header">
+                        <h1>Акции</h1>
+                    </div>
+                    <MobileSidebarToggle />
+
+                    {/* Сайдбар */}
+                    <aside className="sidebar-catalog">
+                        <ul>
+                            {sections.map((section, idx) => {
+                                const sectionPath = `/sales/${section.slug}`;
+                                const isActive = pathname === sectionPath || pathname.startsWith(`${sectionPath}/`);
+
+                                return (
+                                    <li key={section.slug} className={`category-item ${isActive ? 'active' : ''}`}>
+                                        <div className="category-link">
+                                            <Link to={sectionPath}>{section.title}</Link>
+                                            {section.categories?.length > 0 && (
+                                                <div className="arrow-container" onClick={(e) => { e.stopPropagation(); handleToggle(idx); }}>
+                                                    <svg className={`arrow ${expanded === idx ? "rotated" : ""}`} width="20" height="10" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M1 1L5 5L9 1" stroke="#626161" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="divider"></div>
+                                        {section.categories?.length > 0 && (
+                                            <ul className={`subcategory-list ${expanded === idx ? "open" : ""}`}>
+                                                {section.categories.map(cat => (
+                                                    <li key={cat.slug}>
+                                                        <Link to={`/sales/${section.slug}/${cat.slug}`}>{cat.title}</Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </aside>
+                </div>
+
+                <div className="products-section">
+                    <div className="catalog-scrollable">
+                        {loading ? (
+                            <div className="loading-indicator">Загрузка акций...</div>
+                        ) : currentProducts.length === 0 ? (
+                            <p className="no-products">Товаров по акции не найдено</p>
+                        ) : (
+                            <div className="products">
+                                {currentProducts.map(product => (
+                                    <ProductCardMini
+                                        key={product.id}
+                                        product={product}
+                                        onToggleFav={toggleFav}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {currentProducts.length > 0 && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
+        </main>
+    );
+}
