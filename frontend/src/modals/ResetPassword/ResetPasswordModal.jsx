@@ -5,7 +5,7 @@ import SalesPolicy from "../SalesPolicy";
 
 const API_BASE = "http://127.0.0.1:8000";
 
-export default function ResetPasswordModal({ onClose, onShowLogin }) {
+export default function ResetPasswordModal({ onClose}) {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState(null); // 'ok' | 'error' | null
