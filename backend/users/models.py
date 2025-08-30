@@ -115,5 +115,5 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         ordering = ('pk',)
-        verbose_name = ('пользователь')
+        verbose_name = ('Пользователь')
         verbose_name_plural = ('Пользователи')
