@@ -4,6 +4,9 @@ import "../../css/catalog/ProductCardMini.css";
 import { useAuth } from "../../context/AuthContext";
 import AuthModal from "../../modals/Auth/AuthModal";
 
+import heart from '../../assets/icons/heart.png'
+import heartFilled from '../../assets/icons/heart-filled.png'
+
 const API_BASE = "http://127.0.0.1:8000";
 
 const HeartIcon = ({ filled, onClick }) => (
@@ -15,7 +18,8 @@ const HeartIcon = ({ filled, onClick }) => (
             onClick();
         }}
     >
-    {filled ? "♥" : "♡"}
+        <img src={filled ? heartFilled : heart}></img>
+    
   </span>
 );
 

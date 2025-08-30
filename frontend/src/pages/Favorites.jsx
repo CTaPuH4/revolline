@@ -7,7 +7,6 @@ const API_BASE = 'http://127.0.0.1:8000';
 
 export default function Favorites() {
     const [items, setItems] = useState([]);
-    const [checkedItems, setCheckedItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -103,7 +102,6 @@ export default function Favorites() {
             const list = Array.isArray(data) ? data : data.results || [];
             const transformed = list.map(transformFav);
             setItems(transformed);
-            setCheckedItems(transformed.map(i => i.favId));
         } catch (err) {
             console.error('fetchFavorites error', err);
             setError('Не удалось загрузить избранное');
@@ -117,7 +115,6 @@ export default function Favorites() {
     const removeFavorite = async (favId) => {
         const prev = items;
         setItems(prevItems => prevItems.filter(i => i.favId !== favId));
-        setCheckedItems(prev => prev.filter(id => id !== favId));
         try {
             await apiFetch(`/api/favorites/${favId}/`, { method: 'DELETE' });
         } catch (err) {
@@ -130,7 +127,7 @@ export default function Favorites() {
     const clearFavorites = async () => {
         if (!items.length) return;
         const prev = items;
-        setItems([]); setCheckedItems([]);
+        setItems([]);
         try {
             await Promise.all(prev.map(i => apiFetch(`/api/favorites/${i.favId}/`, { method: 'DELETE' })));
         } catch (err) {
@@ -138,10 +135,6 @@ export default function Favorites() {
             setError('Не удалось очистить избранное');
             setItems(prev);
         }
-    };
-
-    const handleCheck = (favId) => {
-        setCheckedItems(prev => prev.includes(favId) ? prev.filter(id => id !== favId) : [...prev, favId]);
     };
 
     return (
@@ -163,11 +156,6 @@ export default function Favorites() {
 
                     {!isLoading && items.map(item => (
                         <div key={item.favId} className="favorites-item">
-                            <label className="custom-checkbox">
-                                <input type="checkbox" checked={checkedItems.includes(item.favId)} onChange={() => handleCheck(item.favId)} />
-                                <span className="checkmark"></span>
-                            </label>
-
                             <a href={`/product/${item.productId}`}>
                                 <img src={item.image} alt={item.title} className="favorites-item-img" />
                             </a>
@@ -180,7 +168,9 @@ export default function Favorites() {
 
                                 <div className="favorites-item-prices">
                                     <span className="favorites-item-price">{item.discount_price} ₽</span>
-                                    {item.price !== item.discount_price && <span className="favorites-item-oldprice">{item.price} ₽</span>}
+                                    {item.price !== item.discount_price && (
+                                        <span className="favorites-item-oldprice">{item.price} ₽</span>
+                                    )}
                                 </div>
 
                                 <AddToCartButton productId={item.productId} />

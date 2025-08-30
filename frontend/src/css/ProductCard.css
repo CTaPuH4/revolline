@@ -136,7 +136,8 @@
 }
 .icon {
     font-size: 22px;
-    color: #888;
+    background-color: #fff;
+    border: none;
     cursor: pointer;
     transition: color 0.2s;
 }

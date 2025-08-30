@@ -29,17 +29,12 @@
 
 .heart-icon {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 40px;
+  top: 0;
+  right: 0;
   cursor: pointer;
   color: #999;
   transition: color 0.2s ease;
   z-index: 2;
-}
-
-.heart-icon.filled {
-  color: #e6007e;
 }
 
 .product-mini-image {

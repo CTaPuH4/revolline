@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './CatalogSidebar.jsx';
+import CatalogSidebar from './CatalogSidebar';
 import '../../css/catalog/MobileSidebar.css'
 
 export default function MobileSidebarToggle() {

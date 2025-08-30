@@ -5,6 +5,10 @@ import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
 import "../css/ProductCard.css";
 
+import heart from '../assets/icons/heart-card.png'
+import heartFilled from '../assets/icons/heart-filled-card.png'
+import share from '../assets/icons/share.png'
+
 const API_BASE = "http://127.0.0.1:8000";
 
 export default function ProductCard({ product }) {
@@ -184,15 +188,16 @@ export default function ProductCard({ product }) {
                                 <button
                                     aria-label={isFav ? "Убрать из избранного" : "В избранное"}
                                     onClick={toggleFavorite}
-                                    className="icon-btn"
+                                    className="icon"
                                 >
-                                    {isFav ? <FaHeart className="icon heart active" /> : <FaHeartBroken className="icon heart" />}
+                                    <img src={isFav ?heartFilled :  heart}></img>
+                                    
                                 </button>
                                 <button
-                                    className="icon-btn"
+                                    className="icon"
                                     onClick={() => navigator.share && navigator.share({ title: product.title, url: window.location.href })}
                                 >
-                                    <FaShareAlt className="icon share" />
+                                    <img src={share}></img>
                                 </button>
                             </div>
                         </div>
