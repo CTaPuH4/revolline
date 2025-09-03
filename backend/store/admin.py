@@ -12,9 +12,8 @@ class ProductImageInline(admin.TabularInline):
 
 class ProductOrderInline(admin.TabularInline):
     model = ProductOrder
+    readonly_fields = ('product', 'quantity')
     extra = 0
-    min_num = 1
-
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -70,5 +69,12 @@ class OrderAdmin(admin.ModelAdmin):
         'client',
     )
     list_editable = ('status', 'tracking_number',)
+    readonly_fields = (
+        'client',
+        'shipping_address',
+        'operation_id',
+        'payment_link',
+        'promo'
+    )
     list_filter = ('status',)
     inlines = (ProductOrderInline,)
