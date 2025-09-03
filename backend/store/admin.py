@@ -1,10 +1,17 @@
 from django.contrib import admin
 
-from store.models import Category, Product, ProductImage, Section
+from store.models import (Category, Order, Product, ProductImage, ProductOrder,
+                          Section)
 
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
+    extra = 0
+    min_num = 1
+
+
+class ProductOrderInline(admin.TabularInline):
+    model = ProductOrder
     extra = 0
     min_num = 1
 
@@ -51,3 +58,17 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'type')
     list_filter = ('categories', 'country', 'is_new')
     inlines = (ProductImageInline,)
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'created_at',
+        'status',
+        'tracking_number',
+        'client',
+    )
+    list_editable = ('status', 'tracking_number',)
+    list_filter = ('status',)
+    inlines = (ProductOrderInline,)

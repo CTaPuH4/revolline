@@ -217,3 +217,110 @@ class Favorites(models.Model):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные товары'
         ordering = ('-pk',)
+
+
+class Promocode(models.Model):
+    '''
+    Модель промокодов.
+    '''
+    code = models.SlugField(
+        'Код',
+        unique=True,
+    )
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Промокод'
+        verbose_name_plural = 'Промокоды'
+        ordering = ('code',)
+
+
+class Order(models.Model):
+    '''
+    Модель заказов.
+    '''
+    class Status(models.TextChoices):
+        NEW = 'N', 'Создан'
+        PAID = 'P', 'Оплачен'
+        SHIPPED = 'S', 'Отправлен'
+        CANCELED = 'C', 'Отменён'
+
+    status = models.CharField(
+        'Статус',
+        max_length=1,
+        choices=Status.choices,
+        default=Status.NEW
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+        editable=False,
+    )
+    client = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name='Клиент'
+    )
+    operation_id = models.CharField(
+        'ID операции',
+        max_length=LONG_CHAR_MAX_LENGTH,
+    )
+    payment_link = models.CharField(
+        'Сслыка на оплату', 
+        max_length=LONG_CHAR_MAX_LENGTH,
+    )
+    promo = models.ForeignKey(
+        Promocode,
+        on_delete=models.CASCADE,
+        related_name='in_orders',
+        null=True,
+        blank=True,
+        verbose_name='Промокод'
+    )
+    shipping_address = models.TextField(
+        'Адрес доставки',
+        max_length=LONG_CHAR_MAX_LENGTH,
+    )
+    tracking_number = models.IntegerField(
+        'Трек-номер',
+        blank=True,
+        null=True,
+    )
+    items = models.ManyToManyField(
+        Product,
+        through='store.ProductOrder',
+        blank=False,
+        verbose_name='Товары',
+    )
+
+    def __str__(self):
+        return f"Заказ #{self.id} — {self.get_status_display()}"
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ('pk',)
+
+
+class ProductOrder(models.Model):
+    '''
+    Many to many для связи продуктов и заказов.
+    '''
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='in_orders'
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE
+    )
+    quantity = models.PositiveIntegerField(
+        'Количество',
+        validators=(MinValueValidator(1),)
+    )
+
+    class Meta:
+        unique_together = ('order', 'product')
+        verbose_name = 'Продукт в заказе'
+        verbose_name_plural = 'Продукты в заказе'
