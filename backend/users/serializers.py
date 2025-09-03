@@ -25,8 +25,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone']
-        read_only_fields = ['id', 'email']
+        fields = (
+            'id', 'email', 'first_name', 'last_name', 'patronymic', 'phone',
+        )
+        read_only_fields = ('id', 'email',)
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -39,7 +41,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'password2']
+        fields = ('email', 'password', 'password2',)
 
     def validate_password(self, value):
         try:
@@ -70,7 +72,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError("Новые пароли не совпадают.")
+            raise serializers.ValidationError('Новые пароли не совпадают.')
 
         try:
             validate_password(attrs['new_password'],
@@ -99,7 +101,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError("Новые пароли не совпадают.")
+            raise serializers.ValidationError('Новые пароли не совпадают.')
 
         try:
             validate_password(attrs['new_password'])

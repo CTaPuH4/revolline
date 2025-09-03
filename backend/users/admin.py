@@ -9,11 +9,15 @@ from users.models import CustomUser
 
 class CartInline(admin.TabularInline):
     model = Cart
+    readonly_fields = ('product', 'quantity')
+    can_delete = False
     extra = 0
 
 
 class FavoritesInline(admin.TabularInline):
     model = Favorites
+    readonly_fields = ('product',)
+    can_delete = False
     extra = 0
 
 
@@ -64,6 +68,7 @@ class CustomUserAdmin(UserAdmin):
         ('Персональная информация', {'fields': (
             'first_name',
             'last_name',
+            'patronymic',
             'phone'
         )}),
         ('Права доступа', {'fields': (
@@ -75,7 +80,14 @@ class CustomUserAdmin(UserAdmin):
         )}),
         ('Даты', {'fields': ('last_login',)}),
     )
-
+    readonly_fields = (
+        'email',
+        'first_name',
+        'last_name',
+        'patronymic',
+        'phone',
+        'last_login',
+    )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),

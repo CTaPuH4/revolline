@@ -13,7 +13,9 @@ class ProductImageInline(admin.TabularInline):
 class ProductOrderInline(admin.TabularInline):
     model = ProductOrder
     readonly_fields = ('product', 'quantity')
+    can_delete = False
     extra = 0
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -63,9 +65,9 @@ class ProductAdmin(admin.ModelAdmin):
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'created_at',
         'status',
         'tracking_number',
+        'created_at',
         'client',
     )
     list_editable = ('status', 'tracking_number',)

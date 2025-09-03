@@ -74,6 +74,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         max_length=NAME_MAX_LENGTH,
         blank=True,
     )
+    patronymic = models.CharField(
+        'Отчество',
+        max_length=NAME_MAX_LENGTH,
+        blank=True,
+    )
     phone = PhoneNumberField(
         'Номер телефона',
         null=True,
