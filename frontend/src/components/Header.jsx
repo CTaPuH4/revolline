@@ -76,7 +76,7 @@ const Header = forwardRef((props, ref) => {
             } finally {
                 setLoadingSuggestions(false);
             }
-        }, 1000); // задержка 300мс
+        }, 1000);
     }, [searchQuery]);
 
     return (
@@ -120,14 +120,19 @@ const Header = forwardRef((props, ref) => {
                         </div>
 
                         {/* Подсказки */}
-                        {searchOpen && suggestions.length > 0 && (
+                        {searchOpen && searchQuery.trim() !== "" && (
                             <ul className="search-suggestions">
                                 {loadingSuggestions && <li>Загрузка...</li>}
-                                {suggestions.map((p) => (
-                                    <li key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
-                                        {p.title}
-                                    </li>
-                                ))}
+
+                                {!loadingSuggestions && suggestions.length === 0 ? (
+                                    <li>Совпадения не найдены</li>
+                                ) : (
+                                    suggestions.map((p) => (
+                                        <li key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
+                                            {p.title}
+                                        </li>
+                                    ))
+                                )}
                             </ul>
                         )}
 
@@ -141,10 +146,10 @@ const Header = forwardRef((props, ref) => {
                                 viewBox="0 0 16 16"
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
-                                >
+                            >
                                 <line x1="1" y1="1" x2="15" y2="15" stroke="#181818ff" strokeWidth="2" strokeLinecap="round"/>
                                 <line x1="15" y1="1" x2="1" y2="15" stroke="#181818ff" strokeWidth="2" strokeLinecap="round"/>
-                                </svg>
+                            </svg>
 
                         </button>
                     </div>

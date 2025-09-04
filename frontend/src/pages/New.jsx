@@ -1,4 +1,3 @@
-// src/pages/NewProducts.jsx
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -17,37 +16,26 @@ export default function NewProducts() {
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 16;
+    const [totalPages, setTotalPages] = useState(1);
 
+    const itemsPerPage = 16;
     // Получение товаров
-    const fetchProducts = async (query = "") => {
+    const fetchProducts = async (page = 1, query = "is_new=true") => {
         setLoading(true);
         try {
-            let allProducts = [];
-            let url = `http://127.0.0.1:8000/api/products/${query ? `?${query}` : "?is_new=true"}`;
+            let url = `http://127.0.0.1:8000/api/products/?page=${page}`;
+            if (query) url += `&${query}`;
 
-            while (url) {
-                const res = await fetch(url, { credentials: "include" });
-                if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-                const data = await res.json();
+            const res = await fetch(url, { credentials: "include" });
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+            const data = await res.json();
 
-                if (data && Array.isArray(data.results)) {
-                    allProducts.push(...data.results);
-                    url = data.next;
-                } else if (Array.isArray(data)) {
-                    allProducts.push(...data);
-                    url = null;
-                } else {
-                    console.warn("Unexpected products response format", data);
-                    url = null;
-                }
-            }
-
-            setProducts(allProducts);
-            setCurrentPage(1);
+            setProducts(data.results || []);
+            setTotalPages(Math.ceil(data.count / itemsPerPage));
         } catch (err) {
             console.error("Ошибка загрузки новинок:", err);
             setProducts([]);
+            setTotalPages(1);
         } finally {
             setLoading(false);
         }
@@ -56,7 +44,9 @@ export default function NewProducts() {
     // Получение разделов для сайдбара
     const fetchSections = async () => {
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/sections/", { credentials: "include" });
+            const res = await fetch("http://127.0.0.1:8000/api/sections/", {
+                credentials: "include",
+            });
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);
             const data = await res.json();
             setSections(Array.isArray(data) ? data : []);
@@ -69,61 +59,58 @@ export default function NewProducts() {
         fetchSections();
 
         const fetchData = async () => {
-            setLoading(true);
             try {
                 if (categorySlug) {
                     // конкретная категория
                     const qs = `categories=${encodeURIComponent(categorySlug)}&is_new=true`;
-                    await fetchProducts(qs);
+                    await fetchProducts(currentPage, qs);
                     return;
                 }
 
                 if (sectionSlug) {
                     // раздел
-                    const res = await fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`, {
-                        credentials: "include",
-                    });
+                    const res = await fetch(
+                        `http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`,
+                        { credentials: "include" }
+                    );
                     if (!res.ok) throw new Error("Раздел не найден");
                     const section = await res.json();
+
                     const cats = Array.isArray(section.categories)
-                        ? section.categories.map(c => c.slug).filter(Boolean)
+                        ? section.categories.map((c) => c.slug).filter(Boolean)
                         : [];
 
                     if (cats.length === 0) {
                         setProducts([]);
+                        setTotalPages(1);
                         return;
                     }
 
                     const qs = `categories=${cats.join(",")}&is_new=true`;
-                    await fetchProducts(qs);
+                    await fetchProducts(currentPage, qs);
                     return;
                 }
 
                 // все новинки
-                await fetchProducts("is_new=true");
+                await fetchProducts(currentPage, "is_new=true");
             } catch (err) {
                 console.error("Ошибка загрузки новинок:", err);
                 setProducts([]);
-            } finally {
-                setLoading(false);
+                setTotalPages(1);
             }
         };
 
         fetchData();
-    }, [sectionSlug, categorySlug]);
+    }, [sectionSlug, categorySlug, currentPage]);
 
     const toggleFav = (id) =>
-        setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
+        setProducts((prev) =>
+            prev.map((p) => (p.id === id ? { ...p, is_fav: !p.is_fav } : p))
+        );
 
     const handleToggle = (idx) => {
-        setExpanded(prev => (prev === idx ? null : idx));
+        setExpanded((prev) => (prev === idx ? null : idx));
     };
-
-    // пагинация
-    const indexOfLast = currentPage * itemsPerPage;
-    const indexOfFirst = indexOfLast - itemsPerPage;
-    const currentProducts = products.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(products.length / itemsPerPage);
 
     return (
         <main className="catalog-page">
@@ -143,26 +130,58 @@ export default function NewProducts() {
                         <ul>
                             {sections.map((section, idx) => {
                                 const sectionPath = `/new/${section.slug}`;
-                                const isActive = pathname === sectionPath || pathname.startsWith(`${sectionPath}/`);
+                                const isActive =
+                                    pathname === sectionPath ||
+                                    pathname.startsWith(`${sectionPath}/`);
 
                                 return (
-                                    <li key={section.slug} className={`category-item ${isActive ? 'active' : ''}`}>
+                                    <li
+                                        key={section.slug}
+                                        className={`category-item ${isActive ? "active" : ""}`}
+                                    >
                                         <div className="category-link">
                                             <Link to={sectionPath}>{section.title}</Link>
                                             {section.categories?.length > 0 && (
-                                                <div className="arrow-container" onClick={(e) => { e.stopPropagation(); handleToggle(idx); }}>
-                                                    <svg className={`arrow ${expanded === idx ? "rotated" : ""}`} width="20" height="10" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M1 1L5 5L9 1" stroke="#626161" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <div
+                                                    className="arrow-container"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggle(idx);
+                                                    }}
+                                                >
+                                                    <svg
+                                                        className={`arrow ${
+                                                            expanded === idx ? "rotated" : ""
+                                                        }`}
+                                                        width="20"
+                                                        height="10"
+                                                        viewBox="0 0 10 6"
+                                                        fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M1 1L5 5L9 1"
+                                                            stroke="#626161"
+                                                            strokeWidth="1.5"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
                                                     </svg>
                                                 </div>
                                             )}
                                         </div>
                                         <div className="divider"></div>
                                         {section.categories?.length > 0 && (
-                                            <ul className={`subcategory-list ${expanded === idx ? "open" : ""}`}>
-                                                {section.categories.map(cat => (
+                                            <ul
+                                                className={`subcategory-list ${
+                                                    expanded === idx ? "open" : ""
+                                                }`}
+                                            >
+                                                {section.categories.map((cat) => (
                                                     <li key={cat.slug}>
-                                                        <Link to={`/new/${section.slug}/${cat.slug}`}>{cat.title}</Link>
+                                                        <Link to={`/new/${section.slug}/${cat.slug}`}>
+                                                            {cat.title}
+                                                        </Link>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -178,11 +197,11 @@ export default function NewProducts() {
                     <div className="catalog-scrollable">
                         {loading ? (
                             <div className="loading-indicator">Загрузка новинок...</div>
-                        ) : currentProducts.length === 0 ? (
+                        ) : products.length === 0 ? (
                             <p className="no-products">Новинок нет</p>
                         ) : (
                             <div className="products">
-                                {currentProducts.map(product => (
+                                {products.map((product) => (
                                     <ProductCardMini
                                         key={product.id}
                                         product={product}
@@ -192,7 +211,7 @@ export default function NewProducts() {
                             </div>
                         )}
 
-                        {currentProducts.length > 0 && (
+                        {products.length > 0 && (
                             <Pagination
                                 currentPage={currentPage}
                                 totalPages={totalPages}

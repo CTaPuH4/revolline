@@ -1,4 +1,3 @@
-// src/pages/Sales.jsx
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -17,47 +16,36 @@ export default function Sales() {
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 16;
+    const [totalPages, setTotalPages] = useState(1);
 
-    // Получение товаров (фильтр: has_discount=true)
-    const fetchProducts = async (query = "") => {
+    const itemsPerPage = 16; // соответствует настройке бэка
+
+    const fetchProducts = async (page = 1, query = "has_discount=true") => {
         setLoading(true);
         try {
-            let allProducts = [];
-            // если query передан — он уже содержит нужные параметры, иначе default has_discount=true
-            let url = `http://127.0.0.1:8000/api/products/${query ? `?${query}` : "?has_discount=true"}`;
+            let url = `http://127.0.0.1:8000/api/products/?page=${page}`;
+            if (query) url += `&${query}`;
 
-            while (url) {
-                const res = await fetch(url, { credentials: "include" });
-                if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-                const data = await res.json();
+            const res = await fetch(url, { credentials: "include" });
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+            const data = await res.json();
 
-                if (data && Array.isArray(data.results)) {
-                    allProducts.push(...data.results);
-                    url = data.next;
-                } else if (Array.isArray(data)) {
-                    allProducts.push(...data);
-                    url = null;
-                } else {
-                    console.warn("Unexpected products response format", data);
-                    url = null;
-                }
-            }
-
-            setProducts(allProducts);
-            setCurrentPage(1);
+            setProducts(data.results || []);
+            setTotalPages(Math.ceil(data.count / itemsPerPage));
         } catch (err) {
             console.error("Ошибка загрузки акций:", err);
             setProducts([]);
+            setTotalPages(1);
         } finally {
             setLoading(false);
         }
     };
 
-    // Получение разделов для сайдбара
     const fetchSections = async () => {
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/sections/", { credentials: "include" });
+            const res = await fetch("http://127.0.0.1:8000/api/sections/", {
+                credentials: "include",
+            });
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);
             const data = await res.json();
             setSections(Array.isArray(data) ? data : []);
@@ -71,61 +59,55 @@ export default function Sales() {
         fetchSections();
 
         const fetchData = async () => {
-            setLoading(true);
             try {
                 if (categorySlug) {
-                    // конкретная категория в разделе sales
                     const qs = `categories=${encodeURIComponent(categorySlug)}&has_discount=true`;
-                    await fetchProducts(qs);
+                    await fetchProducts(currentPage, qs);
                     return;
                 }
 
                 if (sectionSlug) {
-                    // раздел: получаем категории раздела и подставляем их в фильтр
-                    const res = await fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`, {
-                        credentials: "include",
-                    });
+                    const res = await fetch(
+                        `http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`,
+                        { credentials: "include" }
+                    );
                     if (!res.ok) throw new Error("Раздел не найден");
                     const section = await res.json();
+
                     const cats = Array.isArray(section.categories)
-                        ? section.categories.map(c => c.slug).filter(Boolean)
+                        ? section.categories.map((c) => c.slug).filter(Boolean)
                         : [];
 
                     if (cats.length === 0) {
                         setProducts([]);
+                        setTotalPages(1);
                         return;
                     }
 
                     const qs = `categories=${cats.join(",")}&has_discount=true`;
-                    await fetchProducts(qs);
+                    await fetchProducts(currentPage, qs);
                     return;
                 }
 
-                // все товары по акции
-                await fetchProducts("has_discount=true");
+                await fetchProducts(currentPage, "has_discount=true");
             } catch (err) {
                 console.error("Ошибка загрузки акций:", err);
                 setProducts([]);
-            } finally {
-                setLoading(false);
+                setTotalPages(1);
             }
         };
 
         fetchData();
-    }, [sectionSlug, categorySlug]);
+    }, [sectionSlug, categorySlug, currentPage]);
 
     const toggleFav = (id) =>
-        setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
+        setProducts((prev) =>
+            prev.map((p) => (p.id === id ? { ...p, is_fav: !p.is_fav } : p))
+        );
 
     const handleToggle = (idx) => {
-        setExpanded(prev => (prev === idx ? null : idx));
+        setExpanded((prev) => (prev === idx ? null : idx));
     };
-
-    // пагинация
-    const indexOfLast = currentPage * itemsPerPage;
-    const indexOfFirst = indexOfLast - itemsPerPage;
-    const currentProducts = products.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(products.length / itemsPerPage);
 
     return (
         <main className="catalog-page">
@@ -140,31 +122,64 @@ export default function Sales() {
                     </div>
                     <MobileSidebarToggle />
 
-                    {/* Сайдбар */}
                     <aside className="sidebar-catalog">
                         <ul>
                             {sections.map((section, idx) => {
                                 const sectionPath = `/sales/${section.slug}`;
-                                const isActive = pathname === sectionPath || pathname.startsWith(`${sectionPath}/`);
+                                const isActive =
+                                    pathname === sectionPath ||
+                                    pathname.startsWith(`${sectionPath}/`);
 
                                 return (
-                                    <li key={section.slug} className={`category-item ${isActive ? 'active' : ''}`}>
+                                    <li
+                                        key={section.slug}
+                                        className={`category-item ${isActive ? "active" : ""}`}
+                                    >
                                         <div className="category-link">
                                             <Link to={sectionPath}>{section.title}</Link>
                                             {section.categories?.length > 0 && (
-                                                <div className="arrow-container" onClick={(e) => { e.stopPropagation(); handleToggle(idx); }}>
-                                                    <svg className={`arrow ${expanded === idx ? "rotated" : ""}`} width="20" height="10" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M1 1L5 5L9 1" stroke="#626161" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <div
+                                                    className="arrow-container"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggle(idx);
+                                                    }}
+                                                >
+                                                    <svg
+                                                        className={`arrow ${
+                                                            expanded === idx ? "rotated" : ""
+                                                        }`}
+                                                        width="20"
+                                                        height="10"
+                                                        viewBox="0 0 10 6"
+                                                        fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M1 1L5 5L9 1"
+                                                            stroke="#626161"
+                                                            strokeWidth="1.5"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
                                                     </svg>
                                                 </div>
                                             )}
                                         </div>
                                         <div className="divider"></div>
                                         {section.categories?.length > 0 && (
-                                            <ul className={`subcategory-list ${expanded === idx ? "open" : ""}`}>
-                                                {section.categories.map(cat => (
+                                            <ul
+                                                className={`subcategory-list ${
+                                                    expanded === idx ? "open" : ""
+                                                }`}
+                                            >
+                                                {section.categories.map((cat) => (
                                                     <li key={cat.slug}>
-                                                        <Link to={`/sales/${section.slug}/${cat.slug}`}>{cat.title}</Link>
+                                                        <Link
+                                                            to={`/sales/${section.slug}/${cat.slug}`}
+                                                        >
+                                                            {cat.title}
+                                                        </Link>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -180,11 +195,11 @@ export default function Sales() {
                     <div className="catalog-scrollable">
                         {loading ? (
                             <div className="loading-indicator">Загрузка акций...</div>
-                        ) : currentProducts.length === 0 ? (
+                        ) : products.length === 0 ? (
                             <p className="no-products">Товаров по акции не найдено</p>
                         ) : (
                             <div className="products">
-                                {currentProducts.map(product => (
+                                {products.map((product) => (
                                     <ProductCardMini
                                         key={product.id}
                                         product={product}
@@ -194,7 +209,7 @@ export default function Sales() {
                             </div>
                         )}
 
-                        {currentProducts.length > 0 && (
+                        {products.length > 0 && (
                             <Pagination
                                 currentPage={currentPage}
                                 totalPages={totalPages}

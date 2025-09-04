@@ -12,100 +12,85 @@ import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 
 export default function Catalog() {
   const { sectionSlug, categorySlug } = useParams();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 16; // 16 товаров на странице
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchProducts = async (queryString = "") => {
+  const itemsPerPage = 16; // бэк уже отдаёт по 16, просто для расчёта страниц
+
+  const fetchProducts = async (page = 1, queryString = "") => {
     setLoading(true);
     try {
-      let allProducts = [];
-      let url = `http://127.0.0.1:8000/api/products/${queryString ? `?${queryString}` : ""}`;
+      let url = `http://127.0.0.1:8000/api/products/?page=${page}`;
+      if (queryString) url += `&${queryString}`;
 
-      while (url) {
-        const res = await fetch(url, { credentials: "include" });
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        const data = await res.json();
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
 
-        if (data && Array.isArray(data.results)) {
-          allProducts.push(...data.results);
-          url = data.next;
-        } else if (Array.isArray(data)) {
-          allProducts.push(...data);
-          url = null;
-        } else {
-          console.warn("Unexpected products response format", data);
-          url = null;
-        }
-      }
-
-      setProducts(allProducts);
+      setProducts(data.results || []);
+      setTotalPages(Math.ceil(data.count / itemsPerPage));
     } catch (err) {
       console.error("Ошибка загрузки продуктов:", err);
       setProducts([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
-      setCurrentPage(1); // сброс на первую страницу при новой загрузке
     }
   };
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentPage]);
-
-  useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       try {
         if (categorySlug) {
           const qs = `categories=${encodeURIComponent(categorySlug)}`;
-          await fetchProducts(qs);
+          await fetchProducts(currentPage, qs);
           return;
         }
 
         if (sectionSlug) {
-          const res = await fetch(`http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`, {
-            credentials: "include",
-          });
+          const res = await fetch(
+              `http://127.0.0.1:8000/api/sections/${encodeURIComponent(
+                  sectionSlug
+              )}/`,
+              { credentials: "include" }
+          );
           if (!res.ok) throw new Error("Раздел не найден");
           const section = await res.json();
 
           const cats = Array.isArray(section.categories)
-              ? section.categories.map(c => c.slug).filter(Boolean)
+              ? section.categories.map((c) => c.slug).filter(Boolean)
               : [];
 
           if (cats.length === 0) {
             setProducts([]);
+            setTotalPages(1);
             return;
           }
 
           const qs = "categories=" + cats.join(",");
-          await fetchProducts(qs);
+          await fetchProducts(currentPage, qs);
           return;
         }
 
-        await fetchProducts();
+        await fetchProducts(currentPage);
       } catch (err) {
         console.error("Ошибка загрузки раздела:", err);
         setProducts([]);
-      } finally {
-        setLoading(false);
+        setTotalPages(1);
       }
     };
 
     fetchData();
-  }, [sectionSlug, categorySlug]);
+  }, [sectionSlug, categorySlug, currentPage]);
 
   const toggleFav = (id) =>
-      setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
-
-  // пагинация
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentProducts = products.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+      setProducts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, is_fav: !p.is_fav } : p))
+      );
 
   return (
       <main className="catalog-page">
@@ -151,11 +136,11 @@ export default function Catalog() {
             <div className="catalog-scrollable">
               {loading ? (
                   <div className="loading-indicator">Загрузка товаров...</div>
-              ) : currentProducts.length === 0 ? (
+              ) : products.length === 0 ? (
                   <p className="no-products">Товаров не найдено</p>
               ) : (
                   <div className="products">
-                    {currentProducts.map(product => (
+                    {products.map((product) => (
                         <ProductCardMini
                             key={product.id}
                             product={product}
