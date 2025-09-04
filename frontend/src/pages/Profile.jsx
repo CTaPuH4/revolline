@@ -18,6 +18,7 @@ export default function UserProfile() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
+    patronymic: "",
     phone: "+7",
   });
   const [passwordData, setPasswordData] = useState({
@@ -59,6 +60,7 @@ export default function UserProfile() {
       setFormData({
         first_name: user.first_name || "",
         last_name: user.last_name || "",
+        patronymic: user.patronymic || "",
         phone: PREFIX + rest,
       });
     }
@@ -254,6 +256,15 @@ export default function UserProfile() {
             />
           </div>
           <div className="user-info-field">
+            <label>Отчество</label>
+            <input
+                type="text"
+                name="patronymic"
+                value={formData.patronymic}
+                onChange={handleChange}
+            />
+          </div>
+          <div className="user-info-field">
             <label>Телефон</label>
             <input
                 ref={phoneInputRef}
@@ -277,7 +288,7 @@ export default function UserProfile() {
           <h2 className="change-password-title">Смена пароля</h2>
 
           <div className="password-group">
-            <input
+          <input
                 type="password"
                 name="password"
                 placeholder="Старый пароль"
