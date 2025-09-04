@@ -1,6 +1,7 @@
 .footer {
+  margin-top: auto;
   background-color: #aa0f4e;
-  color: white;  
+  color: white;
   display: flex;
   justify-content: center;
   flex-direction: row;
@@ -9,6 +10,7 @@
   margin: 0;
   gap: 0 150px;
 }
+
 
 
 .revolline {
