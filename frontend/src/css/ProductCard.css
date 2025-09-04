@@ -38,6 +38,7 @@
     flex: 1;
     min-width: 300px;
     max-width: 400px;
+    margin-top: 18px;
 }
 .thumbnail-list {
     display: flex;

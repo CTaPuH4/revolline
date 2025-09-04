@@ -4,6 +4,9 @@
 }
 
 .user-dropdown {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
   font-family: 'CarismaClassic';
   position: absolute;
   top: 110%;
