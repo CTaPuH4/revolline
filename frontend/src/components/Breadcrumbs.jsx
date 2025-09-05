@@ -1,45 +1,81 @@
 import { Link, useLocation } from "react-router-dom";
 import '../css/Breadcrumbs.css'
+import { useEffect, useState } from "react";
 
-const PATH_NAMES = {
-  "": "Главная",
-  "catalog": "Каталог",
-  "new": "Новинки",
-  "sales": "Акции",
-  "about": "О компании",
-  "cart": "Корзина",
-  "partners": "Партнёрам",
-  "favorites": "Избранное",
-  "profile": "Профиль",
-  "policy": "Политика конфиденциальности",
-};
+export default function Breadcrumbs({ product }) {
+  const { pathname } = useLocation();
+  const [sections, setSections] = useState([]);
 
-export default function Breadcrumbs() {
-  const location = useLocation();
-  const pathnames = location.pathname
-    .split("/")
-    .filter(Boolean); // разбиваем URL
+  // Загружаем разделы и категории
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/sections/")
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setSections(Array.isArray(data) ? data : []))
+      .catch(err => console.error("Ошибка загрузки разделов:", err));
+  }, []);
 
-  const breadcrumbs = pathnames.map((segment, index) => {
-    const to = "/" + pathnames.slice(0, index + 1).join("/");
-    const isLast = index === pathnames.length - 1;
-    const label = PATH_NAMES[segment] || segment;
+  // Базовые хлебные крошки
+  let crumbs = [{ title: "Главная", path: "/" }];
 
-    return isLast ? (
-      <span key={to}>{label}</span>
-    ) : (
-      <span key={to}>
-        <Link to={to}>{label}</Link> &nbsp;—&nbsp;
-      </span>
-    );
-  });
+  if (product) {
+    // Если есть продукт — ищем его категорию и раздел
+    const category = product.categories?.[0]; // берем первую категорию
+    if (category) {
+      const section = sections.find(sec => sec.categories?.some(cat => cat.slug === category.slug));
+      if (section) {
+        crumbs.push({ title: section.title, path: `/catalog/${section.slug}` });
+      }
+      crumbs.push({ 
+        title: category.title, 
+        path: section ? `/catalog/${section.slug}/${category.slug}` : `/catalog/${category.slug}` 
+      });
+    }
+    // Сам продукт
+    crumbs.push({ title: product.title, path: pathname });
+  } else {
+    // Для страниц каталога, новинок или акций (по URL)
+    const pathParts = pathname.split("/").filter(Boolean);
+    let basePath = "";
+    let baseTitle = "";
 
-  // Добавим "Главная" в начало
+    if (pathParts[0] === "catalog") {
+      baseTitle = "Каталог";
+      basePath = "/catalog";
+    } else if (pathParts[0] === "new") {
+      baseTitle = "Новинки";
+      basePath = "/new";
+    } else if (pathParts[0] === "sales") {
+      baseTitle = "Акции";
+      basePath = "/sales";
+    }
+
+    if (baseTitle) crumbs.push({ title: baseTitle, path: basePath });
+
+    // Добавляем раздел и категорию, если они есть в URL
+    if (pathParts[1]) {
+      const section = sections.find(sec => sec.slug === pathParts[1]);
+      if (section) crumbs.push({ title: section.title, path: `${basePath}/${section.slug}` });
+
+      if (pathParts[2] && section) {
+        const category = section.categories?.find(cat => cat.slug === pathParts[2]);
+        if (category) crumbs.push({ title: category.title, path: `${basePath}/${section.slug}/${category.slug}` });
+      }
+    }
+  }
+
   return (
     <nav className="breadcrumbs">
-      <Link to="/">Главная</Link>
-      {pathnames.length > 0 && <span> &nbsp;—&nbsp; </span>}
-      {breadcrumbs}
+      {crumbs.map((c, idx) => (
+        <span key={c.path}>
+          {idx > 0 && <span>—</span>}
+          {idx < crumbs.length - 1 ? (
+            <Link to={c.path}>{c.title}</Link>
+          ) : (
+            <span className="current">{c.title}</span>
+          )}
+        </span>
+      ))}
     </nav>
   );
 }
+

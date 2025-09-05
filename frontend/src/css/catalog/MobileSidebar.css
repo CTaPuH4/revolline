@@ -1,12 +1,14 @@
 .burger-button {
     display: none;
-    margin: 12px 24px;
+    margin-top: 15px;
     padding: 8px 16px;
-    font-size: 18px;
+    font-family: 'CarismaClassic';
+    font-weight: 500;
+    font-size: 20px;
     background-color: #AA0F4E;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px 6px 20px 6px;
     cursor: pointer;
 }
 
@@ -17,18 +19,17 @@
     margin-top: 40px;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1023px) {
     .burger-button {
         display: block;
         width: 100%;
+        margin: 15px auto 0;
         text-align: center;
     }
 
     .sidebar-wrapper {
         display: none;
     }
-
-
 }
 
 .mobile-sidebar-overlay {

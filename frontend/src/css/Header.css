@@ -3,10 +3,10 @@
 /* --- Шапка --- */
 .header {
   position: fixed;
+  height: 90px;
   top: 0;
   z-index: 1000;
   width: 100%;
-  padding: 12px 0;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fff;
   flex-wrap: wrap;
@@ -32,11 +32,13 @@
 
 /* --- Контент шапки --- */
 .header-content {
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: 7%;
-  padding-right: 7%;
+  padding-left: 8%;
+  padding-right: 8%;
+
 }
 
 /* --- Логотип --- */
@@ -191,6 +193,10 @@
   gap: 16px;
 }
 
+div.icons {
+  margin: 0;
+}
+
 .icon-button {
   background: none;
   border: none;
@@ -305,52 +311,101 @@
   }
 }
 
-/* --- Responsive --- */
-@media (max-width: 768px) {
-  .header { flex-wrap: wrap; padding: 10px 16px; }
-  .logo img { height: 40px; }
+@media (max-width: 1024px) {
+
   .nav {
-    order: 3;
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    max-width: 100%;
-    gap: 12px 24px;
-    margin: 8px 0 0 0;
-    font-size: 16px;
-    justify-content: center;
-    padding-bottom: 8px;
+    gap: 20px;
+    font-size: 18px;
+    padding: 0 10px 0 10px;
   }
-  .nav a { white-space: nowrap; }
-  .search-container.open { width: 200px; }
-  .icons { order: 2; gap: 12px; }
-  .icon-button img { width: 18px; height: 18px; }
 
-  /* Подсказки занимают всю ширину на мобильных */
-  .search-wrapper.open {
-    display: flex; /* на мобилке удобно, чтобы заняло ширину контейнера */
-    width: 100%;
+/* --- Responsive --- */
+  @media (max-width: 768px) {
+    .header {
+      flex-direction: column;   /* элементы идут столбиком */
+      align-items: center;      /* центрирование по горизонтали */
+      height: 150px;
+      max-width: 100%;
+      padding-top: 10px;
+    }
+
+    .header-content {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;  /* расстояние между блоками */
+      padding-left: 5%;
+      padding-right: 5%;
+      height: 150px;
+    }
+
+    .logo img {
+      height: 40px;
+    }
+
+    .nav {
+      order: 2;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;   /* центрируем пункты меню */
+      gap: 0px;
+      margin: 8px 0;
+      font-size: 18px;
+    }
+    .nav a {
+      white-space: nowrap;
+    }
+
+    .search-wrapper.open {
+      order: 3;
+      width: 100%;
+      display: flex;
+      justify-content: center;   /* центрируем поиск */
+    }
+    .search-container.open {
+      width: 90%;  /* поле почти на всю ширину */
+      max-width: 320px;
+    }
+    .search-suggestions {
+      width: 90%;
+      max-width: 320px;
+      margin: 6px auto 0 auto;  /* по центру */
+    }
+
+    .icons {
+      order: 4;
+      display: flex;
+      justify-content: center;   /* центрируем иконки */
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    div.icons {
+      margin: 0;
+    }
+
+    .login-button {
+      margin: 8px auto 0 auto;   /* если нет юзера — кнопка по центру */
+    }
+
+    .nav--hidden {
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .nav {
+        justify-content: center;
+        gap: 8px 12px;   /* центрируем пункты меню */
+      }
+    
+    }
+
+    @media (max-width: 360px) {
+      .nav {
+        font-size: 18px;
+      }
+    }
   }
-  .search-container.open { width: 100%; }
-  .search-suggestions {
-    left: 0;
-    right: 0;
-    width: 100%;
-    border-radius: 8px;
-    top: calc(100% + 6px);
-  }
-}
 
-/* --- Мелкие улучшения --- */
-/* Гарантируем, что при уменьшении инпута flex-basis не ломает вид */
-.search-container .search-input {
-  min-width: 0;
-}
-
-/* Предохранитель: если где-то задано другое поведение, этот стиль поможет корректно считать ширины */
-.search-suggestions,
-.search-container {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
 }

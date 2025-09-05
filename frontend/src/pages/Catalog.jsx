@@ -94,10 +94,7 @@ export default function Catalog() {
 
   return (
       <main className="catalog-page">
-        <div className="breadcrumbs">
           <Breadcrumbs />
-        </div>
-
         <div className="catalog-content">
           <div>
             <div className="catalog-header">

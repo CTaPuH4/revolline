@@ -32,11 +32,16 @@ const Header = forwardRef((props, ref) => {
     const debounceRef = useRef(null);
 
     const handleMouseEnter = () => {
-        clearTimeout(timeoutRef.current);
-        setShowDropdown(true);
+        if (window.innerWidth > 768) {  // только для десктопа
+            clearTimeout(timeoutRef.current);
+            setShowDropdown(true);
+        }
     };
+
     const handleMouseLeave = () => {
-        timeoutRef.current = setTimeout(() => setShowDropdown(false), 70);
+        if (window.innerWidth > 768) {  // только для десктопа
+            timeoutRef.current = setTimeout(() => setShowDropdown(false), 70);
+        }
     };
 
     const doSearch = () => {

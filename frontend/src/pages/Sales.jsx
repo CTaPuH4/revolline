@@ -111,9 +111,7 @@ export default function Sales() {
 
     return (
         <main className="catalog-page">
-            <div className="breadcrumbs">
-                <Breadcrumbs />
-            </div>
+            <Breadcrumbs />
 
             <div className="catalog-content">
                 <div>

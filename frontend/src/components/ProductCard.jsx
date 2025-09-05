@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
-import { FaHeart, FaHeartBroken, FaShareAlt } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
+import Breadcrumbs from "./Breadcrumbs";
 import "../css/ProductCard.css";
 
 import heart from '../assets/icons/heart-card.png'
@@ -24,7 +24,6 @@ export default function ProductCard({ product }) {
     const [showAuth, setShowAuth] = useState(false);
 
     const tabs = ["Описание", "Характеристики", "Применение", "Состав"];
-    const firstCategory = (product.categories && product.categories[0]) || { slug: "", title: "" };
 
     const shortDesc =
         product.description && product.description.length > 200
@@ -132,21 +131,8 @@ export default function ProductCard({ product }) {
     };
 
     return (
-        <>
-            <div className="product-card-wrapper">
-                <nav className="breadcrumbs">
-                    <a href="/">Главная</a>
-                    <span>—</span>
-                    <a href="/catalog">Каталог</a>
-                    {firstCategory.slug && (
-                        <>
-                            <span>—</span>
-                            <a href={`/catalog?categories=${firstCategory.slug}`}>{firstCategory.title}</a>
-                        </>
-                    )}
-                    <span>—</span>
-                    <span className="current">{product.title}</span>
-                </nav>
+        <main className="product-card-wrapper">
+                <Breadcrumbs product={product} />
 
                 <div className="product-card">
                     <div className="product-images">
@@ -235,9 +221,8 @@ export default function ProductCard({ product }) {
                         {error && <p className="error">{error}</p>}
                     </div>
                 </div>
-            </div>
 
             {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-        </>
+        </main>
     );
 }
