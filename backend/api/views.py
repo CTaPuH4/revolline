@@ -1,15 +1,19 @@
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import decorators, filters, mixins, status, views, viewsets
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.filters import ProductFilter
 from api.serializers import (CartSerializer, CategorySerializer,
-                             FavoritesSerializer, ProductSerializer,
+                             FavoritesSerializer, OrdersSerializer,
+                             ProductSerializer, PromocodeSerializer,
                              SectionSerializer)
-from store.models import Cart, Category, Favorites, Product, Section
+from store.models import (Cart, Category, Favorites, Order, Product,
+                          ProductOrder, Promocode, Section)
+from store.services import create_link
 
 
 class CategoryViewSet(mixins.RetrieveModelMixin,
@@ -119,3 +123,75 @@ class CountryListView(views.APIView):
         )
         countries = sorted(set(map(str.strip, countries)))
         return Response(countries)
+
+
+class PromoViewSet(mixins.RetrieveModelMixin,
+                   viewsets.GenericViewSet):
+    queryset = Promocode.objects.all()
+    serializer_class = PromocodeSerializer
+    lookup_field = 'code'
+
+
+class OrderViewSet(mixins.ListModelMixin,
+                   mixins.CreateModelMixin,
+                   viewsets.GenericViewSet):
+    serializer_class = OrdersSerializer
+    permission_classes = (IsAuthenticated,)
+    pagination_class = None
+
+    def get_queryset(self):
+        return self.request.user.orders.select_related(
+            'promo'
+        ).prefetch_related(
+            'productorder_set__product'
+        ).annotate(
+            total_price=Sum(
+                F('productorder__quantity') * F('productorder__product__price')
+            )
+        ).annotate(
+            final_price=ExpressionWrapper(
+                F("total_price")
+                * (1 - (F("promo__percent") / Value(100.0))),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            )
+        )
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        promo = serializer.validated_data['promo']
+        cart = user.cart_items.select_related('product')
+
+        if not cart.exists():
+            raise ValidationError(
+                {'detail': 'Заказ невозможно оформить - корзина пуста.'}
+            )
+
+        op_id, link = create_link(user, cart, promo)
+        order = Order.objects.create(
+            client=user,
+            operation_id=op_id,
+            payment_link=link,
+            promo=promo,
+            shipping_address=serializer.validated_data['shipping_address']
+        )
+
+        items_list = [
+            ProductOrder(
+                order=order, product=item.product, quantity=item.quantity
+            ) for item in cart
+        ]
+        ProductOrder.objects.bulk_create(items_list)
+
+        self.request.user.cart_items.all().delete()
+
+        return order
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = self.perform_create(serializer)
+
+        return Response(
+            {'payment_link': order.payment_link},
+            status=status.HTTP_201_CREATED
+        )

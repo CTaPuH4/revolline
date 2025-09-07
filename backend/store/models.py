@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from store.constants import (LONG_CHAR_MAX_LENGTH, MIN_VALUE,
@@ -227,12 +227,24 @@ class Promocode(models.Model):
         'Код',
         unique=True,
     )
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(
+        'Дествителен',
+        help_text='Определяет возможно ли использовать данный промокод',
+        default=True
+    )
+    percent = models.IntegerField(
+        'Процент',
+        help_text='Процент скидки',
+        validators=(MinValueValidator(1), MaxValueValidator(90),)
+    )
+
+    def __str__(self):
+        return f'{self.code} - {self.percent}%'
 
     class Meta:
         verbose_name = 'Промокод'
         verbose_name_plural = 'Промокоды'
-        ordering = ('code',)
+        ordering = ('code', 'percent')
 
 
 class Order(models.Model):
@@ -259,14 +271,15 @@ class Order(models.Model):
     client = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        verbose_name='Клиент'
+        related_name='orders',
+        verbose_name='Клиент',
     )
     operation_id = models.CharField(
         'ID операции',
         max_length=LONG_CHAR_MAX_LENGTH,
     )
     payment_link = models.CharField(
-        'Сслыка на оплату', 
+        'Сслыка на оплату',
         max_length=LONG_CHAR_MAX_LENGTH,
     )
     promo = models.ForeignKey(

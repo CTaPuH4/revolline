@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from store.models import (Category, Order, Product, ProductImage, ProductOrder,
-                          Section)
+                          Promocode, Section)
 
 
 class ProductImageInline(admin.TabularInline):
@@ -76,7 +76,17 @@ class OrderAdmin(admin.ModelAdmin):
         'shipping_address',
         'operation_id',
         'payment_link',
-        'promo'
+        # 'promo'
     )
     list_filter = ('status',)
     inlines = (ProductOrderInline,)
+
+
+@admin.register(Promocode)
+class PromocodeAdmin(admin.ModelAdmin):
+    list_display = (
+        'code',
+        'active',
+        'percent'
+    )
+    list_editable = ('percent',)

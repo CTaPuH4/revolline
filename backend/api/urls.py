@@ -2,7 +2,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from api.views import (CartViewSet, CategoryViewSet, CountryListView,
-                       FavoritesViewSet, ProductViewSet, SectionViewSet)
+                       FavoritesViewSet, OrderViewSet, ProductViewSet,
+                       PromoViewSet, SectionViewSet)
 from users.views import (ActivateUserView, ChangePasswordView,
                          CustomTokenObtainPairView, CustomTokenRefreshView,
                          LogoutView, PasswordResetConfirmView,
@@ -15,6 +16,8 @@ router.register('products', ProductViewSet, basename='products')
 router.register('cart', CartViewSet, basename='cart')
 router.register('favorites', FavoritesViewSet, basename='faborites')
 router.register('users', UserViewSet, basename='users')
+router.register('orders', OrderViewSet, basename='orders')
+router.register('promo', PromoViewSet, basename='promo')
 
 
 urlpatterns = [
