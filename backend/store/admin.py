@@ -76,7 +76,7 @@ class OrderAdmin(admin.ModelAdmin):
         'shipping_address',
         'operation_id',
         'payment_link',
-        # 'promo'
+        'promo'
     )
     list_filter = ('status',)
     inlines = (ProductOrderInline,)
@@ -87,6 +87,7 @@ class PromocodeAdmin(admin.ModelAdmin):
     list_display = (
         'code',
         'active',
-        'percent'
+        'percent',
+        'min_price'
     )
-    list_editable = ('percent',)
+    list_editable = ('percent', 'active', 'min_price')

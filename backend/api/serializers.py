@@ -29,7 +29,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class PromocodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Promocode
-        fields = ('code', 'percent')
+        fields = ('code', 'percent', 'min_price')
 
 
 class ShortProductSerializer(serializers.ModelSerializer):

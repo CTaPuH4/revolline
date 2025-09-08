@@ -493,7 +493,8 @@
 ```
 {
     "code": "promo_name",
-    "percent": 25
+    "percent": 25,
+    "min_price": 0,
 }
 ```
 ---

@@ -146,7 +146,8 @@ class OrderViewSet(mixins.ListModelMixin,
             'productorder_set__product'
         ).annotate(
             total_price=Sum(
-                F('productorder__quantity') * F('productorder__product__price')
+                F('productorder__quantity')
+                * F('productorder__product__discount_price')
             )
         ).annotate(
             final_price=ExpressionWrapper(
@@ -158,12 +159,26 @@ class OrderViewSet(mixins.ListModelMixin,
 
     def perform_create(self, serializer):
         user = self.request.user
-        promo = serializer.validated_data['promo']
+        promo = serializer.validated_data.get('promo')
         cart = user.cart_items.select_related('product')
 
         if not cart.exists():
             raise ValidationError(
                 {'detail': 'Заказ невозможно оформить - корзина пуста.'}
+            )
+
+        total_price = sum(
+            item.product.discount_price * item.quantity for item in cart
+        )
+
+        if promo and total_price < promo.min_price:
+            raise ValidationError(
+                {
+                    'detail': (
+                        f'Минимальная сумма для применения промокода '
+                        f'{promo.code} составляет {promo.min_price}.'
+                    )
+                }
             )
 
         op_id, link = create_link(user, cart, promo)

@@ -237,14 +237,19 @@ class Promocode(models.Model):
         help_text='Процент скидки',
         validators=(MinValueValidator(1), MaxValueValidator(90),)
     )
+    min_price = models.PositiveIntegerField(
+        'Порог активации',
+        help_text='Минимальная цена товаров в корзине для активации промокода',
+        default=0
+    )
 
     def __str__(self):
-        return f'{self.code} - {self.percent}%'
+        return f'{self.code} - {self.percent}% от {self.min_price}'
 
     class Meta:
         verbose_name = 'Промокод'
         verbose_name_plural = 'Промокоды'
-        ordering = ('code', 'percent')
+        ordering = ('percent',)
 
 
 class Order(models.Model):
