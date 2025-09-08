@@ -67,7 +67,7 @@ export default function Breadcrumbs({ product }) {
     <nav className="breadcrumbs">
       {crumbs.map((c, idx) => (
         <span key={c.path}>
-          {idx > 0 && <span>—</span>}
+          {idx > 0 && <span> — </span>}
           {idx < crumbs.length - 1 ? (
             <Link to={c.path}>{c.title}</Link>
           ) : (

@@ -10,24 +10,23 @@
 /* Сама карточка: две колонки */
 .product-card {
     display: flex;
-    gap: 10px;
     align-items: flex-start;
-    margin-top: 30px;
-    
+    margin-top: 40px;
+    justify-content: space-between;
+    gap: 7%;
 }
 
 /* Изображения */
 .product-images {
     display: flex;
-    width: fit-content;
-    margin-top: 18px;
+    justify-content: space-between;
+    gap: 5%;
 }
 .thumbnail-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     flex-shrink: 0;
-    margin-right: 12px;
 }
 .thumbnail {
     width: 100px;
@@ -45,10 +44,11 @@
     border-color: #aa0f4e;
 }
 .main-image {
-    padding: 0 40px 0 40px;
-    max-width: calc(100% - 72px);
+    max-width: 500px;
+    height: 550px;
     border-radius: 8px;
     object-fit: contain;
+    text-align: center;
 }
 
 /* Информация */
@@ -57,17 +57,17 @@
     min-width: 300px;
 }
 .product-title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 500;
     margin-bottom: 8px;
 }
 .product-type {
-    font-size: 22px;
+    font-size: 20px;
     color: #666;
     margin-bottom: 16px;
 }
 .product-description {
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 20px;
 }
 
@@ -142,10 +142,11 @@
     margin-bottom: 16px;
     list-style: none;
     padding: 0;
+    overflow-x: auto;
 }
 
 .tab {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 400;
     color: #666;
     cursor: pointer;
@@ -166,7 +167,7 @@
     background-color: #aa0f4e;
 }
 .tab-content {
-    font-size: 18px;
+    font-size: 16px;
     color: #000;
 }
 .tab-content p,
@@ -291,7 +292,6 @@
     /* Табы */
     .tabs-nav {
         gap: 16px;
-        overflow-x: auto;
         font-size: 18px;
     }
     .tab {
