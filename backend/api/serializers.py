@@ -2,8 +2,8 @@ from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from store.models import (Cart, Category, Favorites, Product, ProductImage,
-                          Section)
+from store.models import (Cart, Category, Favorites, Order, Product,
+                          ProductImage, ProductOrder, Promocode, Section)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -23,7 +23,13 @@ class SectionSerializer(serializers.ModelSerializer):
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ('id', 'image')
+        fields = ('image',)
+
+
+class PromocodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Promocode
+        fields = ('code', 'percent', 'min_price')
 
 
 class ShortProductSerializer(serializers.ModelSerializer):
@@ -66,7 +72,7 @@ class FavCartSerializerMixin(serializers.Serializer):
 class CartSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Cart
-        fields = ['id', 'product', 'product_data', 'quantity']
+        fields = ('id', 'product', 'product_data', 'quantity')
 
     def validate(self, data):
         if self.instance and 'product' in data:
@@ -79,7 +85,7 @@ class CartSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
 class FavoritesSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Favorites
-        fields = ['id', 'product', 'product_data']
+        fields = ('id', 'product', 'product_data')
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -97,3 +103,49 @@ class FavDeleteSerializer(serializers.Serializer):
         queryset=Product.objects.all(),
         required=True
     )
+
+
+class ProductOrderSerializer(serializers.ModelSerializer):
+    product = ShortProductSerializer()
+
+    class Meta:
+        model = ProductOrder
+        fields = ('product', 'quantity')
+
+
+class OrdersSerializer(serializers.ModelSerializer):
+    promo = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Promocode.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    items = ProductOrderSerializer(
+        source='productorder_set', many=True, read_only=True
+    )
+    total_price = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True
+    )
+    final_price = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True
+    )
+
+    class Meta:
+        model = Order
+        fields = (
+            'id',
+            'status',
+            'created_at',
+            'payment_link',
+            'total_price',
+            'promo',
+            'final_price',
+            'shipping_address',
+            'items'
+        )
+        read_only_fields = (
+            'id',
+            'status',
+            'payment_link',
+            'created_at',
+        )
