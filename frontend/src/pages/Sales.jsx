@@ -18,7 +18,7 @@ export default function Sales() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const itemsPerPage = 16; // соответствует настройке бэка
+    const itemsPerPage = 12; // соответствует настройке бэка
 
     const fetchProducts = async (page = 1, query = "has_discount=true") => {
         setLoading(true);

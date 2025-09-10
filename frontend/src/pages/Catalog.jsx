@@ -19,14 +19,12 @@ export default function Catalog() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const itemsPerPage = 16;
+  const itemsPerPage = 12;
 
   const [ordering, setOrdering] = useState("");
 
   const [countries, setCountries] = useState([]);
-  const [countryInput, setCountryInput] = useState("");
-  const [priceMinInput, setPriceMinInput] = useState("");
-  const [priceMaxInput, setPriceMaxInput] = useState("");
+
 
   const [appliedFilters, setAppliedFilters] = useState({
     country: "",
@@ -142,19 +140,6 @@ export default function Catalog() {
   const handleSortChange = (apiOrderingValue) => {
     setOrdering(apiOrderingValue || "");
     setCurrentPage(1);
-  };
-
-  // helper для безопасной генерации option
-  const renderCountryOption = (c, idx) => {
-    const isString = typeof c === "string";
-    const key = isString ? c : (c.id ?? c.slug ?? c.name ?? idx);
-    const val = isString ? c : (c.slug ?? c.id ?? c.name ?? String(c));
-    const label = isString ? c : (c.name ?? c.slug ?? String(c.id) ?? String(c));
-    return (
-        <option key={String(key)} value={val || ""}>
-          {label}
-        </option>
-    );
   };
 
   return (

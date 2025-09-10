@@ -14,22 +14,24 @@ const Footer = () => {
 
   return (
   <footer className="footer">
-    <div>
-      <p className='revolline'>ReVolline</p>
-      <p className='foot-text'>Политика конфиденциальности</p>
-    </div>
-    <div>
-      <p className='foot-headers'>Контакты</p>
-      <div className="click-wrapper" onClick={copyEmail}>
-        <p className="foot-text-click">mail@revonline.ru</p>
-        {copiedEmail && <p className="tooltip">Скопировано</p>}
+    <div className='footer-content'>
+      <div>
+        <p className='revolline'>ReVolline</p>
+        <p className='foot-text'>Политика конфиденциальности</p>
       </div>
-      <p className='foot-text-bottom'>Москва, Садовническая улица 69</p>
-    </div>
-    <div>
-      <p className='foot-headers'>График работы</p>
-      <p className='foot-text'>Пн-Пт 9:00–18:00</p>
-      <p className='foot-text-bottom'>Сб-Вс выходной день</p>
+      <div>
+        <p className='foot-headers'>Контакты</p>
+        <div className="click-wrapper" onClick={copyEmail}>
+          <p className="foot-text-click">mail@revonline.ru</p>
+          {copiedEmail && <p className="tooltip">Скопировано</p>}
+        </div>
+        <p className='foot-text-bottom'>Москва, Садовническая улица 69</p>
+      </div>
+      <div>
+        <p className='foot-headers'>График работы</p>
+        <p className='foot-text'>Пн-Пт 9:00–18:00</p>
+        <p className='foot-text-bottom'>Сб-Вс выходной день</p>
+      </div>
     </div>
   </footer>
   );

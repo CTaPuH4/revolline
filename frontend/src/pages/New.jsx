@@ -18,7 +18,7 @@ export default function NewProducts() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const itemsPerPage = 16;
+    const itemsPerPage = 12;
     // Получение товаров
     const fetchProducts = async (page = 1, query = "is_new=true") => {
         setLoading(true);

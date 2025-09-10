@@ -3,11 +3,11 @@ import filterIcon from "../../assets/icons/filter-icon.png";
 import '../../css/catalog/SortDropdown.css'; // reuse same css file
 
 export default function FilterDropdown({
-                                           countries = [],            // массив стран (может быть ["france"] или [{id,slug,name}, ...])
-                                           onApply,                   // fn({ country, price_min, price_max })
-                                           onReset,                   // optional fn() при сбросе
-                                           initial = { country: "", price_min: "", price_max: "" }, // опциональные нач. значения
-                                       }) {
+        countries = [],            // массив стран (может быть ["france"] или [{id,slug,name}, ...])
+        onApply,                   // fn({ country, price_min, price_max })
+        onReset,                   // optional fn() при сбросе
+        initial = { country: "", price_min: "", price_max: "" }, // опциональные нач. значения
+    }) {
     const [open, setOpen] = useState(false);
 
     const [country, setCountry] = useState(initial.country ?? "");

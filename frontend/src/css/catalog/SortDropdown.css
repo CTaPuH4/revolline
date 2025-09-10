@@ -49,6 +49,7 @@
 /* ---------- Доп. стили для FilterDropdown (использует .sort-dropdown) ---------- */
 
 .sort-dropdown .filter-row {
+  
   display: flex;
   align-items: center;
   gap: 8px;
@@ -59,14 +60,15 @@
 
 .sort-dropdown .filter-row .filter-label {
   min-width: 64px;
-  font-size: 14px;
+  font-size: 18px;
   color: #333;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* ценовая строка: инпуты рядом */
 .sort-dropdown .price-row input[type="number"] {
   width: 110px;
+  font-family: 'CarismaClassic';
 }
 
 /* select / input в выпадашке */
@@ -76,9 +78,10 @@
   padding: 8px 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   background: #fff;
   outline: none;
+  font-family: 'CarismaClassic';
 }
 
 /* кнопки внизу выпадашки */
@@ -91,19 +94,26 @@
 
 .sort-dropdown .btn {
   padding: 7px 12px;
-  border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .sort-dropdown .btn-apply {
-  background: #111;
+  background: #aa0f4e;
   color: #fff;
-  border: 1px solid #111;
+  border: 2px solid #aa0f4e;
+  border-radius: 6px 6px 20px 6px;
+  transition: transform 0.2s ease;
 }
+
+.sort-dropdown .btn-apply:hover {
+  transform: scale(1.05);
+} 
 
 .sort-dropdown .btn-reset {
   background: transparent;
-  color: #333;
-  border: 1px solid #e0e0e0;
+  color: #000000;
+  border: 2px solid #aa0f4e;
+  border-radius: 20px 6px 6px 6px;
 }

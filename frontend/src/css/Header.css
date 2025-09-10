@@ -209,8 +209,8 @@ div.icons {
   transform: scale(1.15);
 }
 .icon-button img {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 .icon-button::after {
   content: attr(data-tooltip);
@@ -239,17 +239,18 @@ div.icons {
 .login-button {
   background: #aa0f4e;
   color: #fff;
-  border: none;
-  border-radius: 13px;
-  padding: 4px 20px;
+  border: 2px solid transparent;
+  border-color: #aa0f4e;
+  border-radius: 20px 6px 20px 6px;
+  padding: 0 20px;
   font-family: 'CarismaClassic';
   font-size: 20px;
-  line-height: 24px;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 .login-button:hover {
-  background: #900b42;
+  background: #ffffff;
+  color: #aa0f4e;
 }
 
 /* --- Выпадающие подсказки --- */
@@ -327,6 +328,7 @@ div.icons {
       height: 150px;
       max-width: 100%;
       padding-top: 10px;
+      padding-bottom: 10px;
     }
 
     .header-content {
@@ -391,6 +393,11 @@ div.icons {
 
     .nav--hidden {
       display: none;
+    }
+
+    .login-button {
+      font-size: 18px;
+      line-height: 16px;
     }
 
     @media (max-width: 480px) {
