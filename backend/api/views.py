@@ -44,7 +44,7 @@ class ProductViewSet(mixins.RetrieveModelMixin,
     )
     filterset_class = ProductFilter
     search_fields = ('title', 'description', 'type')
-    ordering_fields = ('price',)
+    ordering_fields = ('discount_price',)
 
 
 class CartViewSet(viewsets.ModelViewSet):

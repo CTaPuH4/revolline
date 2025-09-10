@@ -19,7 +19,7 @@ class AbstractModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('pk',)
+        ordering = ('title',)
 
 
 class Category(AbstractModel):
