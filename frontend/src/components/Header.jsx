@@ -26,20 +26,23 @@ const Header = forwardRef((props, ref) => {
     const [showAuth, setShowAuth] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
 
-    // --- Новое: подсказки и загрузка ---
+    // --- Подсказки и загрузка ---
     const [suggestions, setSuggestions] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+    // <-- NEW: флаг, что мы уже получили ответ от бэка (даже если пустой)
+    const [hasFetchedSuggestions, setHasFetchedSuggestions] = useState(false);
+
     const debounceRef = useRef(null);
 
     const handleMouseEnter = () => {
-        if (window.innerWidth > 768) {  // только для десктопа
+        if (window.innerWidth > 768) {
             clearTimeout(timeoutRef.current);
             setShowDropdown(true);
         }
     };
 
     const handleMouseLeave = () => {
-        if (window.innerWidth > 768) {  // только для десктопа
+        if (window.innerWidth > 768) {
             timeoutRef.current = setTimeout(() => setShowDropdown(false), 70);
         }
     };
@@ -49,6 +52,7 @@ const Header = forwardRef((props, ref) => {
             navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
             setSearchOpen(false);
             setSuggestions([]);
+            setHasFetchedSuggestions(false);
         }
     };
 
@@ -59,10 +63,12 @@ const Header = forwardRef((props, ref) => {
         }
     };
 
-    // --- Новое: запрос подсказок с debounce ---
+    // Запрос подсказок с debounce
     useEffect(() => {
         if (!searchQuery.trim()) {
+            // очистить подсказки и отметить, что запрос не выполнялся
             setSuggestions([]);
+            setHasFetchedSuggestions(false);
             return;
         }
 
@@ -73,16 +79,42 @@ const Header = forwardRef((props, ref) => {
         debounceRef.current = setTimeout(async () => {
             try {
                 setLoadingSuggestions(true);
-                const res = await fetch(`${API_BASE}/products/?search=${encodeURIComponent(searchQuery)}&page_size=5`);
+                setHasFetchedSuggestions(false); // мы начинаем новый запрос
+                const res = await fetch(
+                    `${API_BASE}/products/?search=${encodeURIComponent(searchQuery)}&page_size=5`
+                );
                 const data = await res.json();
-                setSuggestions(data.results || data); // зависит от API
+                setSuggestions(data.results || data || []);
             } catch (err) {
                 console.error("Ошибка загрузки подсказок", err);
+                setSuggestions([]);
             } finally {
                 setLoadingSuggestions(false);
+                setHasFetchedSuggestions(true); // ответ пришёл (успех или ошибка)
             }
         }, 1000);
+
+        return () => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+                debounceRef.current = null;
+            }
+        };
     }, [searchQuery]);
+
+    // Когда закрываем поиск — очистим поле и сбросим состояния
+    useEffect(() => {
+        if (!searchOpen) {
+            setSearchQuery("");
+            setSuggestions([]);
+            setHasFetchedSuggestions(false);
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+                debounceRef.current = null;
+            }
+            setLoadingSuggestions(false);
+        }
+    }, [searchOpen]);
 
     return (
         <>
@@ -124,15 +156,17 @@ const Header = forwardRef((props, ref) => {
                             </button>
                         </div>
 
-                        {/* Подсказки */}
+                        {/* Подсказки: показываем "Совпадения не найдены" только после ответа бэка */}
                         {searchOpen && searchQuery.trim() !== "" && (
                             <ul className="search-suggestions">
                                 {loadingSuggestions && <li>Загрузка...</li>}
 
-                                {!loadingSuggestions && suggestions.length === 0 ? (
+                                {!loadingSuggestions && hasFetchedSuggestions && suggestions.length === 0 ? (
                                     <li>Совпадения не найдены</li>
                                 ) : (
-                                    suggestions.map((p) => (
+                                    // если запрос ещё не пришёл (hasFetchedSuggestions === false) — ничего не показываем,
+                                    // если есть результаты — показываем их
+                                    !loadingSuggestions && suggestions.length > 0 && suggestions.map((p) => (
                                         <li key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
                                             {p.title}
                                         </li>
@@ -143,7 +177,17 @@ const Header = forwardRef((props, ref) => {
 
                         <button
                             className="search-close-button"
-                            onClick={() => setSearchOpen(false)}
+                            onClick={() => {
+                                setSearchOpen(false);
+                                setSearchQuery("");
+                                setSuggestions([]);
+                                setHasFetchedSuggestions(false);
+                                if (debounceRef.current) {
+                                    clearTimeout(debounceRef.current);
+                                    debounceRef.current = null;
+                                }
+                                setLoadingSuggestions(false);
+                            }}
                         >
                             <svg
                                 width="18"
@@ -155,7 +199,6 @@ const Header = forwardRef((props, ref) => {
                                 <line x1="1" y1="1" x2="15" y2="15" stroke="#181818ff" strokeWidth="2" strokeLinecap="round"/>
                                 <line x1="15" y1="1" x2="1" y2="15" stroke="#181818ff" strokeWidth="2" strokeLinecap="round"/>
                             </svg>
-
                         </button>
                     </div>
 

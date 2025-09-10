@@ -3,6 +3,27 @@
   padding-right: 8%;
   margin-bottom: 40px;
 }
+.sidebar-wrapper.hidden { display: none; }
+.catalog-content.sidebar-hidden .products-section { width: 100%;  }
+.sidebar-toggle-button { margin-left: 16px;  }
+.search-results-header{
+  font-family: 'CarismaClassic';
+}
+.catalog-header:empty {
+  display: none;
+}
+.clear-search-button{
+  background: #aa0f4e;
+  color: #fff;
+  border: 2px solid transparent;
+  border-color: #aa0f4e;
+  border-radius: 20px 6px 20px 6px;
+  padding: 0 20px;
+  font-family: 'CarismaClassic';
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
 
 .breadcrumbs {
   width: 100%;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
 import CatalogSidebar from "../components/catalog/CatalogSidebar.jsx";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
@@ -12,6 +12,8 @@ import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 
 export default function Catalog() {
   const { sectionSlug, categorySlug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,12 +21,11 @@ export default function Catalog() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const itemsPerPage = 12;
+  const itemsPerPage = 16;
 
   const [ordering, setOrdering] = useState("");
 
   const [countries, setCountries] = useState([]);
-
 
   const [appliedFilters, setAppliedFilters] = useState({
     country: "",
@@ -76,9 +77,24 @@ export default function Catalog() {
     }
   };
 
+  // Удалить параметр search из URL и сбросить страницу
+  const clearSearch = () => {
+    const sp = new URLSearchParams(searchParams);
+    sp.delete("search");
+    setSearchParams(sp);
+    setCurrentPage(1);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Если есть поисковый параметр и мы не на странице 1 — сначала сбросим страницу на 1,
+        // чтобы результаты поиска всегда открывались с первой страницы.
+        if (searchQuery && currentPage !== 1) {
+          setCurrentPage(1);
+          return; // следующий запуск эффекта произойдёт с currentPage=1
+        }
+
         const orderingQs = ordering ? `ordering=${encodeURIComponent(ordering)}` : "";
 
         const parts = [];
@@ -89,6 +105,15 @@ export default function Catalog() {
 
         const commonQs = parts.join("&");
 
+        // Если в URL есть search — приоритет у поиска (ищем по всем полям, можно комбинировать с фильтрами/сортировкой)
+        if (searchQuery) {
+          let qs = `search=${encodeURIComponent(searchQuery)}`;
+          if (commonQs) qs += `&${commonQs}`;
+          await fetchProducts(currentPage, qs);
+          return;
+        }
+
+        // Иначе — ведём себя как раньше: сначала по категории, затем по разделу
         if (categorySlug) {
           let qs = `categories=${encodeURIComponent(categorySlug)}`;
           if (commonQs) qs += `&${commonQs}`;
@@ -130,7 +155,7 @@ export default function Catalog() {
     };
 
     fetchData();
-  }, [sectionSlug, categorySlug, currentPage, ordering, appliedFilters]);
+  }, [sectionSlug, categorySlug, currentPage, ordering, appliedFilters, searchQuery]);
 
   const toggleFav = (id) =>
       setProducts((prev) =>
@@ -148,15 +173,26 @@ export default function Catalog() {
         <div className="catalog-content">
           <div>
             <div className="catalog-header">
-              <h1>Каталог</h1>
+              {!searchQuery && <h1>Каталог</h1>}
             </div>
-            <MobileSidebarToggle />
-            <div className="sidebar-wrapper">
-              <CatalogSidebar />
-            </div>
+
+            {/* Мобильный переключатель показываем только если нет поиска */}
+            {!searchQuery && <MobileSidebarToggle />}
+
+            {/* Показываем сайдбар только если каталог не открыт через поиск */}
+            {!searchQuery && (
+                <div className="sidebar-wrapper">
+                  <CatalogSidebar />
+                </div>
+            )}
           </div>
 
           <div className="products-section">
+            {searchQuery && (
+                <div className="search-results-header">
+                  <h1>Результаты поиска: «{searchQuery}»</h1>
+                </div>
+            )}
             <div className="filters">
               <SortDropdown onChange={handleSortChange} />
               <FilterDropdown
@@ -171,7 +207,14 @@ export default function Catalog() {
                     setCurrentPage(1);
                   }}
               />
-            </div> {/* <-- ЗАКРЫТИЕ .filters (было пропущено) */}
+
+              {/* Кнопка очистки поиска — видна только если открыт поиск через параметр */}
+              {searchQuery && (
+                  <button className="clear-search-button" onClick={clearSearch}>
+                    Очистить поиск
+                  </button>
+              )}
+            </div>
 
             <div className="catalog-scrollable">
               {loading ? (
