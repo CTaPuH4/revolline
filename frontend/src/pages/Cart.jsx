@@ -157,29 +157,6 @@
     const promoDiscountAmount = promo ? Number((totalDiscountPrice * (promo.percent / 100)).toFixed(2)) : 0;
     const finalPriceWithPromo = promo ? Number((totalDiscountPrice - promoDiscountAmount).toFixed(2)) : totalDiscountPrice;
   
-    const addToCart = async (productId, quantity = 1) => {
-      try {
-        const data = await apiFetch('/api/cart/', {
-          method: 'POST',
-          body: JSON.stringify({ product: productId, quantity }),
-        });
-        if (data && (data.id || data.product_data)) {
-          if (!data.id) {
-            await fetchCart();
-            return;
-          }
-          const transformed = transformServerItem(data);
-          setItems(prev => [...prev, transformed]);
-          setCheckedItems(prev => [...prev, transformed.cartItemId]);
-        } else {
-          await fetchCart();
-        }
-      } catch (err) {
-        console.error('addToCart failed', err);
-        setError('Не удалось добавить товар в корзину.');
-      }
-    };
-  
     // --- Promo handlers ---
     const applyPromo = async () => {
       setPromoError(null);
