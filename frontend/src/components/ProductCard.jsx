@@ -14,7 +14,7 @@ const API_BASE = "http://127.0.0.1:8000";
 export default function ProductCard({ product }) {
     const { isAuthenticated } = useAuth();
 
-    const [activeTab, setActiveTab] = useState("Описание");
+    const [activeTab, setActiveTab] = useState("");
     const [selectedIdx, setSelectedIdx] = useState(0);
     const tabContentRef = useRef(null);
     const [isFav, setIsFav] = useState(Boolean(product.is_fav));
@@ -22,8 +22,6 @@ export default function ProductCard({ product }) {
     const [addingToCart, setAddingToCart] = useState(false);
     const [error, setError] = useState(null);
     const [showAuth, setShowAuth] = useState(false);
-
-    const tabs = ["Описание", "Характеристики", "Применение", "Состав"];
 
     const shortDesc =
         product.description && product.description.length > 200
@@ -130,67 +128,106 @@ export default function ProductCard({ product }) {
         }
     };
 
+    // Проверки наличия полей для характеристики
+    const hasSize = Boolean(product.size);
+    const hasProductWeight = product.product_weight != null && product.product_weight !== "";
+    const hasFullWeight = product.full_weight != null && product.full_weight !== "";
+    const hasCountry = Boolean(product.country);
+    const hasColor = Boolean(product.color);
+    const hasCollection = Boolean(product.collection);
+
+    const hasAnyCharacteristics =
+        hasSize || hasProductWeight || hasFullWeight || hasCountry || hasColor || hasCollection;
+
+    const images = Array.isArray(product.images) ? product.images : [];
+
+    // Динамические вкладки: только те, где есть данные
+    const availableTabs = [];
+    if (product.description) availableTabs.push("Описание");
+    if (hasAnyCharacteristics) availableTabs.push("Характеристики");
+    if (product.effect) availableTabs.push("Применение");
+    if (product.ingredients) availableTabs.push("Состав");
+
+    // Устанавливаем активную вкладку — первая доступная, если текущая недоступна
+    useEffect(() => {
+        if (availableTabs.length === 0) {
+            setActiveTab("");
+            return;
+        }
+        setActiveTab((prev) => (availableTabs.includes(prev) ? prev : availableTabs[0]));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [product.id]);
+
+    // Если массив изображений поменялся — корректируем выбранный индекс
+    useEffect(() => {
+        if (selectedIdx >= images.length) setSelectedIdx(0);
+    }, [images.length, selectedIdx]);
+
     return (
         <main className="product-card-wrapper">
-                <Breadcrumbs product={product} />
+            <Breadcrumbs product={product} />
 
-                <div className="product-card">
-                    <div className="product-images">
-                        <div className="thumbnail-list">
-                            {product.images.map((img, idx) => (
-                                <img
-                                    key={idx}
-                                    src={img.image}
-                                    alt={`preview-${idx}`}
-                                    className={`thumbnail${idx === selectedIdx ? " selected" : ""}`}
-                                    onClick={() => setSelectedIdx(idx)}
-                                />
-                            ))}
-                        </div>
-                        <img className="main-image" src={product.images[selectedIdx]?.image} alt={product.title} />
+            <div className="product-card">
+                <div className="product-images">
+                    <div className="thumbnail-list">
+                        {images.map((img, idx) => (
+                            <img
+                                key={idx}
+                                src={img.image}
+                                alt={`preview-${idx}`}
+                                className={`thumbnail${idx === selectedIdx ? " selected" : ""}`}
+                                onClick={() => setSelectedIdx(idx)}
+                            />
+                        ))}
+                    </div>
+                    <img
+                        className="main-image"
+                        src={images[selectedIdx]?.image || ""}
+                        alt={product.title || "product image"}
+                    />
+                </div>
+
+                <div className="product-info">
+                    <h1 className="product-title">{product.title}</h1>
+                    {product.type && <p className="product-type">{product.type}</p>}
+                    {shortDesc && <p className="product-description">{shortDesc}</p>}
+
+                    <div className="product-price">
+                        <span className="price">{product.discount_price || product.price}₽</span>
+                        {product.discount_price && <span className="old-price">{product.price}₽</span>}
                     </div>
 
-                    <div className="product-info">
-                        <h1 className="product-title">{product.title}</h1>
-                        <p className="product-type">{product.type}</p>
-                        <p className="product-description">{shortDesc}</p>
+                    <div className="actions">
+                        <button
+                            className="add-to-cart"
+                            onClick={addToCart}
+                            disabled={addingToCart}
+                            title={inCart ? "Товар уже в корзине — перейти в корзину" : "Добавить в корзину"}
+                        >
+                            {inCart ? "В корзине" : addingToCart ? "Добавлено" : "В корзину"}
+                        </button>
 
-                        <div className="product-price">
-                            <span className="price">{product.discount_price || product.price}₽</span>
-                            {product.discount_price && <span className="old-price">{product.price}₽</span>}
-                        </div>
-
-                        <div className="actions">
+                        <div className="icons">
                             <button
-                                className="add-to-cart"
-                                onClick={addToCart}
-                                disabled={addingToCart}
-                                title={inCart ? "Товар уже в корзине — перейти в корзину" : "Добавить в корзину"}
+                                aria-label={isFav ? "Убрать из избранного" : "В избранное"}
+                                onClick={toggleFavorite}
+                                className="icon"
                             >
-                                {inCart ? "В корзине" : addingToCart ? "Добавлено" : "В корзину"}
+                                <img src={isFav ? heartFilled : heart} alt="fav" />
                             </button>
-
-                            <div className="icons">
-                                <button
-                                    aria-label={isFav ? "Убрать из избранного" : "В избранное"}
-                                    onClick={toggleFavorite}
-                                    className="icon"
-                                >
-                                    <img src={isFav ?heartFilled :  heart}></img>
-                                    
-                                </button>
-                                <button
-                                    className="icon"
-                                    onClick={() => navigator.share && navigator.share({ title: product.title, url: window.location.href })}
-                                >
-                                    <img src={share}></img>
-                                </button>
-                            </div>
+                            <button
+                                className="icon"
+                                onClick={() => navigator.share && navigator.share({ title: product.title, url: window.location.href })}
+                            >
+                                <img src={share} alt="share" />
+                            </button>
                         </div>
+                    </div>
 
+                    {availableTabs.length > 0 && (
                         <div className="product-tabs">
                             <ul className="tabs-nav">
-                                {tabs.map((tab) => (
+                                {availableTabs.map((tab) => (
                                     <li key={tab} className={`tab${tab === activeTab ? " active" : ""}`} onClick={() => setActiveTab(tab)}>
                                         {tab}
                                     </li>
@@ -200,15 +237,15 @@ export default function ProductCard({ product }) {
                             <SwitchTransition mode="out-in">
                                 <CSSTransition key={activeTab} nodeRef={tabContentRef} timeout={300} classNames="fade" unmountOnExit>
                                     <div ref={tabContentRef} className="tab-content">
-                                        {activeTab === "Описание" && <p>{product.description}</p>}
-                                        {activeTab === "Характеристики" && (
+                                        {activeTab === "Описание" && <p>{product.description || "—"}</p>}
+                                        {activeTab === "Характеристики" && hasAnyCharacteristics && (
                                             <ul>
-                                                <li><strong>Размер:</strong> {product.size}</li>
-                                                <li><strong>Вес продукта:</strong> {product.product_weight} г</li>
-                                                <li><strong>Общий вес:</strong> {product.full_weight} г</li>
-                                                <li><strong>Страна:</strong> {product.country}</li>
-                                                {product.color && <li><strong>Цвет:</strong> {product.color}</li>}
-                                                {product.collection && <li><strong>Коллекция:</strong> {product.collection}</li>}
+                                                {hasSize && <li><strong>Размер:</strong> {product.size}</li>}
+                                                {hasProductWeight && <li><strong>Вес продукта:</strong> {product.product_weight} г</li>}
+                                                {hasFullWeight && <li><strong>Общий вес:</strong> {product.full_weight} г</li>}
+                                                {hasCountry && <li><strong>Страна:</strong> {product.country}</li>}
+                                                {hasColor && <li><strong>Цвет:</strong> {product.color}</li>}
+                                                {hasCollection && <li><strong>Коллекция:</strong> {product.collection}</li>}
                                             </ul>
                                         )}
                                         {activeTab === "Применение" && <p>{product.effect || "—"}</p>}
@@ -217,10 +254,11 @@ export default function ProductCard({ product }) {
                                 </CSSTransition>
                             </SwitchTransition>
                         </div>
+                    )}
 
-                        {error && <p className="error">{error}</p>}
-                    </div>
+                    {error && <p className="error">{error}</p>}
                 </div>
+            </div>
 
             {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
         </main>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../../css/catalog/CatalogDropdown.css";
 
 export default function CatalogDropdown() {
@@ -7,6 +7,7 @@ export default function CatalogDropdown() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSections = async () => {
@@ -17,10 +18,8 @@ export default function CatalogDropdown() {
                 }
                 const data = await response.json();
 
-                // Гарантируем, что данные - массив
                 if (Array.isArray(data)) {
                     setSections(data);
-                    // Устанавливаем первый раздел при наличии данных
                     if (data.length > 0) {
                         setSelectedCategory(data[0].slug);
                     }
@@ -39,7 +38,6 @@ export default function CatalogDropdown() {
         fetchSections();
     }, []);
 
-    // Обработка состояний загрузки и ошибок
     if (isLoading) {
         return <div className="dropdown">Загрузка каталога...</div>;
     }
@@ -48,13 +46,18 @@ export default function CatalogDropdown() {
         return <div className="dropdown">Ошибка: {error}</div>;
     }
 
-    // Если нет разделов
     if (sections.length === 0) {
         return <div className="dropdown">Нет доступных разделов</div>;
     }
 
-    // Находим активный раздел
     const activeSection = sections.find(section => section.slug === selectedCategory) || sections[0];
+
+    const onSectionClick = (section) => {
+        // Перейти на страницу раздела
+        navigate(`/catalog/${encodeURIComponent(section.slug)}`);
+        // Можно также установить превью категории для UX перед переходом
+        setSelectedCategory(section.slug);
+    };
 
     return (
         <div className="dropdown">
@@ -64,7 +67,11 @@ export default function CatalogDropdown() {
                         <li
                             key={section.slug}
                             className={section.slug === activeSection.slug ? "active" : ""}
-                            onMouseEnter={() => setSelectedCategory(section.slug)} // клик вместо hover
+                            onMouseEnter={() => setSelectedCategory(section.slug)} // превью по hover
+                            onClick={() => onSectionClick(section)} // переход по клику
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSectionClick(section); }}
                         >
                             {section.title}
                         </li>
@@ -82,7 +89,6 @@ export default function CatalogDropdown() {
                         </li>
                     ))}
 
-                    {/* Запасной вариант при отсутствии категорий */}
                     {activeSection.categories?.length === 0 && (
                         <li>Нет доступных категорий</li>
                     )}
