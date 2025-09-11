@@ -171,6 +171,16 @@ class OrderViewSet(mixins.ListModelMixin,
             item.product.discount_price * item.quantity for item in cart
         )
 
+        if not (user.first_name and
+                user.last_name and
+                user.patronymic and
+                user.phone):
+            raise ValidationError(
+                {
+                    'detail': ('Отсутствует информация о получателе.')
+                }
+            )
+
         if promo and total_price < promo.min_price:
             raise ValidationError(
                 {
