@@ -3,6 +3,9 @@ import json
 import requests
 from decouple import config
 from decimal import Decimal, ROUND_HALF_UP
+import logging
+
+logger = logging.getLogger('main')
 
 
 def get_code():
@@ -114,5 +117,6 @@ def create_link(user, cart, promo=None):
     response = requests.request("POST", url, headers=headers, data=payload)
 
     data = response.json()
+    logger.info(data)
 
     return data['Data']['operationId'], data['Data']['paymentLink']

@@ -148,6 +148,7 @@ class Product(AbstractModel):
     class Meta:
         verbose_name = 'продукт'
         verbose_name_plural = 'Продукты'
+        ordering = ('title',)
 
 
 class ProductImage(models.Model):
