@@ -298,6 +298,84 @@
   border-color: #aa0f4e;
 }
 
+/* =========================
+   Quantity input (new)
+   ========================= */
+.cart-item-qty-input {
+  /* размер и выравнивание */
+  width: 72px;
+  min-width: 48px;
+  height: 40px;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: 'CarismaClassic', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+
+  /* визуал */
+  background: #faf5f7;                 /* светлый фон в духе карточки */
+  border: 1px solid #e6dfe3;           /* лёгкая рамка */
+  border-radius: 12px;                 /* мягкие скругления */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  color: #111;
+  transition: box-shadow .15s ease, transform .08s ease, border-color .15s ease;
+
+  /* убираем стрелки у number input */
+  -moz-appearance: textfield;
+}
+
+/* Удаляем спиннеры для WebKit */
+.cart-item-qty-input::-webkit-outer-spin-button,
+.cart-item-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Фокус — заметный, но не агрессивный */
+.cart-item-qty-input:focus {
+  outline: none;
+  border-color: rgba(170,15,78,0.85);
+  box-shadow: 0 0 0 4px rgba(170,15,78,0.07);
+  transform: translateY(-1px);
+}
+
+/* Состояние disabled */
+.cart-item-qty-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f6f6f6;
+  border-color: #e9e9e9;
+}
+
+/* Улучшение области клика на кнопках +/- рядом с input */
+.cart-item-qty button {
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background .12s ease, transform .08s ease, border-color .12s ease;
+  cursor: pointer;
+}
+
+/* Визуальные состояния для кнопок */
+.cart-item-qty button:hover {
+  background: rgba(170,15,78,0.06);
+  transform: translateY(-1px);
+  border-color: rgba(170,15,78,0.12);
+}
+
+.cart-item-qty button:active {
+  transform: translateY(0);
+}
+
+
 /* Галочка */
 .checkmark::after {
   content: "";

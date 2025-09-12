@@ -14,7 +14,22 @@
     const [checkedItems, setCheckedItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-  
+    // local editing values (string) to allow empty input while typing
+    const [editQuantities, setEditQuantities] = useState({});
+
+    useEffect(() => {
+      // initialize missing entries from items (don't overwrite existing ones while user edits)
+      setEditQuantities(prev => {
+        const next = { ...prev };
+        items.forEach(it => {
+          if (next[it.cartItemId] === undefined) next[it.cartItemId] = String(it.quantity);
+        });
+        return next;
+      });
+// eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [items]);
+
+
     // --- promo states ---
     const [promoCode, setPromoCode] = useState('');
     const [applyingPromo, setApplyingPromo] = useState(false);
@@ -59,7 +74,31 @@
         image,
       };
     };
-  
+    const handleQtyInputChange = (cartItemId, value) => {
+      // allow any string (including empty) while typing
+      setEditQuantities(prev => ({ ...prev, [cartItemId]: value }));
+    };
+
+    const commitQuantity = (cartItemId) => {
+      const raw = editQuantities[cartItemId];
+      let num = parseInt(raw, 10);
+
+      if (isNaN(num) || num <= 0) num = 1;
+      else if (num > 100) num = 100;
+
+      // normalize displayed value immediately
+      setEditQuantities(prev => ({ ...prev, [cartItemId]: String(num) }));
+
+      const item = items.find(i => i.cartItemId === cartItemId);
+      if (!item) return;
+
+      // only call server if value actually changed
+      if (item.quantity !== num) {
+        updateQuantity(cartItemId, num);
+      }
+    };
+
+
     const fetchCart = async () => {
       setIsLoading(true);
       setError(null);
@@ -94,19 +133,24 @@
         fetchCart();
       }
     };
-  
+
     const incrementQty = (cartItemId) => {
       const item = items.find(i => i.cartItemId === cartItemId);
       if (!item) return;
-      updateQuantity(cartItemId, item.quantity + 1);
+      const newQty = item.quantity + 1;
+      setEditQuantities(prev => ({ ...prev, [cartItemId]: String(newQty) }));
+      updateQuantity(cartItemId, newQty);
     };
-  
+
     const decrementQty = (cartItemId) => {
       const item = items.find(i => i.cartItemId === cartItemId);
       if (!item || item.quantity <= 1) return;
-      updateQuantity(cartItemId, item.quantity - 1);
+      const newQty = item.quantity - 1;
+      setEditQuantities(prev => ({ ...prev, [cartItemId]: String(newQty) }));
+      updateQuantity(cartItemId, newQty);
     };
-  
+
+
     const removeItem = async (cartItemId) => {
       const prev = items;
       setItems(prevItems => prevItems.filter(i => i.cartItemId !== cartItemId));
@@ -258,7 +302,7 @@
                     <a href={`/product/${item.productId}`} className="cart-item-link">
                       <img src={item.image} alt={item.title} className="cart-item-img" />
                     </a>
-  
+
                     <div className="cart-item-info">
                       <h3 className="cart-item-title">
                         <a href={`/product/${item.productId}`} className="cart-item-title-link">{item.title}</a>
@@ -268,34 +312,56 @@
                         <span className="cart-item-price">{item.discount_price} ₽</span>
                         <span className="cart-item-oldprice">{item.price} ₽</span>
                       </div>
-  
                       <div className="cart-item-qty">
-                        <button onClick={() => decrementQty(item.cartItemId)}>
-                          <img src={minusIcon} alt="-" />
+                        <button onClick={() => decrementQty(item.cartItemId)} aria-label="Уменьшить">
+                          <img src={minusIcon} alt="-"/>
                         </button>
-                        <span>{item.quantity}</span>
-                        <button onClick={() => incrementQty(item.cartItemId)}>
-                          <img src={plusIcon} alt="+" />
+
+                        <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={editQuantities[item.cartItemId] ?? String(item.quantity)}
+                            onChange={(e) => {
+                              // оставляем любую строку, чтобы пользователь мог стереть и ввести новое
+                              handleQtyInputChange(item.cartItemId, e.target.value);
+                            }}
+                            onBlur={() => commitQuantity(item.cartItemId)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                // при Enter подтверждаем (и снимаем фокус)
+                                e.currentTarget.blur();
+                              } else if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                incrementQty(item.cartItemId);
+                              } else if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                decrementQty(item.cartItemId);
+                              }
+                            }}
+                            className="cart-item-qty-input"
+                        />
+
+                        <button onClick={() => incrementQty(item.cartItemId)} aria-label="Увеличить">
+                          <img src={plusIcon} alt="+"/>
                         </button>
                       </div>
-  
-                      <div style={{ marginTop: 8 }}>
-                        {/* favorites actions are omitted here for brevity */}
-                      </div>
+
+
                     </div>
-  
+
                     <button className="cart-item-remove" onClick={() => removeItem(item.cartItemId)}>×</button>
                   </div>
               ))}
             </div>
           </div>
-  
+
           <div className='cart-summary cart-box'>
             <div className="summary-header">
               <h2 className='cart-header'>Итог заказа</h2>
               <span className="items-count">{selectedItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
             </div>
-  
+
             <div className="promo-code">
               {!promo ? (
                   <>
