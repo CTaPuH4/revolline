@@ -91,36 +91,155 @@
   font-family: 'CarismaClassic';
 }
 
+/* =========================
+   Promo code — styles
+   ========================= */
 .promo-code {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  align-items: center;
 }
 
+/* Input */
 .promo-code input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 20px 6px 6px 6px;
-  font-family: 'CarismaClassic';
-  font-size: 18px;
-  font-weight: 400;
+  height: 44px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  font-family: 'CarismaClassic', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  background: #faf5f7;                /* в тон с qty input */
+  border: 1px solid #e6dfe3;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  transition: border-color .15s ease, box-shadow .12s ease, transform .06s ease;
+  color: #111;
+  -webkit-appearance: none;
 }
 
+/* Mobile numeric/text hint */
+.promo-code input[mode="numeric"],
+.promo-code input[inputmode="numeric"] {
+  /* fallback if used */
+}
+
+/* Focus */
+.promo-code input:focus {
+  outline: none;
+  border-color: rgba(170,15,78,0.95);
+  box-shadow: 0 0 0 5px rgba(170,15,78,0.06);
+  transform: translateY(-1px);
+}
+
+/* Disabled */
+.promo-code input:disabled {
+  opacity: 0.6;
+  background: #f6f6f6;
+  cursor: not-allowed;
+}
+
+/* Button */
 .promo-code button {
-  padding: 8px 16px;
-  background-color: #ccc;
-  color: #fff;
+  height: 44px;
+  padding: 0 16px;
+  min-width: 72px;
+  border-radius: 12px;
   border: none;
-  border-radius: 6px 6px 20px 6px;
+  background: #aa0f4e;                  /* фирменный */
+  color: #fff;
+  font-family: 'CarismaClassic', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  font-family: 'CarismaClassic';
-  font-size: 14px;
-  font-weight: 400;
+  box-shadow: 0 3px 8px rgba(170,15,78,0.12);
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Hover/active */
 .promo-code button:hover {
-  transform: scale(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(170,15,78,0.14);
+}
+.promo-code button:active { transform: translateY(0); }
+
+/* Disabled state for button */
+.promo-code button:disabled {
+  background: #d7c2c8;
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #fff;
+  opacity: 0.9;
+}
+
+/* Applied promo — pill with remove control */
+.promo-applied {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff7f9;
+  border: 1px solid rgba(170,15,78,0.12);
+  padding: 8px 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  font-family: 'CarismaClassic', sans-serif;
+  font-size: 15px;
+  color: #111;
+}
+
+/* bold promo code */
+.promo-applied strong {
+  color: #aa0f4e;
+  font-weight: 700;
+}
+
+/* Remove promo small button */
+.remove-promo {
+  background: transparent;
+  border: none;
+  color: #aa0f4e;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background .12s ease, transform .08s ease;
+}
+.remove-promo:hover { background: rgba(170,15,78,0.06); transform: translateY(-1px); }
+
+/* Promo error / hint */
+.promo-error {
+  color: crimson;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Subtle success message style (if needed) */
+.promo-success {
+  color: #056b3b;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Responsive tweaks */
+@media (max-width: 720px) {
+  .promo-code input {
+    height: 40px;
+    font-size: 15px;
+    padding: 6px 10px;
+  }
+  .promo-code button {
+    min-width: 64px;
+    height: 40px;
+    font-size: 14px;
+  }
+  .promo-applied { font-size: 14px; padding: 6px 10px; }
 }
 
 /* Линии итогов */
