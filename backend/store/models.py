@@ -3,7 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from store.constants import (LONG_CHAR_MAX_LENGTH, MIN_VALUE,
-                             SHORT_CHAR_MAX_LENGTH)
+                             PRODUCT_MAX_QUANTITY, SHORT_CHAR_MAX_LENGTH)
 from users.models import CustomUser
 
 
@@ -186,7 +186,10 @@ class Cart(models.Model):
     )
     quantity = models.PositiveIntegerField(
         'Количество',
-        validators=(MinValueValidator(1),)
+        validators=(
+            MinValueValidator(1),
+            MaxValueValidator(PRODUCT_MAX_QUANTITY),
+        )
     )
 
     class Meta:

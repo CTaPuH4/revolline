@@ -1,4 +1,5 @@
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
+from api.exceptions import ExternalAPIError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import decorators, filters, mixins, status, views, viewsets
@@ -191,7 +192,11 @@ class OrderViewSet(mixins.ListModelMixin,
                 }
             )
 
-        op_id, link = create_link(user, cart, promo)
+        try:
+            op_id, link = create_link(user, cart, promo)
+        except Exception as e:
+            print(f"Ошибка внешнего API: {e}")
+            raise ExternalAPIError()
         order = Order.objects.create(
             client=user,
             operation_id=op_id,
