@@ -1,0 +1,9 @@
+.notfound-page {
+    width: 100%;
+}
+
+.notfound-page img {
+  width: 100%;      /* всегда занимает всю ширину */
+  height: auto;     /* сохраняет пропорции */
+  display: block;   /* убирает лишние пробелы вокруг img */
+}

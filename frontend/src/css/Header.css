@@ -58,7 +58,7 @@
   font-weight: 400;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 70px;
+  gap: 10px 50px;
   justify-content: center;
   min-width: 200px;
   transition: opacity 0.3s ease;
@@ -188,12 +188,12 @@
 }
 
 /* --- Иконки справа --- */
-.icons {
+.heaer-icons {
   display: flex;
   gap: 16px;
 }
 
-div.icons {
+div.heaer-icons {
   margin: 0;
 }
 
@@ -375,16 +375,11 @@ div.icons {
       margin: 6px auto 0 auto;  /* по центру */
     }
 
-    .icons {
+    .heaer-icons {
       order: 4;
       display: flex;
       justify-content: center;   /* центрируем иконки */
-      gap: 16px;
       margin-top: 8px;
-    }
-
-    div.icons {
-      margin: 0;
     }
 
     .login-button {

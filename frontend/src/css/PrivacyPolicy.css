@@ -1,0 +1,76 @@
+.info-page {
+    padding-left: 8%;
+    padding-right: 8%;
+}
+
+.info-page h1 {
+  font-family: 'CarismaClassic';
+  font-size: 30px;
+  font-weight: 500;
+  color: #aa0f4e;
+  margin-top: 0px;
+}
+
+.info-catalog {
+  width: 240px;
+  box-sizing: border-box;
+}
+
+.info-catalog ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.divider {
+  height: 1px;
+  background-color: #c2c2c2;
+  margin: 8px 0;
+}
+
+.category-item {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.category-link {
+  color:#000;  
+  text-decoration: none;  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  position: relative;
+  font-family: 'CarismaClassic';
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.category-link a {
+  color: #000;
+  text-decoration: none;
+  font-family: 'CarismaClassic';
+  font-size: 22px;
+  font-weight: 400;
+  transition: all 0.2s;
+}
+
+.category-item.active .category-link a {
+  font-weight: 500;
+}
+
+.category-item:hover .category-link a {
+  font-weight: 500;
+}
+
+.info-content {
+  display: flex;
+  gap: 6%;
+  margin-top: 30px;
+}
+
+.info-text {
+    font-family: 'CarismaClassic';
+    font-size: 18px;
+    font-weight: 400;
+}

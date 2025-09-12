@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import Layout from './components/Layout';
 
@@ -6,13 +6,11 @@ const Home = lazy(() => import('./pages/Home'));
 const Catalog = lazy(() => import('./pages/Catalog'));
 const New = lazy(() => import('./pages/New'));
 const Sales = lazy(() => import('./pages/Sales'));
-const About = lazy(() => import('./pages/About'));
-const Partners = lazy(() => import('./pages/Partners'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Info = lazy(() => import('./pages/Info'));
 const ProductPage = lazy(() => import('./pages/ProductPage'));
 
 const router = createBrowserRouter([
@@ -46,12 +44,19 @@ const router = createBrowserRouter([
           { path: ':sectionSlug/:categorySlug', element: <Sales /> }, // /sales/:sectionSlug/:categorySlug
         ],
       },
-      { path: 'about', element: <About /> },
+
+      {
+        path: 'info',
+        children: [
+          // /info -> редиректим на /info/privacy
+          { index: true, element: <Navigate to="/info/privacy" replace /> },
+          // /info/:pageId -> PrivacyPolicy читает useParams().pageId
+          { path: ':pageId', element: <Info /> },
+        ],
+      },
       { path: 'cart', element: <Cart /> },
-      { path: 'partners', element: <Partners /> },
       { path: 'favorites', element: <Favorites /> },
       { path: 'profile', element: <Profile /> },
-      { path: 'policy', element: <PrivacyPolicy /> },
       { path: '*', element: <NotFound /> },
     ],
   },

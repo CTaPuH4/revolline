@@ -135,8 +135,8 @@ const Header = forwardRef((props, ref) => {
                         </div>
                         <Link to="/new" className="nav-link">Новинки</Link>
                         <Link to="/sales" className="nav-link">Акции</Link>
-                        <Link to="/about" className="nav-link">О компании</Link>
-                        <Link to="/partners" className="nav-link">Партнерам</Link>
+                        <Link to="/info/about" className="nav-link">О компании</Link>
+                        <Link to="/info/partners" className="nav-link">Партнерам</Link>
                     </nav>
 
                     {/* Поиск */}
@@ -203,7 +203,7 @@ const Header = forwardRef((props, ref) => {
                     </div>
 
                     {/* Иконки */}
-                    <div className="icons">
+                    <div className="heaer-icons">
                         {!searchOpen && (
                             <button
                                 className="search-toggle  icon-button"

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import '../css/Footer.css';
 
@@ -17,7 +18,7 @@ const Footer = () => {
     <div className='footer-content'>
       <div>
         <p className='revolline'>ReVolline</p>
-        <p className='foot-text'>Политика конфиденциальности</p>
+        <Link to="info/policy" className='foot-text'>Политика конфиденциальности</Link>
       </div>
       <div>
         <p className='foot-headers'>Контакты</p>

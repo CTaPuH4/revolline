@@ -1,17 +1,13 @@
-import { Link } from 'react-router-dom';
+import page404 from "../assets/page404.jpg"
+import '../css/NotFound.css'
+import { Link } from "react-router-dom";
 
 export default function Home() {
-
   return (
-    <>
-        <h1>Добро пожаловать в наш магазин!</h1>
-        <nav className="navigation">
-          <Link to="/catalog">Каталог</Link>
-          <Link to="/new">Новинки</Link>
-          <Link to="/promotions">Акции</Link>
-          <Link to="/cart">Корзина</Link>
-        </nav>
-      
-    </>
+    <main className="notfound-page">
+      <Link to="/">
+        <img src={page404}></img>
+      </Link>
+    </main>
   );
 };
