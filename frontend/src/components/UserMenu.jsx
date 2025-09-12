@@ -45,7 +45,7 @@ const UserMenu = () => {
   const handleLogout = useCallback(async () => {
     try {
       await logout();
-      navigate("/");
+      navigate("");
     } catch (e) {
       console.error("Ошибка при выходе:", e);
     }
