@@ -1,159 +1,359 @@
-/* UserProfile.css */
+/* UserProfile.css
+   Стиль в духе Cart.css — CarismaClassic, акцент #aa0f4e, мягкие скругления и тени.
+   Внимание: шрифт CarismaClassic применяется везде для всех текстовых элементов.
+*/
 
-.user-profile-container {
-    position: relative;
-    width: 1200px;
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 40px 24px;
-    background: #FFFFFF;
-    font-family: 'CarismaClassic';
-    border: 1px solid #eee;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    border-radius: 16px;
+.user-profile-container,
+.user-profile-container * {
+    font-family: 'CarismaClassic', sans-serif !important;
     box-sizing: border-box;
 }
 
+/* Общая обёртка */
+.user-profile-container {
+    padding-left: 8% !important;
+    padding-right: 8% !important;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    color: #111;
+}
+
+/* Заголовок профиля */
 .user-profile-header {
-    font-size: 28px;
-    font-weight: 400;
-    color: #626161;
-    margin-bottom: 32px;
-    text-align: center;
-}
-
-.user-info-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    margin-bottom: 32px;
-}
-
-.user-info-field {
-    flex: 1 1 45%;
     display: flex;
     flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
 }
 
-.user-info-field label {
-    font-size: 16px;
-    color: #7B7B7B;
-    margin-bottom: 8px;
+.user-profile-header h1 {
+    font-size: 34px;
+    color: #aa0f4e;
+    margin: 0;
+    font-weight: 500;
 }
 
-.user-info-field input {
-    padding: 12px 16px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: 'CarismaClassic';
-    background: #FAFAFA;
-    transition: border 0.3s ease;
+.user-profile-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
 }
 
-.user-info-field input:focus {
-    border-color: #AA0F4E;
-    outline: none;
-}
-
-.save-button {
-    background-color: #AA0F4E;
-    color: white;
-    font-family: 'CarismaClassic';
-    font-size: 18px;
-    padding: 14px 24px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    display: block;
-    margin: 0 auto 40px auto;
-}
-
-.save-button:hover {
-    background-color: #8a0c3e;
-}
-
-.change-password-section {
-    border-top: 1px solid #eee;
-    padding-top: 32px;
-}
-
-.change-password-title {
-    font-size: 24px;
-    font-weight: 400;
-    margin-bottom: 24px;
-    color: #626161;
-    text-align: center;
-}
-
-.password-group {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.password-group input {
-    padding: 12px 16px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: 'CarismaClassic';
-    background: #FAFAFA;
-}
-
-.change-password-button {
-    background-color: #AA0F4E;
-    color: white;
-    font-family: 'CarismaClassic';
-    font-size: 18px;
-    padding: 14px 24px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    display: block;
-    margin: 0 auto;
-}
-
-.change-password-button:hover {
-    background-color: #8a0c3e;
-}
-
+/* Сообщения успеха / ошибки */
 .success-message,
 .error-message {
-    text-align: center;
-    font-size: 16px;
-    margin-top: 16px;
-    font-family: 'CarismaClassic';
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    font-size: 15px;
+    font-weight: 500;
 }
 
 .success-message {
-    color: green;
+    background: #f3fbf6;
+    border: 1px solid rgba(5,107,59,0.08);
+    color: #056b3b;
 }
 
 .error-message {
-    color: red;
+    background: #fff7f7;
+    border: 1px solid rgba(220,20,60,0.08);
+    color: #b00020;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .user-profile-container {
-        padding: 24px 16px;
-    }
+/* Блок с полями пользователя */
+.user-info-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    align-items: start;
+}
 
+/* Для узких экранов делаем одну колонку */
+@media (max-width: 860px) {
     .user-info-group {
-        flex-direction: column;
+        grid-template-columns: 1fr;
     }
+}
 
-    .user-info-field {
-        flex: 1 1 100%;
-    }
+/* Поле ввода — общий стиль */
+.user-info-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
+.user-info-field label {
+    font-size: 14px;
+    color: #444;
+    font-weight: 600;
+}
+
+/* Инпуты общего профиля */
+.user-info-field input[type="text"],
+.user-info-field input[type="tel"],
+.user-info-field input[type="email"],
+.user-info-field input[type="password"],
+.user-info-field textarea,
+.user-info-field select {
+    height: 44px;
+    padding: 8px 12px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 12px;
+    border: 1px solid #e6dfe3;
+    background: #faf5f7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    transition: border-color .15s ease, box-shadow .12s ease, transform .06s ease;
+    color: #111;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    outline: none;
+}
+
+/* Multi-line textarea adjustment */
+.user-info-field textarea {
+    min-height: 100px;
+    padding-top: 10px;
+    resize: vertical;
+}
+
+/* Фокус для инпутов */
+.user-info-field input:focus,
+.user-info-field textarea:focus,
+.user-info-field select:focus {
+    border-color: rgba(170,15,78,0.95);
+    box-shadow: 0 0 0 5px rgba(170,15,78,0.06);
+    transform: translateY(-1px);
+}
+
+/* Placeholder */
+.user-info-field input::placeholder,
+.user-info-field textarea::placeholder {
+    color: #a9a9a9;
+}
+
+/* Кнопка сохранения */
+.save-button {
+    align-self: flex-start;
+    margin-top: 6px;
+    height: 46px;
+    padding: 0 18px;
+    border-radius: 12px;
+    border: none;
+    background: #aa0f4e;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(170,15,78,0.12);
+    transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.save-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(170,15,78,0.14);
+}
+
+.save-button:active { transform: translateY(0); }
+
+.save-button:disabled {
+    background: #d7c2c8;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Секция смены пароля */
+.change-password-section {
+    margin-top: 18px;
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.change-password-title {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+}
+
+/* Поля пароля */
+.password-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Отдельный стиль для password inputs (чтобы они были компактнее) */
+.password-group input[type="password"] {
+    height: 44px;
+    padding: 8px 12px;
+    font-size: 15px;
+    border-radius: 10px;
+    border: 1px solid #e6dfe3;
+    background: #fbf7f8;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: border-color .12s ease, box-shadow .12s ease;
+    min-width: 200px;
+    box-sizing: border-box;
+}
+
+/* Кнопка изменения пароля */
+.change-password-button {
+    margin-top: 12px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: none;
+    background: #aa0f4e;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(170,15,78,0.12);
+    transition: transform .08s ease;
+}
+
+.change-password-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Loading indicator */
+.loading-indicator {
+    padding: 16px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    font-size: 16px;
+    color: #444;
+}
+
+/* Стили для input phone (фикс префикса +7) */
+.user-info-field input[type="tel"] {
+    /* наследует CarismaClassic из .user-profile-container * */
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+}
+
+/* Улучшаем поведение курсора и видимости префикса (фиктивно, для совместимости) */
+.user-info-field input[type="tel"]::-webkit-textfield-decoration-container { }
+
+/* Подсказка/маленький текст снизу (если нужно) */
+.hint-text {
+    font-size: 13px;
+    color: #777;
+    margin-top: 6px;
+}
+
+/* Доступность: визуальные состояния для ошибок рядом с полем */
+.field-error {
+    color: #b00020;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+/* Небольшая адаптация для мобильных: кнопки занимают всю ширину */
+@media (max-width: 720px) {
     .save-button,
     .change-password-button {
         width: 100%;
     }
+    .password-group {
+        flex-direction: column;
+    }
+    .password-group input[type="password"] {
+        width: 100%;
+        min-width: 0;
+    }
 }
 
+/* Дополнительные мелочи: делаем блоки визуально ближе к Cart.css */
+.user-profile-container > .user-info-group,
+.user-profile-container > .change-password-section {
+    margin-top: 6px;
+}
+
+/* Акцентное оформление лейблов/полей при ошибке (можно ставить класс .has-error на .user-info-field) */
+.user-info-field.has-error input,
+.user-info-field.has-error textarea,
+.user-info-field.has-error select {
+    border-color: rgba(220,20,60,0.24);
+    box-shadow: 0 0 0 4px rgba(220,20,60,0.04);
+}
+
+/* Стили для кнопок logout/прочего (при необходимости) */
+.user-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.user-actions .secondary-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: #444;
+}
+
+.user-actions .secondary-btn:hover {
+    background: #fafafa;
+    transform: translateY(-1px);
+}
+
+/* Уменьшаем визуальную нагрузку при больших экранах */
+@media (min-width: 1200px) {
+    .user-profile-container {
+        padding-left: 12%;
+        padding-right: 12%;
+    }
+}
+
+/* Дополнительные мелочи: кнопки, ссылки и текстовые элементы */
+.user-profile-container button,
+.user-profile-container a,
+.user-profile-container label,
+.user-profile-container span,
+.user-profile-container p,
+.user-profile-container h1,
+.user-profile-container h2,
+.user-profile-container h3,
+.user-profile-container h4,
+.user-profile-container h5,
+.user-profile-container h6 {
+    font-family: 'CarismaClassic', sans-serif !important;
+}
+
+/* Убираем дефолтные outline у кнопок при клике, но оставляем фокус для клавиатуры */
+.user-profile-container button:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(170,15,78,0.08);
+}
+
+/* Уточнение: для input'ов и select'ов ставим явный font-family (на случай системной замены) */
+.user-profile-container input,
+.user-profile-container textarea,
+.user-profile-container select {
+    font-family: 'CarismaClassic', sans-serif !important;
+}
+
+/* Маленькая подсказка: если используете иконки внутри кнопок, центрируем текст корректно */
+.user-profile-container .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Доступность: aria-live контейнер для динамических сообщений */
+.user-profile-container .live-region[aria-live] {
+    position: relative;
+    min-height: 1px;
+    overflow: visible;
+}
