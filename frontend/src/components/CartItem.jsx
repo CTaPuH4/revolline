@@ -112,5 +112,3 @@ export default function Home() {
 const CartItem = () => {
     <></>
 }
-
-export default CartItem;

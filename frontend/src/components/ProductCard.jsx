@@ -49,7 +49,7 @@ export default function ProductCard({ product }) {
     // Проверяем корзину на сервере
     const fetchCart = async () => {
         try {
-            const data = await apiFetch("/api/cart/");
+            const data = await apiFetch("/cart/");
             const list = Array.isArray(data) ? data : data.results || [];
             const found = list.find(
                 (c) => (c.product_data && c.product_data.id === product.id) || (c.product && c.product.id === product.id)
@@ -80,7 +80,7 @@ export default function ProductCard({ product }) {
 
         setAddingToCart(true);
         try {
-            const data = await apiFetch("/api/cart/", {
+            const data = await apiFetch("/cart/", {
                 method: "POST",
                 body: JSON.stringify({ product: product.id, quantity: 1 }),
             });
@@ -109,13 +109,13 @@ export default function ProductCard({ product }) {
         try {
             if (prev) {
                 // Удаляем из избранного по product.id
-                await fetch(`${API_BASE}/api/favorites/delete/?product=${product.id}`, {
+                await fetch(`${API_BASE}/favorites/delete/?product=${product.id}`, {
                     method: "DELETE",
                     credentials: "include",
                 });
             } else {
                 // Добавляем в избранное
-                await apiFetch("/api/favorites/", {
+                await apiFetch("/favorites/", {
                     method: "POST",
                     body: JSON.stringify({ product: product.id }),
                     credentials: "include",
