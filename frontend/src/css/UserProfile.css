@@ -169,10 +169,6 @@
 .change-password-section {
     margin-top: 18px;
     background: #fff;
-    border: 1px solid #eee;
-    padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
 .change-password-title {
@@ -186,7 +182,9 @@
 .password-group {
     display: flex;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    flex-direction: column;
 }
 
 /* Отдельный стиль для password inputs (чтобы они были компактнее) */
