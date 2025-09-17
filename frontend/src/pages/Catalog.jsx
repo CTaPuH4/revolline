@@ -42,7 +42,7 @@ export default function Catalog() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch(apiUrl("/api/countries/"), {
+        const res = await fetch(apiUrl("/countries/"), {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Не удалось загрузить список стран");
@@ -64,7 +64,7 @@ export default function Catalog() {
   const fetchProducts = async (page = 1, queryString = "") => {
     setLoading(true);
     try {
-      const base = apiUrl("/api/products/");
+      const base = apiUrl("/products/");
       const url = queryString
           ? `${base}?page=${page}&${queryString}`
           : `${base}?page=${page}`;
@@ -130,7 +130,7 @@ export default function Catalog() {
 
         if (sectionSlug) {
           const res = await fetch(
-              apiUrl(`/api/sections/${encodeURIComponent(sectionSlug)}/`),
+              apiUrl(`/sections/${encodeURIComponent(sectionSlug)}/`),
               { credentials: "include" }
           );
           if (!res.ok) throw new Error("Раздел не найден");

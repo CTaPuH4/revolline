@@ -23,7 +23,7 @@ export default function NewProducts() {
     const fetchProducts = async (page = 1) => {
         setLoading(true);
         try {
-            const base = apiUrl("/api/products/");
+            const base = apiUrl("/products/");
             const url = `${base}?page=${page}&is_new=true`;
 
             const res = await fetch(url, { credentials: "include" });

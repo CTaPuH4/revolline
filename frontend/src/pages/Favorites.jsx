@@ -46,7 +46,7 @@ export default function Favorites() {
         const [addingToCart, setAddingToCart] = useState(false);
 
         useEffect(() => {
-            fetch(`${API_BASE}/api/cart/`, { credentials: "include" })
+            fetch(`${API_BASE}/cart/`, { credentials: "include" })
                 .then((res) => res.json())
                 .then((data) => {
                     const item = data.results.find((i) => i.product.id === productId);
@@ -65,7 +65,7 @@ export default function Favorites() {
             }
             setAddingToCart(true);
             try {
-                const res = await fetch(`${API_BASE}/api/cart/`, {
+                const res = await fetch(`${API_BASE}/cart/`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
@@ -98,7 +98,7 @@ export default function Favorites() {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await apiFetch('/api/favorites/');
+            const data = await apiFetch('/favorites/');
             const list = Array.isArray(data) ? data : data.results || [];
             const transformed = list.map(transformFav);
             setItems(transformed);
@@ -116,7 +116,7 @@ export default function Favorites() {
         const prev = items;
         setItems(prevItems => prevItems.filter(i => i.favId !== favId));
         try {
-            await apiFetch(`/api/favorites/${favId}/`, { method: 'DELETE' });
+            await apiFetch(`/favorites/${favId}/`, { method: 'DELETE' });
         } catch (err) {
             console.error('removeFavorite failed', err);
             setError('Не удалось удалить из избранного');
@@ -129,7 +129,7 @@ export default function Favorites() {
         const prev = items;
         setItems([]);
         try {
-            await Promise.all(prev.map(i => apiFetch(`/api/favorites/${i.favId}/`, { method: 'DELETE' })));
+            await Promise.all(prev.map(i => apiFetch(`/favorites/${i.favId}/`, { method: 'DELETE' })));
         } catch (err) {
             console.error('clearFavorites failed', err);
             setError('Не удалось очистить избранное');

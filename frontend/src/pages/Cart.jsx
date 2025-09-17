@@ -102,7 +102,7 @@
       setIsLoading(true);
       setError(null);
       try {
-        const data = await apiFetch('/api/cart/');
+        const data = await apiFetch('/cart/');
         const list = Array.isArray(data) ? data : data.results || [];
         const transformed = list.map(transformServerItem);
         setItems(transformed);
@@ -122,7 +122,7 @@
     const updateQuantity = async (cartItemId, newQty) => {
       setItems(prev => prev.map(it => it.cartItemId === cartItemId ? { ...it, quantity: newQty } : it));
       try {
-        await apiFetch(`/api/cart/${cartItemId}/`, {
+        await apiFetch(`/cart/${cartItemId}/`, {
           method: 'PATCH',
           body: JSON.stringify({ quantity: newQty }),
         });
@@ -155,7 +155,7 @@
       setItems(prevItems => prevItems.filter(i => i.cartItemId !== cartItemId));
       setCheckedItems(prev => prev.filter(cid => cid !== cartItemId));
       try {
-        await apiFetch(`/api/cart/${cartItemId}/`, { method: 'DELETE' });
+        await apiFetch(`/cart/${cartItemId}/`, { method: 'DELETE' });
       } catch (err) {
         console.error('removeItem failed', err);
         setError('Не удалось удалить товар. Попробуйте снова.');
@@ -172,7 +172,7 @@
       setItems([]);
       setCheckedItems([]);
       try {
-        await Promise.all(ids.map(id => apiFetch(`/api/cart/${id}/`, { method: 'DELETE' })));
+        await Promise.all(ids.map(id => apiFetch(`/cart/${id}/`, { method: 'DELETE' })));
         // also clear promo when cart cleared
         setPromo(null);
         setPromoCode('');
@@ -218,7 +218,7 @@
   
       setApplyingPromo(true);
       try {
-        const data = await apiFetch(`/api/promo/${encodeURIComponent(code)}/`);
+        const data = await apiFetch(`/promo/${encodeURIComponent(code)}/`);
         // data: { code, percent, min_price }
         if (!data || typeof data.percent !== 'number') {
           setPromoError('Неверный ответ от сервера по промокоду');
