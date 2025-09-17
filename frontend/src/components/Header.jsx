@@ -11,7 +11,7 @@ import cartIcon from "../assets/icons/cart-icon.svg";
 import UserMenu from "./UserMenu";
 import CatalogDropdown from "./catalog/CatalogDropdown";
 
-const API_BASE = "http://127.0.0.1:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const Header = forwardRef((props, ref) => {
     const { user } = useAuth();
@@ -29,7 +29,6 @@ const Header = forwardRef((props, ref) => {
     // --- Подсказки и загрузка ---
     const [suggestions, setSuggestions] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-    // <-- NEW: флаг, что мы уже получили ответ от бэка (даже если пустой)
     const [hasFetchedSuggestions, setHasFetchedSuggestions] = useState(false);
 
     const debounceRef = useRef(null);
@@ -66,7 +65,6 @@ const Header = forwardRef((props, ref) => {
     // Запрос подсказок с debounce
     useEffect(() => {
         if (!searchQuery.trim()) {
-            // очистить подсказки и отметить, что запрос не выполнялся
             setSuggestions([]);
             setHasFetchedSuggestions(false);
             return;
@@ -79,7 +77,7 @@ const Header = forwardRef((props, ref) => {
         debounceRef.current = setTimeout(async () => {
             try {
                 setLoadingSuggestions(true);
-                setHasFetchedSuggestions(false); // мы начинаем новый запрос
+                setHasFetchedSuggestions(false);
                 const res = await fetch(
                     `${API_BASE}/products/?search=${encodeURIComponent(searchQuery)}&page_size=5`
                 );
@@ -90,7 +88,7 @@ const Header = forwardRef((props, ref) => {
                 setSuggestions([]);
             } finally {
                 setLoadingSuggestions(false);
-                setHasFetchedSuggestions(true); // ответ пришёл (успех или ошибка)
+                setHasFetchedSuggestions(true);
             }
         }, 1000);
 
@@ -156,7 +154,6 @@ const Header = forwardRef((props, ref) => {
                             </button>
                         </div>
 
-                        {/* Подсказки: показываем "Совпадения не найдены" только после ответа бэка */}
                         {searchOpen && searchQuery.trim() !== "" && (
                             <ul className="search-suggestions">
                                 {loadingSuggestions && <li>Загрузка...</li>}
@@ -164,8 +161,6 @@ const Header = forwardRef((props, ref) => {
                                 {!loadingSuggestions && hasFetchedSuggestions && suggestions.length === 0 ? (
                                     <li>Совпадения не найдены</li>
                                 ) : (
-                                    // если запрос ещё не пришёл (hasFetchedSuggestions === false) — ничего не показываем,
-                                    // если есть результаты — показываем их
                                     !loadingSuggestions && suggestions.length > 0 && suggestions.map((p) => (
                                         <li key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
                                             {p.title}

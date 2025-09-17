@@ -3,7 +3,7 @@ import { useState } from "react";
 import '../../css/modals/AuthRegisterModal.css';
 import SalesPolicy from "../SalesPolicy";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function ResetPasswordModal({ onClose}) {
     const [email, setEmail] = useState("");

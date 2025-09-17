@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/catalog/CatalogDropdown.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
+
 export default function CatalogDropdown() {
     const [sections, setSections] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -12,7 +15,7 @@ export default function CatalogDropdown() {
     useEffect(() => {
         const fetchSections = async () => {
             try {
-                const response = await fetch("http://127.0.0.1:8000/api/sections/");
+                const response = await fetch(`${API_BASE}/sections/`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

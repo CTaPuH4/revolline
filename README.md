@@ -27,7 +27,8 @@ python manage.py createsuperuser
 
 Запустить проект:
 ```
-python manage.py runserver
+python manage.py runserver runserver localhost:8000
+
 ```
 ---
 ### Frontend
@@ -39,7 +40,7 @@ npm install
 
 Запустить проект:
 ```
-npm run dev -- --host 127.0.0.1
+npm run dev
 ```
 
 ---

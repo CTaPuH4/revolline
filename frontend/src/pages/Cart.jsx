@@ -4,11 +4,10 @@
   import plusIcon from "../assets/icons/plus.png"
   import minusIcon from "../assets/icons/minus.png"
   import exapmle1 from "../assets/example1.jpg"
-  
-  
-  // В этой версии явно прописан BASE URL API — чтобы fetch уходил на backend, а не на dev-server (5173).
-  const API_BASE = 'http://127.0.0.1:8000'; // <- полный путь к бэку
-  
+
+
+  const API_BASE = import.meta.env.VITE_API_BASE;
+
   export default function Cart() {
     const [items, setItems] = useState([]);
     const [checkedItems, setCheckedItems] = useState([]);

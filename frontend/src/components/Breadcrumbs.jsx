@@ -2,16 +2,18 @@ import { Link, useLocation } from "react-router-dom";
 import '../css/Breadcrumbs.css'
 import { useEffect, useState } from "react";
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 export default function Breadcrumbs({ product }) {
   const { pathname } = useLocation();
   const [sections, setSections] = useState([]);
 
   // Загружаем разделы и категории
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/sections/")
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setSections(Array.isArray(data) ? data : []))
-      .catch(err => console.error("Ошибка загрузки разделов:", err));
+    fetch(`${API_BASE}/sections/`)
+        .then(res => res.ok ? res.json() : [])
+        .then(data => setSections(Array.isArray(data) ? data : []))
+        .catch(err => console.error("Ошибка загрузки разделов:", err));
   }, []);
 
   // Базовые хлебные крошки
@@ -25,9 +27,9 @@ export default function Breadcrumbs({ product }) {
       if (section) {
         crumbs.push({ title: section.title, path: `/catalog/${section.slug}` });
       }
-      crumbs.push({ 
-        title: category.title, 
-        path: section ? `/catalog/${section.slug}/${category.slug}` : `/catalog/${category.slug}` 
+      crumbs.push({
+        title: category.title,
+        path: section ? `/catalog/${section.slug}/${category.slug}` : `/catalog/${category.slug}`
       });
     }
     // Сам продукт
@@ -64,18 +66,17 @@ export default function Breadcrumbs({ product }) {
   }
 
   return (
-    <nav className="breadcrumbs">
-      {crumbs.map((c, idx) => (
-        <span key={c.path}>
+      <nav className="breadcrumbs">
+        {crumbs.map((c, idx) => (
+            <span key={c.path}>
           {idx > 0 && <span> — </span>}
-          {idx < crumbs.length - 1 ? (
-            <Link to={c.path}>{c.title}</Link>
-          ) : (
-            <span className="current">{c.title}</span>
-          )}
+              {idx < crumbs.length - 1 ? (
+                  <Link to={c.path}>{c.title}</Link>
+              ) : (
+                  <span className="current">{c.title}</span>
+              )}
         </span>
-      ))}
-    </nav>
+        ))}
+      </nav>
   );
 }
-

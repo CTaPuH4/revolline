@@ -9,7 +9,7 @@ import React, {
 
 const AuthContext = createContext();
 
-const API_BASE = "http://127.0.0.1:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);

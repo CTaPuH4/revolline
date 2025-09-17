@@ -1,3 +1,4 @@
+// src/pages/NewProducts.jsx
 import { useEffect, useState } from "react";
 import Breadcrumbs from "../components/Breadcrumbs";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
@@ -5,6 +6,10 @@ import Pagination from "../components/catalog/Pagination.jsx";
 import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 import "../css/catalog/Catalog.css";
 import "../css/catalog/CatalogSidebar.css";
+
+const API_BASE = import.meta.env.VITE_API_BASE;
+const apiUrl = (path = "") =>
+    `${String(API_BASE).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
 
 export default function NewProducts() {
     const [products, setProducts] = useState([]);
@@ -18,7 +23,9 @@ export default function NewProducts() {
     const fetchProducts = async (page = 1) => {
         setLoading(true);
         try {
-            const url = `http://127.0.0.1:8000/api/products/?page=${page}&is_new=true`;
+            const base = apiUrl("/api/products/");
+            const url = `${base}?page=${page}&is_new=true`;
+
             const res = await fetch(url, { credentials: "include" });
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);
             const data = await res.json();
@@ -68,11 +75,7 @@ export default function NewProducts() {
                         )}
 
                         {products.length > 0 && (
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
+                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                         )}
                     </div>
                 </div>

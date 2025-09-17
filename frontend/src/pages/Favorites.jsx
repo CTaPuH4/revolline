@@ -3,7 +3,7 @@ import '../css/Favorites.css';
 import deleteIcon from "../assets/icons/delete-icon.png";
 import example1 from "../assets/example1.jpg"; // запасное изображение
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function Favorites() {
     const [items, setItems] = useState([]);

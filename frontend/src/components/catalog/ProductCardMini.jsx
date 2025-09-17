@@ -7,7 +7,7 @@ import AuthModal from "../../modals/Auth/AuthModal";
 import heart from '../../assets/icons/heart.png'
 import heartFilled from '../../assets/icons/heart-filled.png'
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const HeartIcon = ({ filled, onClick }) => (
     <span

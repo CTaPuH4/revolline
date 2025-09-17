@@ -1,3 +1,4 @@
+// src/pages/Catalog.jsx
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -5,10 +6,14 @@ import CatalogSidebar from "../components/catalog/CatalogSidebar.jsx";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
 import Pagination from "../components/catalog/Pagination.jsx";
 import "../css/catalog/Catalog.css";
-import "../css/catalog/SortDropdown.css"
+import "../css/catalog/SortDropdown.css";
 import FilterDropdown from "../components/catalog/FilterDropdown.jsx";
 import SortDropdown from "../components/catalog/SortDropdown.jsx";
 import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
+
+const API_BASE = import.meta.env.VITE_API_BASE;
+const apiUrl = (path = "") =>
+    `${String(API_BASE).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
 
 export default function Catalog() {
   const { sectionSlug, categorySlug } = useParams();
@@ -37,7 +42,7 @@ export default function Catalog() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/countries/", {
+        const res = await fetch(apiUrl("/api/countries/"), {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Не удалось загрузить список стран");
@@ -59,8 +64,10 @@ export default function Catalog() {
   const fetchProducts = async (page = 1, queryString = "") => {
     setLoading(true);
     try {
-      let url = `http://127.0.0.1:8000/api/products/?page=${page}`;
-      if (queryString) url += `&${queryString}`;
+      const base = apiUrl("/api/products/");
+      const url = queryString
+          ? `${base}?page=${page}&${queryString}`
+          : `${base}?page=${page}`;
 
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -123,7 +130,7 @@ export default function Catalog() {
 
         if (sectionSlug) {
           const res = await fetch(
-              `http://127.0.0.1:8000/api/sections/${encodeURIComponent(sectionSlug)}/`,
+              apiUrl(`/api/sections/${encodeURIComponent(sectionSlug)}/`),
               { credentials: "include" }
           );
           if (!res.ok) throw new Error("Раздел не найден");
