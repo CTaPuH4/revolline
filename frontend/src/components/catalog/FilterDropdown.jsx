@@ -1,100 +1,127 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "../../css/catalog/CatalogDropdown.css";
+import { useState, useEffect } from "react";
+import filterIcon from "../../assets/icons/filter-icon.png";
+import '../../css/catalog/SortDropdown.css'; // reuse same css file
 
-const API_BASE = import.meta.env.VITE_API_BASE;
-export default function CatalogDropdown() {
-    const [sections, setSections] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+export default function FilterDropdown({
+        countries = [],            // массив стран (может быть ["france"] или [{id,slug,name}, ...])
+        onApply,                   // fn({ country, price_min, price_max })
+        onReset,                   // optional fn() при сбросе
+        initial = { country: "", price_min: "", price_max: "" }, // опциональные нач. значения
+    }) {
+    const [open, setOpen] = useState(false);
 
+    const [country, setCountry] = useState(initial.country ?? "");
+    const [priceMin, setPriceMin] = useState(initial.price_min ?? "");
+    const [priceMax, setPriceMax] = useState(initial.price_max ?? "");
+
+    // Если initial изменится извне — синхронизируем
     useEffect(() => {
-        const fetchSections = async () => {
-            try {
-                const response = await fetch(`${API_BASE}/sections/`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
+        setCountry(initial.country ?? "");
+        setPriceMin(initial.price_min ?? "");
+        setPriceMax(initial.price_max ?? "");
+    }, [initial]);
 
-                if (Array.isArray(data)) {
-                    setSections(data);
-                    if (data.length > 0) {
-                        setSelectedCategory(data[0].slug);
-                    }
-                } else {
-                    throw new Error("Invalid API response: expected array");
-                }
-            } catch (err) {
-                console.error("Ошибка загрузки разделов:", err);
-                setError(err.message);
-                setSections([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const handleApply = () => {
+        if (onApply) {
+            onApply({
+                country: country || "",
+                price_min: priceMin === "" ? "" : priceMin,
+                price_max: priceMax === "" ? "" : priceMax,
+            });
+        }
+        setOpen(false);
+    };
 
-        fetchSections();
-    }, []);
+    const handleReset = () => {
+        setCountry("");
+        setPriceMin("");
+        setPriceMax("");
+        if (onReset) onReset();
+        if (onApply) onApply({ country: "", price_min: "", price_max: "" });
+        setOpen(false);
+    };
 
-    if (isLoading) {
-        return <div className="dropdown">Загрузка каталога...</div>;
-    }
-
-    if (error) {
-        return <div className="dropdown">Ошибка: {error}</div>;
-    }
-
-    if (sections.length === 0) {
-        return <div className="dropdown">Нет доступных разделов</div>;
-    }
-
-    const activeSection = sections.find(section => section.slug === selectedCategory) || sections[0];
-
-    const onSectionClick = (section) => {
-        // Перейти на страницу раздела
-        navigate(`/catalog/${encodeURIComponent(section.slug)}`);
-        // Можно также установить превью категории для UX перед переходом
-        setSelectedCategory(section.slug);
+    // helper — безопасно рендерим опции
+    const renderCountryOption = (c, idx) => {
+        const isString = typeof c === "string";
+        const key = isString ? c : (c.id ?? c.slug ?? c.name ?? idx);
+        const val = isString ? c : (c.slug ?? c.id ?? c.name ?? String(c));
+        const label = isString ? c : (c.name ?? c.slug ?? String(c.id) ?? String(c));
+        return (
+            <option key={String(key)} value={val || ""}>
+                {label}
+            </option>
+        );
     };
 
     return (
-        <div className="dropdown">
-            <div className="dropdown-left">
-                <ul>
-                    {sections.map((section) => (
-                        <li
-                            key={section.slug}
-                            className={section.slug === activeSection.slug ? "active" : ""}
-                            onMouseEnter={() => setSelectedCategory(section.slug)} // превью по hover
-                            onClick={() => onSectionClick(section)} // переход по клику
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSectionClick(section); }}
-                        >
-                            {section.title}
-                        </li>
-                    ))}
-                </ul>
+        <div className="sort-container">
+            <div
+                className="sort"
+                onClick={() => setOpen((s) => !s)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen((s) => !s); }}
+                aria-expanded={open}
+            >
+                <img src={filterIcon} alt="filter" />
+                <p>Фильтры</p>
+                <svg
+                    className={`arrow ${open ? "open" : ""}`}
+                    width="20"
+                    height="10"
+                    viewBox="0 0 10 6"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path
+                        d="M1 1L5 5L9 1"
+                        stroke="#626161"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
             </div>
 
-            <div className="dropdown-right">
-                <ul>
-                    {activeSection.categories?.map((cat) => (
-                        <li key={cat.slug}>
-                            <Link to={`/catalog/${activeSection.slug}/${cat.slug}`}>
-                                {cat.title}
-                            </Link>
-                        </li>
-                    ))}
+            {open && (
+                <div className="sort-dropdown" style={{ minWidth: 260 }}>
+                    <div className="filter-row">
+                        <label className="filter-label">Страна</label>
+                        <select value={country} onChange={(e) => setCountry(e.target.value)}>
+                            <option value="">Все страны</option>
+                            {countries.map((c, i) => renderCountryOption(c, i))}
+                        </select>
+                    </div>
 
-                    {activeSection.categories?.length === 0 && (
-                        <li>Нет доступных категорий</li>
-                    )}
-                </ul>
-            </div>
+                    <div className="filter-row price-row">
+                        <label className="filter-label">Цена</label>
+                        <input
+                            type="number"
+                            min="0"
+                            placeholder="Мин"
+                            value={priceMin}
+                            onChange={(e) => setPriceMin(e.target.value)}
+                        />
+                        <input
+                            type="number"
+                            min="0"
+                            placeholder="Макс"
+                            value={priceMax}
+                            onChange={(e) => setPriceMax(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="filter-actions" style={{ marginTop: 8 }}>
+                        <button className="btn btn-reset" onClick={handleReset} type="button">
+                            Сбросить
+                        </button>
+                        <button className="btn btn-apply" onClick={handleApply} type="button">
+                            Применить
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

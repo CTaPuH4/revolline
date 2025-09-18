@@ -12,6 +12,8 @@ const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Info = lazy(() => import('./pages/Info'));
 const ProductPage = lazy(() => import('./pages/ProductPage'));
+const Orders = lazy(() => import('./pages/Orders'));
+const CreateOrder = lazy(() => import('./pages/CreateOrder'));
 
 const router = createBrowserRouter([
   {
@@ -57,6 +59,8 @@ const router = createBrowserRouter([
       { path: 'cart', element: <Cart /> },
       { path: 'favorites', element: <Favorites /> },
       { path: 'profile', element: <Profile /> },
+      { path: 'orders', element: <Orders /> },
+      { path: 'create', element: <CreateOrder /> },
       { path: '*', element: <NotFound /> },
     ],
   },
