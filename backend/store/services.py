@@ -55,8 +55,10 @@ def create_link(user, cart, promo=None):
         promo_mult = Decimal('1') - (Decimal(
             str(promo.percent)) / Decimal('100'))
 
-    total_price = sum(item.product.discount_price * item.quantity
-                      for item in cart)
+    total_price = sum(
+            (item.product.discount_price or item.product.price) * item.quantity
+            for item in cart
+        )
     final_price = (total_price * promo_mult).quantize(
         Decimal("0.01"),
         rounding=ROUND_HALF_UP
@@ -68,7 +70,8 @@ def create_link(user, cart, promo=None):
             "vatType": "none",
             "name": item.product.title,
             "amount": str(
-                (item.product.discount_price * promo_mult).quantize(
+                ((item.product.discount_price or item.product.price) *
+                 promo_mult).quantize(
                     Decimal("0.01"), rounding=ROUND_HALF_UP)
             ),
             "quantity": item.quantity,
@@ -80,7 +83,7 @@ def create_link(user, cart, promo=None):
     payload = json.dumps({
         "Data": {
             "customerCode": code,
-            "amount": str(final_price),
+            "amount": int(final_price),
             "purpose": "Перевод за оказанные услуги",
             "redirectUrl": "https://example.com",
             "failRedirectUrl": "https://example.com/fail",
@@ -117,6 +120,7 @@ def create_link(user, cart, promo=None):
     response = requests.request("POST", url, headers=headers, data=payload)
 
     data = response.json()
+    logger.info('Создана ссылка на оплату. Детали заказа:')
     logger.info(data)
 
     return data['Data']['operationId'], data['Data']['paymentLink']

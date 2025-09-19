@@ -1,4 +1,5 @@
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
+from django.db.models.functions import Coalesce
 from api.exceptions import ExternalAPIError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -147,8 +148,10 @@ class OrderViewSet(mixins.ListModelMixin,
             'productorder_set__product'
         ).annotate(
             total_price=Sum(
-                F('productorder__quantity')
-                * F('productorder__product__discount_price')
+                F('productorder__quantity') * Coalesce(
+                    F('productorder__product__discount_price'),
+                    F('productorder__product__price')
+                )
             )
         ).annotate(
             final_price=ExpressionWrapper(
@@ -169,7 +172,8 @@ class OrderViewSet(mixins.ListModelMixin,
             )
 
         total_price = sum(
-            item.product.discount_price * item.quantity for item in cart
+            (item.product.discount_price or item.product.price) * item.quantity
+            for item in cart
         )
 
         if not (user.first_name and
@@ -197,6 +201,7 @@ class OrderViewSet(mixins.ListModelMixin,
         except Exception as e:
             print(f"Ошибка внешнего API: {e}")
             raise ExternalAPIError()
+
         order = Order.objects.create(
             client=user,
             operation_id=op_id,
