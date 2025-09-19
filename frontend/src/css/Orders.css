@@ -1,0 +1,225 @@
+/* Общая обёртка страницы заказов */
+.orders-container {
+  padding-left: 8%;
+  padding-right: 8%;
+  margin-bottom: 40px;
+  font-family: 'CarismaClassic', sans-serif;
+  color: #000000;
+}
+
+/* Заголовок страницы */
+.orders-header {
+  font-size: 35px;
+  color: #aa0f4e;
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+
+/* Инфо / ошибки */
+.orders-info,
+.orders-error,
+.orders-empty {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+/* Список карточек заказов */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Одна карточка заказа — визуально как cart-box */
+.order-card {
+  background: #fff;
+  border-bottom: 1px solid #adadad;
+  padding: 18px 0 18px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-card strong {
+    font-weight: 500;
+}
+
+/* Header карточки: две области (лево/право) */
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Левая часть — id и мета */
+.order-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.order-id {
+  font-size: 24px;
+  font-weight: 500;
+  color: #000000;
+}
+
+/* Правая часть — суммы и кнопка раскрытия */
+.order-right {
+  display: flex;
+  flex-direction: column;
+  align-items:end;
+  gap: 12px;
+}
+
+/* Кнопка-пилюля для показа товаров */
+.order-toggle-btn {
+  background: #aa0f4e;
+  border: 1px solid #efe0e7;
+  padding: 8px 12px;
+  border-radius: 20px 6px 20px 6px;
+  cursor: pointer;
+  font-family: 'CarismaClassic', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.order-toggle-btn:hover {
+  transform: translateY(-2px);
+  transform: scale(1.05);
+}
+.order-toggle-btn .chev {
+  transition: transform 160ms ease;
+  display:inline-block;
+}
+.order-toggle-btn .chev.open {
+  transform: rotate(180deg);
+}
+
+/* Тело карточки заказа */
+.order-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 18px;
+  color: #000000;
+}
+
+.order-total {
+    font-size: 20px;
+    color: #aa0f4e;
+    font-weight: 500;
+}
+
+.order-total strong {
+    font-size: 18px;
+    color: #000000;
+}
+
+/* Блок с товарами (скрываем/показываем) */
+.order-items-collapse {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 260ms ease, opacity 220ms ease, margin 220ms ease;
+  margin-top: 0;
+}
+.order-items-collapse.open {
+  max-height: 2000px; /* достаточно большое для раскрытия */
+  opacity: 1;
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap:10px;
+}
+
+/* Карточка товара в списке (по стилю похожа на cart-item) */
+.order-item-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #f0e6ea;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+/* Изображение товара */
+.order-item-img-wrap {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #faf5f7;
+  border: 1px solid #eee;
+  display: inline-block;
+}
+.order-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Инфо о товаре */
+.order-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.order-item-title {
+  font-size: 18px;
+  color: #111;
+  font-weight: 500;
+  text-decoration: none;
+}
+.order-item-sub {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 15px;
+  color: #666;
+}
+.order-item-oldprice {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.order-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 769px) {
+  .orders-container {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+
+  .order-card {
+    padding: 12px;
+  }
+
+  .order-item-img-wrap {
+    width: 64px;
+    height: 64px;
+  }
+
+  .order-id { font-size: 16px; }
+  .orders-header { font-size: 28px; }
+}
+
+/* Мелкие вспомогательные стили */
+.orders-list .order-card + .order-card {
+  margin-top: 6px;
+}
