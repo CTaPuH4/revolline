@@ -304,6 +304,68 @@ export const AuthProvider = ({ children }) => {
         [refreshAccessToken]
     );
 
+    /**
+     * authFetch - универсальная обёртка fetch, обрабатывающая 401:
+     * - добавляет API_BASE к относительным путям
+     * - по умолчанию ставит credentials: 'include' и Content-Type: application/json
+     * - при 401 пытается вызвать refreshAccessToken() и повторить запрос один раз
+     * - при неудаче вызывает logout() и выбрасывает ошибку с полезным сообщением
+     */
+    const authFetch = useCallback(
+        async (path, options = {}, retry = true) => {
+            const url = path.startsWith("http") ? path : `${API_BASE}${path.startsWith("/") ? path : "/" + path}`;
+            const defaultHeaders = { "Content-Type": "application/json" };
+            const opts = {
+                credentials: "include",
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...(options.headers || {}),
+                },
+            };
+
+            let res;
+            try {
+                res = await fetch(url, opts);
+            } catch (e) {
+                // сетевые ошибки пробрасываем дальше
+                throw e;
+            }
+
+            // если 401 — пробуем обновить токен и повторить запрос один раз
+            if (res.status === 401 && retry) {
+                try {
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        return await authFetch(path, options, false);
+                    } else {
+                        // refresh не сработал — разлогиниваемся и кидаем ошибку
+                        try { await logout(); } catch (_) { /* ignore */ }
+                        const data = await safeJson(res);
+                        throw buildError(res, data);
+                    }
+                } catch (e) {
+                    try { await logout(); } catch (_) { /* ignore */ }
+                    throw e;
+                }
+            }
+
+            if (!res.ok) {
+                const data = await safeJson(res);
+                throw buildError(res, data);
+            }
+
+            if (res.status === 204) return null;
+
+            try {
+                return await res.json();
+            } catch {
+                return null;
+            }
+        },
+        [refreshAccessToken, logout]
+    );
+
     useEffect(() => {
         (async () => {
             try {
@@ -339,6 +401,7 @@ export const AuthProvider = ({ children }) => {
                 changePassword,
                 fetchUser,
                 refreshAccessToken,
+                authFetch,
             }}
         >
             {children}

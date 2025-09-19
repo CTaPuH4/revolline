@@ -27,7 +27,7 @@ python manage.py createsuperuser
 
 Запустить проект:
 ```
-python manage.py runserver runserver localhost:8000
+python manage.py runserver localhost:8000
 
 ```
 ---

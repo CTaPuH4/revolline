@@ -42,7 +42,6 @@ export default function UserProfile() {
   // Когда подтянулся контекстный user — заполняем поля
   useEffect(() => {
     if (user) {
-      // Приводим телефон к формату "+7" + digits after leading 7/8 (если есть)
       const rawPhone = user.phone ?? "";
       const digits = String(rawPhone).replace(/\D/g, "");
       let rest = "";
@@ -53,7 +52,6 @@ export default function UserProfile() {
       } else if (digits.startsWith("7")) {
         rest = digits.slice(1);
       } else {
-        // если номер начинается не с 7/8 — просто возьмём все цифры
         rest = digits;
       }
 
@@ -69,62 +67,41 @@ export default function UserProfile() {
   // общий обработчик для полей кроме телефона
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "phone") {
-      // телефон обрабатывается специальным обработчиком
-      return;
-    }
+    if (name === "phone") return;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Специальная логика для телефона:
+  // Телефон
   const handlePhoneChange = (e) => {
     const raw = e.target.value || "";
-    // Удаляем всё, кроме цифр из введённого
     const digits = raw.replace(/\D/g, "");
-
     let rest = digits;
-    // Если пользователь вставил или ввёл полный номер с ведущей 7/8, убираем её — мы добавим +7 сами
-    if (digits.startsWith("8") || digits.startsWith("7")) {
-      rest = digits.slice(1);
-    }
-
-    // Собираем окончательное значение
+    if (digits.startsWith("8") || digits.startsWith("7")) rest = digits.slice(1);
     const newVal = PREFIX + rest;
     setFormData((prev) => ({ ...prev, phone: newVal }));
   };
-
-  // Запрет на удаление префикса +7 (Backspace/Delete), если курсор в префиксе
   const handlePhoneKeyDown = (e) => {
     const selStart = e.target.selectionStart ?? 0;
     const selEnd = e.target.selectionEnd ?? 0;
-
-    // Если пытаются удалить символы в префиксе — блокируем
     if (
         (e.key === "Backspace" && selStart <= PREFIX.length) ||
         (e.key === "Delete" && selStart < PREFIX.length)
     ) {
-      // Разрешаем, если выделен диапазон, закрывающий часть вне префикса
       if (selEnd > PREFIX.length) {
-        // allow (user is deleting a selection that includes beyond prefix)
+        // allow
       } else {
         e.preventDefault();
       }
     }
   };
-
-  // При фокусе/клике не даём поставить курсор в префикс
   const ensureCaretAfterPrefix = () => {
     requestAnimationFrame(() => {
       const input = phoneInputRef.current;
       if (!input) return;
       const start = input.selectionStart ?? 0;
-      if (start < PREFIX.length) {
-        input.setSelectionRange(PREFIX.length, PREFIX.length);
-      }
+      if (start < PREFIX.length) input.setSelectionRange(PREFIX.length, PREFIX.length);
     });
   };
-
-  // Очистка вставки: оставляем только цифры, затем формируем +7...
   const handlePhonePaste = (e) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text") || "";
@@ -133,8 +110,6 @@ export default function UserProfile() {
     if (digits.startsWith("8") || digits.startsWith("7")) rest = digits.slice(1);
     const newVal = PREFIX + rest;
     setFormData((prev) => ({ ...prev, phone: newVal }));
-
-    // поставить каретку в конец
     requestAnimationFrame(() => {
       const input = phoneInputRef.current;
       if (input) {
@@ -147,20 +122,12 @@ export default function UserProfile() {
   const handlePasswordChange = (e) =>
       setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // format backend error to readable string
   const formatError = (err) => {
     if (!err) return "Ошибка";
-    // If our AuthContext throws an error with .response (payload) - prefer it
     const payload = err.response ?? err?.data ?? null;
-
     if (payload) {
       if (typeof payload === "string") return payload;
-      if (payload.detail) {
-        return Array.isArray(payload.detail)
-            ? payload.detail.join(" ")
-            : String(payload.detail);
-      }
-      // collect any nested values (arrays / objects -> strings)
+      if (payload.detail) return Array.isArray(payload.detail) ? payload.detail.join(" ") : String(payload.detail);
       const collected = [];
       const collect = (v) => {
         if (v == null) return;
@@ -171,8 +138,6 @@ export default function UserProfile() {
       collect(payload);
       if (collected.length) return collected.join(" ");
     }
-
-    // fallback to message
     if (err.message) return err.message;
     return "Неизвестная ошибка";
   };
@@ -180,13 +145,13 @@ export default function UserProfile() {
   const handleSave = async () => {
     setMessage("");
     try {
-      // Передаём и имя, и фамилию, и телефон (phone уже в формате "+7...")
       await updateProfile(formData);
       setMessage("Данные успешно обновлены.");
     } catch (err) {
       setMessage(formatError(err));
     }
   };
+
   const handleChangePassword = async () => {
     setMessage("");
     try {
@@ -197,18 +162,15 @@ export default function UserProfile() {
       );
       setPasswordData({ password: "", new_password: "", new_password2: "" });
       setMessage("Пароль успешно изменён.");
-
       setTimeout(() => {
         logout()
             .then(() => navigate("/"))
             .catch((e) => console.error("Ошибка при выходе:", e));
       }, 2000);
-
     } catch (err) {
       setMessage(formatError(err));
     }
   };
-
 
   if ((loading && !user) || !user) {
     return <div className="loading-indicator">Загрузка...</div>;
@@ -216,108 +178,148 @@ export default function UserProfile() {
 
   return (
       <div className="user-profile-container">
-        <div className="user-profile-header">
-          <h1>Профиль</h1>
-          <p>{user.email}</p>
-        </div>
+        <div className="profile-card">
+          <div className="user-profile-header">
+            <div className="header-left">
+              <h1>Профиль</h1>
+              <p>{user.email}</p>
+            </div>
+          </div>
 
-        {message && (
-            <div
-                className={
-                  message.toLowerCase().includes("успешно")
-                      ? "success-message"
-                      : "error-message"
+          {message && (
+              <div
+                  className={
+                    message.toLowerCase().includes("успешно") ? "success-message" : "error-message"
+                  }
+                  role="status"
+                  aria-live="polite"
+              >
+                {message}
+              </div>
+          )}
+          {!message && error && <div className="error-message">{error}</div>}
+
+          <div className="profile-grid">
+            {/* left */}
+            <div className="left-col">
+              <div className="card-inner">
+                <div className="info-card">
+                  {/* Заголовок внутри info-card: тот же стиль, что и у "Смена пароля" */}
+                  <h2 className="change-password-title">Данные пользователя</h2>
+
+                  <div className="user-info-group">
+                    <div className="user-info-field">
+                      <label>Имя</label>
+                      <input
+                          type="text"
+                          name="first_name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                      />
+                    </div>
+                    <div className="user-info-field">
+                      <label>Фамилия</label>
+                      <input
+                          type="text"
+                          name="last_name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                      />
+                    </div>
+                    <div className="user-info-field">
+                      <label>Отчество</label>
+                      <input
+                          type="text"
+                          name="patronymic"
+                          value={formData.patronymic}
+                          onChange={handleChange}
+                      />
+                    </div>
+                    <div className="user-info-field">
+                      <label>Телефон</label>
+                      <input
+                          ref={phoneInputRef}
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handlePhoneChange}
+                          onKeyDown={handlePhoneKeyDown}
+                          onFocus={ensureCaretAfterPrefix}
+                          onClick={ensureCaretAfterPrefix}
+                          onPaste={handlePhonePaste}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="left-actions">
+                  <button className="save-button" onClick={handleSave}>
+                    Сохранить
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* right */}
+            <aside className="right-col">
+              <div className="card-inner">
+                <div className="change-password-section">
+                  <h2 className="change-password-title">Смена пароля</h2>
+
+                  <div className="password-group">
+                    <label className="field-label">
+                      Старый пароль
+                      <input
+                          type="password"
+                          name="password"
+                          value={passwordData.password}
+                          onChange={handlePasswordChange}
+                      />
+                    </label>
+
+                    <label className="field-label">
+                      Новый пароль
+                      <input
+                          type="password"
+                          name="new_password"
+                          value={passwordData.new_password}
+                          onChange={handlePasswordChange}
+                      />
+                    </label>
+
+                    <label className="field-label">
+                      Повторите новый пароль
+                      <input
+                          type="password"
+                          name="new_password2"
+                          value={passwordData.new_password2}
+                          onChange={handlePasswordChange}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="password-actions">
+                  <button className="change-password-button" onClick={handleChangePassword}>
+                    Изменить пароль
+                  </button>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div className="user-actions" aria-hidden={false}>
+            <button
+                className="logout-button"
+                onClick={() =>
+                    logout()
+                        .then(() => navigate("/"))
+                        .catch((e) => console.error("Ошибка при выходе:", e))
                 }
             >
-              {message}
-            </div>
-        )}
-
-        {/* keep context error (if any) but prefer message */}
-        {!message && error && <div className="error-message">{error}</div>}
-
-        <div className="user-info-group">
-          <div className="user-info-field">
-            <label>Имя</label>
-            <input
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-            />
+              Выйти
+            </button>
           </div>
-          <div className="user-info-field">
-            <label>Фамилия</label>
-            <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-            />
-          </div>
-          <div className="user-info-field">
-            <label>Отчество</label>
-            <input
-                type="text"
-                name="patronymic"
-                value={formData.patronymic}
-                onChange={handleChange}
-            />
-          </div>
-          <div className="user-info-field">
-            <label>Телефон</label>
-            <input
-                ref={phoneInputRef}
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handlePhoneChange}
-                onKeyDown={handlePhoneKeyDown}
-                onFocus={ensureCaretAfterPrefix}
-                onClick={ensureCaretAfterPrefix}
-                onPaste={handlePhonePaste}
-            />
-          </div>
-        </div>
-
-        <button className="save-button" onClick={handleSave}>
-          Сохранить
-        </button>
-
-        <div className="change-password-section">
-          <h2 className="change-password-title">Смена пароля</h2>
-
-          <div className="password-group">
-          <input
-                type="password"
-                name="password"
-                placeholder="Старый пароль"
-                value={passwordData.password}
-                onChange={handlePasswordChange}
-            />
-            <input
-                type="password"
-                name="new_password"
-                placeholder="Новый пароль"
-                value={passwordData.new_password}
-                onChange={handlePasswordChange}
-            />
-            <input
-                type="password"
-                name="new_password2"
-                placeholder="Повторите новый пароль"
-                value={passwordData.new_password2}
-                onChange={handlePasswordChange}
-            />
-          </div>
-
-          <button
-              className="change-password-button"
-              onClick={handleChangePassword}
-
-          >
-            Изменить пароль
-          </button>
         </div>
       </div>
   );

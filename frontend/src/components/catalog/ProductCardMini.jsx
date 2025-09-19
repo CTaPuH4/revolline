@@ -46,13 +46,13 @@ export default function ProductCardMini({ product }) {
         try {
             if (prevFav) {
                 // Удаляем из избранного
-                await fetch(`${API_BASE}/api/favorites/delete/?product=${product.id}`, {
+                await fetch(`${API_BASE}/favorites/delete/?product=${product.id}`, {
                     method: "DELETE",
                     credentials: "include",
                 });
             } else {
                 // Добавляем в избранное
-                await fetch(`${API_BASE}/api/favorites/`, {
+                await fetch(`${API_BASE}/favorites/`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },

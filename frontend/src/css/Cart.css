@@ -157,6 +157,7 @@
 
 /* Button */
 .promo-code button {
+  margin-left: auto;
   height: 44px;
   padding: 0 16px;
   min-width: 72px;
@@ -193,6 +194,7 @@
 
 /* Applied promo — pill with remove control */
 .promo-applied {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -285,6 +287,7 @@
 .checkout-btn {
   display: flex;
   justify-content: center;
+  width: 100%;
   padding: 12px;
   background-color: #aa0f4e;
   color: #fff;
