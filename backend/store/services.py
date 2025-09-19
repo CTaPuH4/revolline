@@ -42,8 +42,8 @@ def get_code():
 
 def create_link(user, cart, promo=None):
     url = (
-        'https://enter.tochka.com/sandbox/' +
-        'v2/acquiring/v1.0/payments_with_receipt'
+        'https://enter.tochka.com/sandbox/'
+        + 'v2/acquiring/v1.0/payments_with_receipt'
     )
     token = config('PAYMENT_TOKEN')
 
@@ -56,9 +56,9 @@ def create_link(user, cart, promo=None):
             str(promo.percent)) / Decimal('100'))
 
     total_price = sum(
-            (item.product.discount_price or item.product.price) * item.quantity
-            for item in cart
-        )
+        (item.product.discount_price or item.product.price) * item.quantity
+        for item in cart
+    )
     final_price = (total_price * promo_mult).quantize(
         Decimal("0.01"),
         rounding=ROUND_HALF_UP
@@ -69,9 +69,9 @@ def create_link(user, cart, promo=None):
         products.append({
             "vatType": "none",
             "name": item.product.title,
-            "amount": str(
-                ((item.product.discount_price or item.product.price) *
-                 promo_mult).quantize(
+            "amount": float(
+                ((item.product.discount_price or item.product.price)
+                 * promo_mult).quantize(
                     Decimal("0.01"), rounding=ROUND_HALF_UP)
             ),
             "quantity": item.quantity,
@@ -83,7 +83,7 @@ def create_link(user, cart, promo=None):
     payload = json.dumps({
         "Data": {
             "customerCode": code,
-            "amount": int(final_price),
+            "amount": float(final_price),
             "purpose": "Перевод за оказанные услуги",
             "redirectUrl": "https://example.com",
             "failRedirectUrl": "https://example.com/fail",
