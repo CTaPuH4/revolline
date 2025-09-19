@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState} from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../css/Cart.css';
 import "../css/UserProfile.css";
@@ -31,8 +31,7 @@ export default function Cart() {
   const [isCheckout, setIsCheckout] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
 
-  // --- selected shipping address and payload ---
-  const [selectedShippingAddress, setSelectedShippingAddress] = useState('');
+  // --- selected payload ---
   const [selectedShippingPayload, setSelectedShippingPayload] = useState(null);
 
   const apiFetch = async (path, options = {}) => {
