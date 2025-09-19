@@ -302,13 +302,20 @@ export default function Cart() {
       return;
     }
 
-    const fio = `${firstName || ''} ${lastName || ''} ${patronymic || ''}`.trim();
-    const shipping_address = selectedShippingAddress
-        || `${fio}${phone ? ', ' + phone : ''}`;
+    // ИСПРАВЛЕНО: используем данные из selectedShippingPayload для формирования shipping_address
+    const shipping_address_string = selectedShippingPayload?.address || selectedShippingPayload?.formatted || '';
 
     try {
-      const payload = { shipping_address };
+      // ИСПРАВЛЕНО: передаем полный объект с данными доставки в payload
+      const payload = {
+        shipping_address: shipping_address_string,
+        // Вы можете добавить сюда другие данные из виджета, если нужно
+        city: selectedShippingPayload?.city,
+        sdek_code: selectedShippingPayload?.code,
+        sdek_payload: selectedShippingPayload, // Можно отправить весь объект
+      };
       if (promo?.code) payload.promo = promo.code;
+
       const data = await apiFetch('/orders/', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -428,24 +435,24 @@ export default function Cart() {
 
               <div className="checkout-fields">
                 <div className="info-card">
-                <div className="user-info-group">
-                  <div className="user-info-field">
-                    <label>Имя</label>
-                    <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  <div className="user-info-group">
+                    <div className="user-info-field">
+                      <label>Имя</label>
+                      <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                    </div>
+                    <div className="user-info-field">
+                      <label>Фамилия</label>
+                      <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    </div>
+                    <div className="user-info-field">
+                      <label>Отчество</label>
+                      <input type="text" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} />
+                    </div>
+                    <div className="user-info-field">
+                      <label>Телефон</label>
+                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    </div>
                   </div>
-                  <div className="user-info-field">
-                    <label>Фамилия</label>
-                    <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                  </div>
-                  <div className="user-info-field">
-                    <label>Отчество</label>
-                    <input type="text" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} />
-                  </div>
-                  <div className="user-info-field">
-                    <label>Телефон</label>
-                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                  </div>
-                </div>
                 </div>
 
                 {/* --- CDEK Widget --- */}
@@ -454,7 +461,13 @@ export default function Cart() {
                       apiKey={import.meta.env.VITE_YANDEX_API_KEY}
                       servicePath={import.meta.env.VITE_CDEK_SERVICE_PATH}
                       defaultLocation="Москва"
-                      from={{ city: "Москва" }}
+                      from={{
+                        country_code: 'RU',
+                        city: 'Новосибирск',
+                        postal_code: 630009,
+                        code: 270,
+                        address: 'ул. Большевистская, д. 101',
+                      }}
                       goods={items.map(item => ({
                         width: 20,
                         height: 10,
@@ -462,28 +475,32 @@ export default function Cart() {
                         weight: item.quantity * 1
                       }))}
                       tariffs={{
-                        office: [], // убираем выбор тарифа для офисов
-                        door: []    // убираем доставку на дом
+                        office: [136],
+                        door: []
                       }}
                       hideDeliveryOptions={{
-                        office: false, // показываем офисы
-                        door: true     // скрываем доставку на дом
+                        office: false,
+                        door: true
                       }}
                       onShippingSelect={(payload) => {
                         console.log("Выбран пункт выдачи:", payload);
-                        if (payload?.address || payload?.name) {
-                          setSelectedShippingAddress(payload.address || payload.name);
-                          setSelectedShippingPayload(payload); // сохраняем весь payload
-                        }
+                        // Оставляем только эту строку, так как она уже сохраняет весь объект
+                        setSelectedShippingPayload(payload);
                       }}
                   />
-
                 </div>
 
-                    <div style={{ marginTop: 15, fontWeight: 500 }}>
-                      <span>Выбранный адрес доставки: </span>
-                      <span>{selectedShippingAddress}</span>
-                    </div>
+                <div style={{ marginTop: 15, fontWeight: 500 }}>
+                  <span>Выбранный адрес доставки: </span>
+                  {/* ИСПРАВЛЕНО: используем selectedShippingPayload для отображения полного адреса */}
+                  <span>
+                        {selectedShippingPayload ? (
+                            `${selectedShippingPayload.city}, ${selectedShippingPayload.address || selectedShippingPayload.name}`
+                        ) : (
+                            'не выбран'
+                        )}
+                    </span>
+                </div>
 
 
                 {checkoutError && <p className="error" style={{ color: 'crimson' }}>{checkoutError}</p>}
