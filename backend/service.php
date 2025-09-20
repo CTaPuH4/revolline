@@ -274,9 +274,6 @@ class service
             'client_secret' => $this->secret,
         ), true);
 
-        // --- DEBUG: сохраним ответ в файл ---
-        file_put_contents(__DIR__ . '/service_oauth_response.json', $token['result']);
-
         $this->endMetrics('auth', 'Server Auth Time', $time);
 
         $result = json_decode($token['result'], true);
