@@ -1,8 +1,8 @@
-// pages/ProductPage.jsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import ProductCard from "../components/ProductCard";
+import RecommendedSection from "../components/RecommendedSection";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -13,7 +13,7 @@ export default function ProductPage() {
 
     useEffect(() => {
         axios.get(`${API_BASE}/products/${id}/`, {
-            withCredentials: true, // <-- добавлено
+            withCredentials: true,
         })
             .then((res) => setProduct(res.data))
             .catch((err) => console.error("Ошибка загрузки продукта:", err))
@@ -23,5 +23,15 @@ export default function ProductPage() {
     if (loading) return <div className="product-loading">Загрузка...</div>;
     if (!product) return <div className="product-error">Товар не найден</div>;
 
-    return <ProductCard product={product} />;
+    return (
+        <div className="product-page-container">
+            <ProductCard product={product} />
+
+            <RecommendedSection
+                // Передаем slug категории, а не id
+                categorySlug={product.categories?.[0]?.slug}
+                currentProductId={product.id}
+            />
+        </div>
+    );
 }
