@@ -141,11 +141,13 @@ class OrdersSerializer(serializers.ModelSerializer):
             'promo',
             'final_price',
             'shipping_address',
-            'items'
+            'tracking_number',
+            'items',
         )
         read_only_fields = (
             'id',
             'status',
             'payment_link',
             'created_at',
+            'tracking_number',
         )
