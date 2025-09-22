@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../css/Cart.css';
 import "../css/UserProfile.css";
@@ -34,6 +34,34 @@ export default function Cart() {
   // --- selected payload ---
   const [selectedShippingPayload, setSelectedShippingPayload] = useState(null);
 
+  // --- validation/errors ---
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [checkoutError, setCheckoutError] = useState(null);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+
+  // -------------------------
+  // helper: normalize backend keys/texts (handles keys/texts with weird spaces)
+  // -------------------------
+  const normalizeBackendKey = (key) => {
+    if (!key) return '';
+    return String(key).replace(/\s+/g, '').toLowerCase();
+  };
+
+  const normalizeErrorText = (text) => {
+    if (text == null) return '';
+    let t = String(text).trim();
+    // collapse repeating whitespace
+    t = t.replace(/\s+/g, ' ');
+    // heuristic: if the string contains an unusually high ratio of spaces (likely letters separated by spaces),
+    // remove all spaces to restore words
+    const spaces = (t.match(/ /g) || []).length;
+    const ratio = t.length > 0 ? spaces / t.length : 0;
+    if (ratio > 0.35) {
+      t = t.replace(/ /g, '');
+    }
+    return t;
+  };
+
   const apiFetch = async (path, options = {}) => {
     const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
     const opts = {
@@ -42,13 +70,25 @@ export default function Cart() {
       ...options,
     };
     const res = await fetch(url, opts);
+
     if (!res.ok) {
       const text = await res.text();
-      const err = new Error(`HTTP ${res.status}: ${text}`);
-      err.status = res.status;
-      throw err;
+      try {
+        const body = text ? JSON.parse(text) : null;
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        err.body = body;
+        throw err;
+      } catch {
+        const err = new Error(`HTTP ${res.status}: ${text}`);
+        err.status = res.status;
+        err.body = text;
+        throw err;
+      }
     }
+
     if (res.status === 204) return null;
+
     try {
       return await res.json();
     } catch {
@@ -103,6 +143,11 @@ export default function Cart() {
       const list = Array.isArray(data) ? data : data.results || [];
       const transformed = list.map(transformServerItem);
       setItems(transformed);
+
+      // инициализируем editQuantities чтобы инпуты были синхронизированы
+      const initialEdit = {};
+      transformed.forEach(it => { initialEdit[it.cartItemId] = String(it.quantity); });
+      setEditQuantities(initialEdit);
     } catch (err) {
       console.error('fetchCart error', err);
       setError('Не удалось загрузить корзину');
@@ -242,8 +287,6 @@ export default function Cart() {
   const [lastName, setLastName] = useState('');
   const [patronymic, setPatronymic] = useState('');
   const [phone, setPhone] = useState('+7');
-  const [checkoutError, setCheckoutError] = useState(null);
-  const [creatingOrder, setCreatingOrder] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -283,11 +326,37 @@ export default function Cart() {
     setIsCheckout(true);
   };
 
+  // validate checkout fields; returns true if ok, fills fieldErrors otherwise
+  const validateCheckout = () => {
+    const errs = {};
+    if (!firstName || !firstName.trim()) errs.firstName = 'Введите имя';
+    if (!lastName || !lastName.trim()) errs.lastName = 'Введите фамилию';
+    if (!patronymic || !patronymic.trim()) errs.patronymic = 'Введите отчество';
+
+    const digits = String(phone || '').replace(/\D/g, '');
+    // expect Russian full number including leading country digit (7) -> total 11 digits
+    if (digits.length < 11) errs.phone = 'Введите корректный телефон (например +7...)';
+
+    if (!selectedShippingPayload) errs.shipping = 'Выберите адрес доставки';
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const createOrder = async () => {
     setCheckoutError(null);
     setCreatingOrder(true);
+    setFieldErrors({});
+
+    // client-side validation
+    const ok = validateCheckout();
+    if (!ok) {
+      setCreatingOrder(false);
+      return;
+    }
 
     try {
+      // try to update profile first
       await updateProfile({
         first_name: firstName,
         last_name: lastName,
@@ -296,22 +365,42 @@ export default function Cart() {
       });
     } catch (err) {
       console.error('updateProfile failed', err);
-      setCheckoutError('Не удалось сохранить данные профиля');
+      // if backend returned structured field errors, map them
+      if (err && err.body && typeof err.body === 'object') {
+        const map = {};
+        for (const key of Object.keys(err.body)) {
+          const normKey = normalizeBackendKey(key);
+          const rawVal = err.body[key];
+          const text = Array.isArray(rawVal) ? rawVal.join(' ') : String(rawVal);
+          const cleanText = normalizeErrorText(text);
+
+          if (normKey === 'first_name' || normKey === 'firstname') map.firstName = cleanText;
+          else if (normKey === 'last_name' || normKey === 'lastname') map.lastName = cleanText;
+          else if (normKey === 'phone') map.phone = cleanText;
+          else if (normKey === 'patronymic' || normKey === 'middle_name') map.patronymic = cleanText;
+          else {
+            // unknown — push to general
+            setCheckoutError(prev => (prev ? prev + ' ' + cleanText : cleanText));
+          }
+        }
+        if (Object.keys(map).length > 0) setFieldErrors(map);
+        if (!checkoutError) setCheckoutError('Ошибка в данных профиля');
+      } else {
+        setCheckoutError('Не удалось сохранить данные профиля');
+      }
       setCreatingOrder(false);
       return;
     }
 
-    // ИСПРАВЛЕНО: используем данные из selectedShippingPayload для формирования shipping_address
+    // формируем адрес
     const shipping_address_string = selectedShippingPayload?.address || selectedShippingPayload?.formatted || '';
 
     try {
-      // ИСПРАВЛЕНО: передаем полный объект с данными доставки в payload
       const payload = {
         shipping_address: shipping_address_string,
-        // Вы можете добавить сюда другие данные из виджета, если нужно
         city: selectedShippingPayload?.city,
         sdek_code: selectedShippingPayload?.code,
-        sdek_payload: selectedShippingPayload, // Можно отправить весь объект
+        sdek_payload: selectedShippingPayload,
       };
       if (promo?.code) payload.promo = promo.code;
 
@@ -328,7 +417,34 @@ export default function Cart() {
       navigate('/orders');
     } catch (err) {
       console.error('createOrder failed', err);
-      setCheckoutError('Не удалось создать заказ. Попробуйте ещё раз.');
+
+      // если бэк вернул объект с ошибками — отобразим их рядом с полями
+      if (err && err.body) {
+        const body = err.body;
+        const map = {};
+        for (const key of Object.keys(body)) {
+          const normKey = normalizeBackendKey(key);
+          const rawVal = body[key];
+          const text = Array.isArray(rawVal) ? rawVal.join(' ') : String(rawVal);
+          const cleanText = normalizeErrorText(text);
+
+          if (normKey === 'first_name' || normKey === 'firstname') map.firstName = cleanText;
+          else if (normKey === 'last_name' || normKey === 'lastname') map.lastName = cleanText;
+          else if (normKey === 'phone') map.phone = cleanText;
+          else if (normKey === 'patronymic' || normKey === 'middle_name') map.patronymic = cleanText;
+          else if (normKey === 'shipping_address' || normKey === 'city' || normKey === 'sdek_code' || normKey === 'shipping') {
+            map.shipping = (map.shipping ? map.shipping + ' ' : '') + cleanText;
+          } else if (normKey === 'non_field_errors' || normKey === 'detail' || normKey === 'message') {
+            setCheckoutError(prev => (prev ? prev + ' ' + cleanText : cleanText));
+          } else {
+            // unknown key — append to general checkoutError
+            setCheckoutError(prev => (prev ? prev + ' ' + cleanText : cleanText));
+          }
+        }
+        if (Object.keys(map).length > 0) setFieldErrors(map);
+      } else {
+        setCheckoutError('Не удалось создать заказ. Попробуйте ещё раз.');
+      }
     } finally {
       setCreatingOrder(false);
     }
@@ -351,6 +467,69 @@ export default function Cart() {
     await createOrder();
   };
 
+  // ------------------
+  // Mемоизация пропсов для CDEK виджета — чтобы не пересоздавать объекты при каждом рендере
+  // ------------------
+
+  const goodsMemo = useMemo(() => items.map(item => ({
+    width: 20,
+    height: 10,
+    length: 15,
+    weight: item.quantity * 1,
+  })), [items]);
+
+  const fromMemo = useMemo(() => ({
+    country_code: 'RU',
+    city: 'Новосибирск',
+    postal_code: 630009,
+    code: 270,
+    address: 'ул. Большевистская, д. 101',
+  }), []);
+
+  const tariffsMemo = useMemo(() => ({
+    office: [136],
+    door: []
+  }), []);
+
+  const hideDeliveryOptionsMemo = useMemo(() => ({
+    office: false,
+    door: true
+  }), []);
+
+  const handleShippingSelect = useCallback((payload) => {
+    console.log("Выбран пункт выдачи:", payload);
+    setSelectedShippingPayload(payload);
+    // clear shipping field error on selection
+    setFieldErrors(prev => ({ ...prev, shipping: undefined }));
+  }, [setSelectedShippingPayload]);
+
+  const cdekWidgetElement = useMemo(() => (
+      <CdekWidgetReact
+          apiKey={import.meta.env.VITE_YANDEX_API_KEY}
+          servicePath={import.meta.env.VITE_CDEK_SERVICE_PATH}
+          defaultLocation="Москва"
+          from={fromMemo}
+          goods={goodsMemo}
+          tariffs={tariffsMemo}
+          hideDeliveryOptions={hideDeliveryOptionsMemo}
+          onShippingSelect={handleShippingSelect}
+      />
+  ), [fromMemo, goodsMemo, tariffsMemo, hideDeliveryOptionsMemo, handleShippingSelect]);
+
+  // helper to clear field error on change
+  const clearFieldError = (field) => {
+    setFieldErrors(prev => {
+      if (!prev || !prev[field]) return prev;
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+    setCheckoutError(null);
+  };
+
+  // ------------------
+  // JSX
+  // ------------------
   return (
       <main className='cart-page'>
         {/* Products block */}
@@ -437,61 +616,50 @@ export default function Cart() {
                   <div className="user-info-group">
                     <div className="user-info-field">
                       <label>Имя</label>
-                      <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                      <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => { setFirstName(e.target.value); clearFieldError('firstName'); }}
+                      />
+                      {fieldErrors.firstName && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.firstName}</p>}
                     </div>
                     <div className="user-info-field">
                       <label>Фамилия</label>
-                      <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                      <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => { setLastName(e.target.value); clearFieldError('lastName'); }}
+                      />
+                      {fieldErrors.lastName && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.lastName}</p>}
                     </div>
                     <div className="user-info-field">
                       <label>Отчество</label>
-                      <input type="text" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} />
+                      <input
+                          type="text"
+                          value={patronymic}
+                          onChange={(e) => { setPatronymic(e.target.value); clearFieldError('patronymic'); }}
+                      />
+                      {fieldErrors.patronymic && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.patronymic}</p>}
                     </div>
                     <div className="user-info-field">
                       <label>Телефон</label>
-                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                      <input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => { setPhone(e.target.value); clearFieldError('phone'); }}
+                      />
+                      {fieldErrors.phone && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.phone}</p>}
                     </div>
                   </div>
                 </div>
 
                 {/* --- CDEK Widget --- */}
                 <div className="cdek-widget-container" style={{ marginTop: 20 }}>
-                  <CdekWidgetReact
-                      apiKey={import.meta.env.VITE_YANDEX_API_KEY}
-                      servicePath={import.meta.env.VITE_CDEK_SERVICE_PATH}
-                      defaultLocation="Москва"
-                      from={{
-                        country_code: 'RU',
-                        city: 'Новосибирск',
-                        postal_code: 630009,
-                        code: 270,
-                        address: 'ул. Большевистская, д. 101',
-                      }}
-                      goods={items.map(item => ({
-                        width: 20,
-                        height: 10,
-                        length: 15,
-                        weight: item.quantity * 1
-                      }))}
-                      tariffs={{
-                        office: [136],
-                        door: []
-                      }}
-                      hideDeliveryOptions={{
-                        office: false,
-                        door: true
-                      }}
-                      onShippingSelect={(payload) => {
-                        console.log("Выбран пункт выдачи:", payload);
-                        // Оставляем только эту строку, так как она уже сохраняет весь объект
-                        setSelectedShippingPayload(payload);
-                      }}
-                  />
+                  {cdekWidgetElement}
                 </div>
 
                 <div style={{ marginTop: 15, fontWeight: 500 }}>
                   <span>Выбранный адрес доставки: </span>
-                  {/* ИСПРАВЛЕНО: используем selectedShippingPayload для отображения полного адреса */}
                   <span>
                         {selectedShippingPayload ? (
                             `${selectedShippingPayload.city}, ${selectedShippingPayload.address || selectedShippingPayload.name}`
@@ -500,7 +668,7 @@ export default function Cart() {
                         )}
                     </span>
                 </div>
-
+                {fieldErrors.shipping && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.shipping}</p>}
 
                 {checkoutError && <p className="error" style={{ color: 'crimson' }}>{checkoutError}</p>}
               </div>
@@ -579,6 +747,23 @@ export default function Cart() {
           >
             {creatingOrder ? 'Создаём заказ...' : (isCheckout ? 'Перейти к оплате' : 'Оформить заказ')}
           </button>
+
+          {/* === NEW: общие ошибки под кнопкой оформления === */}
+          {(checkoutError || Object.keys(fieldErrors).length > 0) && (
+              <div className="checkout-errors" style={{ marginTop: 12 }}>
+                {checkoutError && <p style={{ color: 'crimson', margin: 0 }}>{checkoutError}</p>}
+
+                {/* Показываем все fieldErrors как список — избегаем дублирования пустых значений */}
+                {Object.keys(fieldErrors).length > 0 && (
+                    <ul style={{ color: 'crimson', marginTop: 8, paddingLeft: 18 }}>
+                      {Object.entries(fieldErrors).map(([key, msg]) => (
+                          msg ? <li key={key} style={{ fontSize: 13 }}>{msg}</li> : null
+                      ))}
+                    </ul>
+                )}
+              </div>
+          )}
+          {/* === END NEW === */}
 
           {error && <p className="error">{error}</p>}
         </div>
