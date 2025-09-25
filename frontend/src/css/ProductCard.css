@@ -1,7 +1,7 @@
 /* Обёртка */
 .product-card-wrapper {
     margin: 0 auto;
-    padding: 32px;
+    padding-top: 32px;
     background: #fff;
     font-family: 'CarismaClassic', sans-serif;
     padding-left: 8%;
@@ -45,7 +45,7 @@
 }
 .main-image {
     max-width: 500px;
-    height: 550px;
+    height: 450px;
     border-radius: 8px;
     object-fit: contain;
     text-align: center;

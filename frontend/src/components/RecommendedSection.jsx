@@ -5,7 +5,7 @@ import Pagination from "../components/catalog/Pagination";
 import "../css/catalog/Catalog.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
-const itemsPerPage = 8;
+const itemsPerPage = 1;
 
 export default function RecommendedSection({ categorySlug}) {
     const [recommended, setRecommended] = useState([]);
@@ -61,7 +61,7 @@ export default function RecommendedSection({ categorySlug}) {
     }
 
     return (
-        <div className="recommended-section">
+        <div className="catalog-page">
             <h2>Рекомендуем также</h2>
             <div className="products">
                 {recommended.map((product) => (
