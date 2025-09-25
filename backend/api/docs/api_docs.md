@@ -59,6 +59,7 @@
 - Фильтрация по полям ['is_new', 'country', 'categories', 'price_min', 'has_discount', 'price_max'].
 - Поиск (?search) по полям ('title', 'description', 'pr_type').
 - Сортировка (?ordering) по полю price.
+- Изменение размера страницы (page_size) пагинатора.
 
 Полный список стран для фильтрации можно получить с помощью `http://127.0.0.1:8000/api/countries/`.
 #### Пример запроса: **GET** `http://127.0.0.1:8000/api/products/?is_new=&country=&categories=second&search=Описание&ordering=-price/`
