@@ -64,7 +64,7 @@ class Product(AbstractModel):
     description = models.TextField(
         'Описание',
     )
-    type = models.CharField(
+    pr_type = models.CharField(
         'Тип продукта',
         max_length=LONG_CHAR_MAX_LENGTH
     )

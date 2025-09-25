@@ -57,7 +57,7 @@
 ### Просмотр продуктов
 Возвращает все продукты. Возможен запрос к конкретному продукту по id.
 - Фильтрация по полям ['is_new', 'country', 'categories', 'price_min', 'has_discount', 'price_max'].
-- Поиск (?search) по полям ('title', 'description', 'type').
+- Поиск (?search) по полям ('title', 'description', 'pr_type').
 - Сортировка (?ordering) по полю price.
 
 Полный список стран для фильтрации можно получить с помощью `http://127.0.0.1:8000/api/countries/`.
@@ -73,7 +73,7 @@
             "id": 3,
             "title": "Третий",
             "description": "Описание третьего",
-            "type": "Тип продукта 3",
+            "pr_type": "Тип продукта 3",
             "price": 333,
             "discount_price": 30,
             "is_new": true,
@@ -107,7 +107,7 @@
             "id": 2,
             "title": "Второй",
             "description": "Описание второго",
-            "type": "Тип продукта 2",
+            "pr_type": "Тип продукта 2",
             "price": 222,
             "discount_price": 22,
             "is_new": true,

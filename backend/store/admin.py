@@ -46,7 +46,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'title',
-        'type',
+        'pr_type',
         'price',
         'discount_price',
         'full_weight',
@@ -56,7 +56,7 @@ class ProductAdmin(admin.ModelAdmin):
         'price',
         'discount_price',
     )
-    search_fields = ('title', 'description', 'type')
+    search_fields = ('title', 'description', 'pr_type')
     list_filter = ('categories', 'country', 'is_new')
     inlines = (ProductImageInline,)
 

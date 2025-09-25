@@ -45,7 +45,7 @@ class ProductViewSet(mixins.RetrieveModelMixin,
         DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter
     )
     filterset_class = ProductFilter
-    search_fields = ('title', 'description', 'type')
+    search_fields = ('title', 'description', 'pr_type')
     ordering_fields = ('discount_price',)
 
 
