@@ -1,6 +1,5 @@
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
 from django.db.models.functions import Coalesce
-from api.exceptions import ExternalAPIError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import decorators, filters, mixins, status, views, viewsets
@@ -8,6 +7,7 @@ from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from api.exceptions import ExternalAPIError
 from api.filters import ProductFilter
 from api.serializers import (CartSerializer, CategorySerializer,
                              FavoritesSerializer, OrdersSerializer,

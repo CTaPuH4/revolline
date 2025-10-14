@@ -1,7 +1,8 @@
 import json
 import logging
-from django.utils.deprecation import MiddlewareMixin
+
 from django.http import FileResponse, StreamingHttpResponse
+from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger('main')
 

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'rest_framework_simplejwt.token_blacklist',
+    "import_export",
 ]
 
 MIDDLEWARE = [
@@ -95,6 +96,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGS_DIR = os.path.join(BASE_DIR, 'logs/')
+os.makedirs(LOGS_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -108,7 +112,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/project.log'),
+            'filename': os.path.join(LOGS_DIR, 'project.log'),
             'formatter': 'verbose',
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 5,
