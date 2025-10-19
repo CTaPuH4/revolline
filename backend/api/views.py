@@ -176,10 +176,10 @@ class OrderViewSet(mixins.ListModelMixin,
             for item in cart
         )
 
-        if not (user.first_name and
-                user.last_name and
-                user.patronymic and
-                user.phone):
+        if not (user.first_name
+                and user.last_name
+                and user.patronymic
+                and user.phone):
             raise ValidationError(
                 {
                     'detail': ('Отсутствует информация о получателе.')
