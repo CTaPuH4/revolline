@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
@@ -15,7 +17,9 @@ from api.serializers import (CartSerializer, CategorySerializer,
                              SectionSerializer)
 from store.models import (Cart, Category, Favorites, Order, Product,
                           ProductOrder, Promocode, Section)
-from store.services import create_link
+from store.services import create_link, get_status
+
+logger = logging.getLogger('main')
 
 
 class CategoryViewSet(mixins.RetrieveModelMixin,
@@ -161,6 +165,29 @@ class OrderViewSet(mixins.ListModelMixin,
             )
         )
 
+    def list(self, request, *args, **kwargs):
+        self.update_orders_status(request.user)
+        return super().list(request, *args, **kwargs)
+
+    def update_orders_status(self, user):
+        """
+        Функция, обновлющая статусы заказов.
+        """
+        orders = user.orders.filter(status=Order.Status.NEW)
+        for order in orders:
+            try:
+                new_status = get_status(order.operation_id)
+                if new_status == 'APPROVED':
+                    order.status = Order.Status.PAID
+                    logger.info(f'Изменён статус заказа {order.id}: оплачен')
+                    order.save(update_fields=['status'])
+                elif new_status != 'CREATED':
+                    order.status = Order.Status.CANCELED
+                    logger.info(f'Изменён статус заказа {order.id}: отменён')
+                    order.save(update_fields=['status'])
+            except Exception as e:
+                logger.warning(f'Ошибка при обновлении заказа {order.id}: {e}')
+
     def perform_create(self, serializer):
         user = self.request.user
         promo = serializer.validated_data.get('promo')
@@ -199,7 +226,7 @@ class OrderViewSet(mixins.ListModelMixin,
         try:
             op_id, link = create_link(user, cart, promo)
         except Exception as e:
-            print(f"Ошибка внешнего API: {e}")
+            logger.warning(f'Ошибка внешнего API: {e}')
             raise ExternalAPIError()
 
         order = Order.objects.create(
