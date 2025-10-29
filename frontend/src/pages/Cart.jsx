@@ -398,9 +398,6 @@ export default function Cart() {
     try {
       const payload = {
         shipping_address: shipping_address_string,
-        city: selectedShippingPayload?.city,
-        sdek_code: selectedShippingPayload?.code,
-        sdek_payload: selectedShippingPayload,
       };
       if (promo?.code) payload.promo = promo.code;
 
