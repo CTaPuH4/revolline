@@ -138,8 +138,11 @@ const ConfirmReset = () => {
                         <button type="submit" className="confirm-reset-submit" disabled={status === 'loading'}>
                             {status === 'loading' ? 'Сохранение...' : 'Сохранить пароль'}
                         </button>
+                        <p>{errorDetails}</p>
                     </form>
+
                 ) : null}
+
 
                 {status === 'success' && (
                     <div className="activation-success">
