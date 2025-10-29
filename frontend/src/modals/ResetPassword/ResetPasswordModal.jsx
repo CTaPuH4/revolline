@@ -30,7 +30,7 @@ export default function ResetPasswordModal({ onClose}) {
 
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/api/reset/request/`, {
+            const res = await fetch(`${API_BASE}/reset/request/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
@@ -87,7 +87,7 @@ export default function ResetPasswordModal({ onClose}) {
                     <div style={{ marginTop: 12, color: "green", textAlign: "center" }}>{message}</div>
                 )}
                 {status === "error" && (
-                    <div style={{ marginTop: 12, color: "crimson", textAlign: "center" }}>{message}</div>
+                    <div style={{ marginTop: 12, color: "crimson", textAlign: "center"}}>{message}</div>
                 )}
 
                 <p className="auth-disclaimer" style={{ marginTop: 16 }}>

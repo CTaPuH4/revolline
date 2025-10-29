@@ -1,0 +1,103 @@
+/* Общая обёртка страницы — как orders-container, но красивее с плавным фоном и центрированием */
+.activation-container {
+    padding-left: 8%;
+    padding-right: 8%;
+    margin-bottom: 40px;
+    font-family: 'CarismaClassic', sans-serif;
+    color: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 80vh;
+    justify-content: center;
+    background: linear-gradient(to bottom, #f8f8f8, #ffffff);  /* Плавный градиент для красоты */
+    transition: background 0.3s ease;
+}
+
+/* Заголовок страницы — как orders-header, с лёгкой тенью и анимацией */
+.activation-header {
+    font-size: 35px;
+    color: #aa0f4e;
+    font-weight: 500;
+    margin-bottom: 18px;
+    text-shadow: 1px 1px 2px rgba(170, 15, 78, 0.15);  /* Мягкая тень для глубины */
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.activation-header:hover {
+    transform: translateY(-2px);  /* Лёгкий подъём для интерактивности */
+}
+
+/* Карточка активации — как order-card, но с закруглениями, тенью и плавным появлением */
+.activation-card {
+    background: #fff;
+    border-bottom: 1px solid #adadad;
+    padding: 24px;  /* Увеличил padding для воздуха */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 12px;  /* Закругления для красоты */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);  /* Мягкая тень для объёма */
+    max-width: 500px;
+    width: 100%;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.activation-card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);  /* Усиление тени на hover */
+    transform: translateY(-4px);  /* Лёгкий подъём */
+}
+
+/* Инфо / успех / ошибки — как orders-info, с улучшенной типографикой */
+.activation-info,
+.activation-success,
+.activation-error {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 12px;
+    text-align: center;
+    line-height: 1.5;  /* Лучшая читаемость */
+    transition: color 0.2s ease;
+}
+
+.activation-success {
+    color: #000000;  /* Зелёный для успеха, но близко к стилю */
+}
+
+.activation-error p {
+    color: #000000;  /* Как в ошибках Cart */
+    font-size: 14px;  /* Чуть меньше для деталей */
+    margin-top: 8px;
+}
+
+/* Ссылки — простые, без button-стиля, с плавным hover */
+.activation-link {
+    color: #aa0f4e;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 16px;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+    margin-top: 12px;
+}
+
+.activation-link:hover {
+    color: #88003c;  /* Темнее для контраста */
+    text-decoration: underline;
+}
+
+/* Адаптация для мобильных — как в Orders, с улучшениями */
+@media (max-width: 769px) {
+    .activation-container {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+
+    .activation-card {
+        padding: 18px;
+        border-radius: 10px;  /* Легче на мобильных */
+    }
+
+    .activation-header {
+        font-size: 28px;
+    }
+}

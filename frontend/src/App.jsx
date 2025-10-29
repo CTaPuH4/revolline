@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react';
 import Layout from './components/Layout';
 
+
+const Activate = lazy(() => import('./pages/Activate'));
 const Home = lazy(() => import('./pages/Home'));
 const Catalog = lazy(() => import('./pages/Catalog'));
 const New = lazy(() => import('./pages/New'));
@@ -14,6 +16,7 @@ const Info = lazy(() => import('./pages/Info'));
 const ProductPage = lazy(() => import('./pages/ProductPage'));
 const Orders = lazy(() => import('./pages/Orders'));
 const CreateOrder = lazy(() => import('./pages/CreateOrder'));
+const ConfirmReset  = lazy(() => import('./pages/ConfirmReset'));
 
 const router = createBrowserRouter([
   {
@@ -62,6 +65,8 @@ const router = createBrowserRouter([
       { path: 'orders', element: <Orders /> },
       { path: 'create', element: <CreateOrder /> },
       { path: '*', element: <NotFound /> },
+      { path: 'activate/:uidb64/:token', element: <Activate /> },
+      { path: 'reset', element: <ConfirmReset /> },
     ],
   },
 ]);

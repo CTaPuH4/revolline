@@ -48,7 +48,8 @@ export default function RegisterModal({ onClose, onBack }) {
                 </button>
                 <h2 className="auth-title">Регистрация успешна</h2>
                 <p className="auth-success-message">
-                  Теперь вы можете войти в систему.
+                  Необходимо подтвердить учетную запись.
+                  Письмо активации направлено на почту.
                 </p>
                 <button className="auth-button" onClick={onClose}>
                   OK
