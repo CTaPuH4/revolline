@@ -468,21 +468,6 @@ export default function Cart() {
   // Mемоизация пропсов для CDEK виджета — чтобы не пересоздавать объекты при каждом рендере
   // ------------------
 
-  const goodsMemo = useMemo(() => items.map(item => ({
-    width: 20,
-    height: 10,
-    length: 15,
-    weight: item.quantity * 1,
-  })), [items]);
-
-  const fromMemo = useMemo(() => ({
-    country_code: 'RU',
-    city: 'Новосибирск',
-    postal_code: 630009,
-    code: 270,
-    address: 'ул. Большевистская, д. 101',
-  }), []);
-
   const tariffsMemo = useMemo(() => ({
     office: [136],
     door: []
@@ -505,13 +490,11 @@ export default function Cart() {
           apiKey={import.meta.env.VITE_YANDEX_API_KEY}
           servicePath={import.meta.env.VITE_CDEK_SERVICE_PATH}
           defaultLocation="Москва"
-          from={fromMemo}
-          goods={goodsMemo}
           tariffs={tariffsMemo}
           hideDeliveryOptions={hideDeliveryOptionsMemo}
           onShippingSelect={handleShippingSelect}
       />
-  ), [fromMemo, goodsMemo, tariffsMemo, hideDeliveryOptionsMemo, handleShippingSelect]);
+  ), [tariffsMemo, hideDeliveryOptionsMemo, handleShippingSelect]);
 
   // helper to clear field error on change
   const clearFieldError = (field) => {

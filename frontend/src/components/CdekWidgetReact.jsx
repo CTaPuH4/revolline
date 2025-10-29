@@ -57,10 +57,8 @@ export default function CdekWidgetReact({
                     root: rootIdRef.current,
                     apiKey,
                     servicePath,
-                    from,
                     defaultLocation,
                     canChoose: true,
-                    goods: memoGoods,
                     // передаём tariffs только если он задан и непустой
                     ...(memoTariffs ? { tariffs: memoTariffs } : {}),
                     hideFilters: memoHideFilters,
