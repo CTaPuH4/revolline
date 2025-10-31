@@ -15,7 +15,7 @@ class ProductFilter(filters.FilterSet):
         field_name='discount_price', lookup_expr='lte'
     )
     categories = CharInFilter(
-        field_name="categories__slug", lookup_expr='in'
+        field_name='categories__slug', lookup_expr='in'
     )
     has_discount = filters.BooleanFilter(method='filter_has_discount')
 

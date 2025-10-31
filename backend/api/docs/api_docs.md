@@ -516,7 +516,6 @@
     "payment_link": "somelink",
     "total_price": "1111.00",
     "promo": "BRFF",
-    "final_price": "833.25",
     "shipping_address": "aboba",
     "items": [
         {

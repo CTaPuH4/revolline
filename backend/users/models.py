@@ -41,7 +41,7 @@ class CustomUserManager(BaseUserManager):
         token = default_token_generator.make_token(user)
 
         activation_link = (
-            f"{settings.FRONTEND_URL}/activate/{uid}/{token}/"
+            f'{settings.FRONTEND_URL}/activate/{uid}/{token}/'
         )
 
         send_mail(

@@ -283,6 +283,9 @@ class Order(models.Model):
         related_name='orders',
         verbose_name='Клиент',
     )
+    total_price = models.PositiveIntegerField(
+        'Сумма',
+    )
     operation_id = models.CharField(
         'ID операции',
         max_length=LONG_CHAR_MAX_LENGTH,
@@ -316,12 +319,12 @@ class Order(models.Model):
     )
 
     def __str__(self):
-        return f"Заказ #{self.id} — {self.get_status_display()}"
+        return f'Заказ #{self.id} — {self.get_status_display()}'
 
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
-        ordering = ('pk',)
+        ordering = ('-pk',)
 
 
 class ProductOrder(models.Model):

@@ -1,7 +1,5 @@
 import logging
 
-from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
-from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import decorators, filters, mixins, status, views, viewsets
@@ -123,8 +121,8 @@ class CountryListView(views.APIView):
         countries = (
             Product.objects
             .exclude(country__isnull=True)
-            .exclude(country__exact="")
-            .values_list("country", flat=True)
+            .exclude(country__exact='')
+            .values_list('country', flat=True)
             .distinct()
         )
         countries = sorted(set(map(str.strip, countries)))
@@ -150,29 +148,16 @@ class OrderViewSet(mixins.ListModelMixin,
             'promo'
         ).prefetch_related(
             'productorder_set__product'
-        ).annotate(
-            total_price=Sum(
-                F('productorder__quantity') * Coalesce(
-                    F('productorder__product__discount_price'),
-                    F('productorder__product__price')
-                )
-            )
-        ).annotate(
-            final_price=ExpressionWrapper(
-                F("total_price")
-                * (1 - (F("promo__percent") / Value(100.0))),
-                output_field=DecimalField(max_digits=12, decimal_places=2),
-            )
-        )
+        ).order_by('-pk')
 
     def list(self, request, *args, **kwargs):
         self.update_orders_status(request.user)
         return super().list(request, *args, **kwargs)
 
     def update_orders_status(self, user):
-        """
+        '''
         Функция, обновлющая статусы заказов.
-        """
+        '''
         orders = user.orders.filter(status=Order.Status.NEW)
         for order in orders:
             try:
@@ -198,7 +183,7 @@ class OrderViewSet(mixins.ListModelMixin,
                 {'detail': 'Заказ невозможно оформить - корзина пуста.'}
             )
 
-        total_price = sum(
+        cart_sum = sum(
             (item.product.discount_price or item.product.price) * item.quantity
             for item in cart
         )
@@ -213,7 +198,7 @@ class OrderViewSet(mixins.ListModelMixin,
                 }
             )
 
-        if promo and total_price < promo.min_price:
+        if promo and cart_sum < promo.min_price:
             raise ValidationError(
                 {
                     'detail': (
@@ -224,13 +209,14 @@ class OrderViewSet(mixins.ListModelMixin,
             )
 
         try:
-            op_id, link = create_link(user, cart, promo)
+            op_id, total_price, link = create_link(user, cart, promo)
         except Exception as e:
             logger.warning(f'Ошибка внешнего API: {e}')
             raise ExternalAPIError()
 
         order = Order.objects.create(
             client=user,
+            total_price=total_price,
             operation_id=op_id,
             payment_link=link,
             promo=promo,

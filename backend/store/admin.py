@@ -67,12 +67,14 @@ class OrderAdmin(admin.ModelAdmin):
         'id',
         'status',
         'tracking_number',
+        'total_price',
         'created_at',
         'client',
     )
     list_editable = ('status', 'tracking_number',)
     readonly_fields = (
         'client',
+        'total_price',
         'shipping_address',
         'operation_id',
         'payment_link',

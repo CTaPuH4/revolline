@@ -7,12 +7,13 @@ import requests
 from decouple import config
 
 from api.exceptions import ExternalAPIError
+from store.constants import DELIVERY_FEE, FREE_DELIVERY_TRESHOLD
 
 logger = logging.getLogger('main')
 
 
 def get_code():
-    conn = http.client.HTTPSConnection("enter.tochka.com")
+    conn = http.client.HTTPSConnection('enter.tochka.com')
     token = config('PAYMENT_TOKEN')
     payload = ''
     headers = {
@@ -27,7 +28,7 @@ def get_code():
         headers
     )
     res = conn.getresponse()
-    data = json.loads(res.read().decode("utf-8"))
+    data = json.loads(res.read().decode('utf-8'))
 
     if res.status == 200:
         try:
@@ -50,7 +51,7 @@ def get_code():
         headers
     )
     res = conn.getresponse()
-    data = json.loads(res.read().decode("utf-8"))
+    data = json.loads(res.read().decode('utf-8'))
 
     if res.status == 200:
         try:
@@ -86,45 +87,56 @@ def create_link(user, cart, promo=None):
         for item in cart
     )
     final_price = (total_price * promo_mult).quantize(
-        Decimal("0.01"),
+        Decimal('0.01'),
         rounding=ROUND_HALF_UP
     )
 
     products = []
     for item in cart:
         products.append({
-            "vatType": "none",
-            "name": item.product.title,
-            "amount": float(
+            'vatType': 'none',
+            'name': item.product.title,
+            'amount': float(
                 ((item.product.discount_price or item.product.price)
                  * promo_mult).quantize(
-                    Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    Decimal('0.01'), rounding=ROUND_HALF_UP)
             ),
-            "quantity": item.quantity,
-            "paymentMethod": "full_payment",
-            "paymentObject": "goods"
+            'quantity': item.quantity,
+            'paymentMethod': 'full_payment',
+            'paymentObject': 'goods'
         })
 
+    if total_price < FREE_DELIVERY_TRESHOLD:
+        products.append({
+            'vatType': 'none',
+            'name': 'Доставка',
+            'amount': DELIVERY_FEE,
+            'quantity': 1,
+            'paymentMethod': 'full_payment',
+            'paymentObject': 'service'
+        })
+        final_price += DELIVERY_FEE
+
     payload = json.dumps({
-        "Data": {
-            "customerCode": sup_info['customerCode'],
-            "amount": float(final_price),
-            "purpose": "Оплата заказа",
-            "redirectUrl": "https://example.com",
-            "failRedirectUrl": "https://example.com/fail",
-            "paymentMode": mer_data['paymentModes'],
-            "merchantId": mer_data['merchantId'],
-            "taxSystemCode": "usn_income_outcome",
-            "Client": {
-                "name": full_name,
-                "email": str(user.email),
-                "phone": '+' + str(user.phone)
+        'Data': {
+            'customerCode': sup_info['customerCode'],
+            'amount': float(final_price),
+            'purpose': 'Оплата заказа',
+            'redirectUrl': 'https://example.com',
+            'failRedirectUrl': 'https://example.com/fail',
+            'paymentMode': mer_data['paymentModes'],
+            'merchantId': mer_data['merchantId'],
+            'taxSystemCode': 'usn_income_outcome',
+            'Client': {
+                'name': full_name,
+                'email': str(user.email),
+                'phone': '+' + str(user.phone)
             },
-            "Items": products,
-            "Supplier": {
-                "phone": config('PHONE_NUMBER'),
-                "name": sup_info['shortName'],
-                "taxCode": sup_info['taxCode']
+            'Items': products,
+            'Supplier': {
+                'phone': config('PHONE_NUMBER'),
+                'name': sup_info['shortName'],
+                'taxCode': sup_info['taxCode']
             }
         }
     })
@@ -134,7 +146,7 @@ def create_link(user, cart, promo=None):
         'Authorization': f'Bearer {token}'
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request('POST', url, headers=headers, data=payload)
     data = response.json()
 
     if response.status_code == 200:
@@ -148,7 +160,7 @@ def create_link(user, cart, promo=None):
             'Создана ссылка на оплату. Детали:'
             f'Заказ {op_id}, ссылка: {link}'
         )
-        return op_id, link
+        return op_id, final_price, link
     else:
         logger.warning(
             f'Ошибка API Tochka ({response.status_code}): '
@@ -158,7 +170,7 @@ def create_link(user, cart, promo=None):
 
 
 def get_status(id):
-    conn = http.client.HTTPSConnection("enter.tochka.com")
+    conn = http.client.HTTPSConnection('enter.tochka.com')
     token = config('PAYMENT_TOKEN')
     payload = ''
     headers = {
@@ -166,13 +178,13 @@ def get_status(id):
         'Authorization': f'Bearer {token}'
     }
     conn.request(
-        "GET",
-        f"/uapi/acquiring/v1.0/payments/{id}",
+        'GET',
+        f'/uapi/acquiring/v1.0/payments/{id}',
         payload,
         headers
     )
     res = conn.getresponse()
-    data = json.loads(res.read().decode("utf-8"))
+    data = json.loads(res.read().decode('utf-8'))
     if res.status != 200:
         raise ExternalAPIError(
             f'Ошибка обновления заказа {id}, {res.status}:'

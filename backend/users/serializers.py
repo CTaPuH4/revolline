@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[
             UniqueValidator(
                 queryset=CustomUser.objects.all(),
-                message="Номер телефона уже используется."
+                message='Номер телефона уже используется.'
             )
         ],
         error_messages={
@@ -37,7 +37,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     '''
     password = serializers.CharField(write_only=True, required=True)
     password2 = serializers.CharField(write_only=True, required=True,
-                                      label="Повторите пароль")
+                                      label='Повторите пароль')
 
     class Meta:
         model = CustomUser
