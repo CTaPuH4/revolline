@@ -8,6 +8,10 @@ from decouple import config
 
 from api.exceptions import ExternalAPIError
 from store.constants import DELIVERY_FEE, FREE_DELIVERY_TRESHOLD
+from store.models import Order
+
+from django.utils import timezone
+from datetime import timedelta
 
 logger = logging.getLogger('main')
 
@@ -191,3 +195,26 @@ def get_status(id):
             f'{json.dumps(data, ensure_ascii=False)}'
         )
     return data['Data']['Operation'][0]['status']
+
+
+def status_update(orders):
+    for order in orders:
+        try:
+            new_status = get_status(order.operation_id)
+            if new_status == 'APPROVED':
+                order.status = Order.Status.PAID
+                logger.info(f'Изменён статус заказа {order.id}: оплачен')
+                order.save(update_fields=['status'])
+            elif new_status != 'CREATED':
+                order.status = Order.Status.CANCELED
+                logger.info(f'Изменён статус заказа {order.id}: отменён')
+                order.save(update_fields=['status'])
+        except Exception as e:
+            logger.warning(f'Ошибка при обновлении заказа {order.id}: {e}')
+        if (
+            order.status == Order.Status.NEW
+            and order.created_at + timedelta(days=7) < timezone.now()
+        ):
+            order.status = Order.Status.CANCELED
+            order.save(update_fields=['status'])
+            logger.info(f'Заказ {order.id} отменён по истечении 7 дней')

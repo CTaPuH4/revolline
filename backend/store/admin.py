@@ -1,7 +1,12 @@
+import logging
+
 from django.contrib import admin
 
 from store.models import (Category, Order, Product, ProductImage, ProductOrder,
                           Promocode, Section)
+from store.services import status_update
+
+logger = logging.getLogger('main')
 
 
 class ProductImageInline(admin.TabularInline):
@@ -82,6 +87,11 @@ class OrderAdmin(admin.ModelAdmin):
     )
     list_filter = ('status',)
     inlines = (ProductOrderInline,)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        status_update(qs.filter(status=Order.Status.NEW))
+        return qs
 
 
 @admin.register(Promocode)

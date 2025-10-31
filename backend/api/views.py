@@ -15,7 +15,7 @@ from api.serializers import (CartSerializer, CategorySerializer,
                              SectionSerializer)
 from store.models import (Cart, Category, Favorites, Order, Product,
                           ProductOrder, Promocode, Section)
-from store.services import create_link, get_status
+from store.services import create_link, status_update
 
 logger = logging.getLogger('main')
 
@@ -151,27 +151,9 @@ class OrderViewSet(mixins.ListModelMixin,
         ).order_by('-pk')
 
     def list(self, request, *args, **kwargs):
-        self.update_orders_status(request.user)
+        orders = request.user.orders.filter(status=Order.Status.NEW)
+        status_update(orders)
         return super().list(request, *args, **kwargs)
-
-    def update_orders_status(self, user):
-        '''
-        Функция, обновлющая статусы заказов.
-        '''
-        orders = user.orders.filter(status=Order.Status.NEW)
-        for order in orders:
-            try:
-                new_status = get_status(order.operation_id)
-                if new_status == 'APPROVED':
-                    order.status = Order.Status.PAID
-                    logger.info(f'Изменён статус заказа {order.id}: оплачен')
-                    order.save(update_fields=['status'])
-                elif new_status != 'CREATED':
-                    order.status = Order.Status.CANCELED
-                    logger.info(f'Изменён статус заказа {order.id}: отменён')
-                    order.save(update_fields=['status'])
-            except Exception as e:
-                logger.warning(f'Ошибка при обновлении заказа {order.id}: {e}')
 
     def perform_create(self, serializer):
         user = self.request.user
