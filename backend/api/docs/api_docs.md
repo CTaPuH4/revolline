@@ -4,7 +4,7 @@
 
 ### Просмотр разделов
 Возвращает все разделы и их категории. Возможен запрос к конкретному разделу по слагу.
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/sections/`
+#### Пример запроса: **GET** `http://localhost:8000/api/sections/`
 #### Пример ответа: **200 OK**
 ```
 [
@@ -31,7 +31,7 @@
 
 ### Просмотр категорий
 Возвращает все категории. Возможен запрос к конкретной категории по слагу.
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/category/`
+#### Пример запроса: **GET** `http://localhost:8000/api/category/`
 #### Пример ответа: **200 OK**
 ```
 [
@@ -61,8 +61,8 @@
 - Сортировка (?ordering) по полю price.
 - Изменение размера страницы (page_size) пагинатора.
 
-Полный список стран для фильтрации можно получить с помощью `http://127.0.0.1:8000/api/countries/`.
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/products/?is_new=&country=&categories=second&search=Описание&ordering=-price/`
+Полный список стран для фильтрации можно получить с помощью `http://localhost:8000/api/countries/`.
+#### Пример запроса: **GET** `http://localhost:8000/api/products/?is_new=&country=&categories=second&search=Описание&ordering=-price/`
 #### Пример ответа: **200 OK**
 ```
 {
@@ -100,7 +100,7 @@
             "images": [
                 {
                     "id": 3,
-                    "image": "http://127.0.0.1:8000/images/products/Prefs.jpg"
+                    "image": "http://localhost:8000/images/products/image"
                 }
             ]
         },
@@ -134,7 +134,7 @@
             "images": [
                 {
                     "id": 2,
-                    "image": "http://127.0.0.1:8000/images/products/minion_zxQh7Tg.png"
+                    "image": "http://localhost:8000/images/products/image"
                 }
             ]
         }
@@ -147,7 +147,7 @@
 ## Users
 
 ### Регистрация нового пользователя
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/users/`
+#### Пример запроса: **POST** `http://localhost:8000/api/users/`
 ```
 {
     "email": "Email",
@@ -166,7 +166,7 @@
 
 ### Активация пользователя
 Активация пользователя по зашифрованным UserID и token из письма активации.
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/activate/uidb64/token/`
+#### Пример запроса: **GET** `http://localhost:8000/api/activate/uidb64/token/`
 #### Пример ответа: **200 ОК**
 ```
 {
@@ -178,7 +178,7 @@
 
 ### Запрос на восстановление пароля
 Запрос письма со ссылкой восстановления на почту.
-#### Пример запроса: **POST** `http://127.0.0.01:8000/api/reset/request/`
+#### Пример запроса: **POST** `http://localhost:8000/api/reset/request/`
 ```
 {
     "email": "Email"
@@ -195,7 +195,7 @@
 
 ### Восстановление пароля
 Изменение пароля по UserID и token из письма восстановления.
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/reset/`
+#### Пример запроса: **POST** `http://localhost:8000/api/reset/`
 ```
 {
     "uid": "uid",
@@ -214,7 +214,7 @@
 ---
 
 ### Получение JWT-токенов
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/login/`
+#### Пример запроса: **POST** `http://localhost:8000/api/login/`
 ```
 {
     "email": "Email",
@@ -230,14 +230,14 @@
 *Доступно только авторизованным пользователям.*
 
 Отправляет refresh-токен из cookie в blacklist, удаляет токены из cookie.
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/logout/`
+#### Пример запроса: **POST** `http://localhost:8000/api/logout/`
 
 #### Пример ответа: **205 Reset Content**
 
 ---
 
 ### Обновление JWT-токенов
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/token/refresh/`
+#### Пример запроса: **POST** `http://localhost:8000/api/token/refresh/`
 
 #### Пример ответа: **200 OK**
 Токены обновляются и устанавливаются в HttpOnly cookie 'access_token' и 'refresh_token'.
@@ -246,7 +246,7 @@
 
 ### Получение информации для текущего пользователя
 *Доступно только авторизованным пользователям.*
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/users/me/`
+#### Пример запроса: **GET** `http://localhost:8000/api/users/me/`
 #### Пример ответа: **200 OK**
 ```
 {
@@ -263,7 +263,7 @@
 
 ### Изменение информации для текущего пользователя
 *Доступно только авторизованным пользователям.*
-#### Пример запроса: **PATCH** `http://127.0.0.1:8000/api/users/me/`
+#### Пример запроса: **PATCH** `http://localhost:8000/api/users/me/`
 ```
 {
     "first_name": "new_first_name",
@@ -285,7 +285,7 @@
 
 ### Смена пароля
 *Доступно только авторизованным пользователям.*
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/users/me/change_password/`
+#### Пример запроса: **POST** `http://localhost:8000/api/users/me/change_password/`
 ```
 {
     "password": "OldPassword",
@@ -306,7 +306,7 @@
 ### Просмотр корзины
 *Доступно только авторизированным пользователям.*
 Возвращает все продукты в корзине текущего пользователя. Возможен запрос к конкретному товару в корзине по id
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/cart/`
+#### Пример запроса: **GET** `http://localhost:8000/api/cart/`
 #### Пример ответа: **200 OK**
 ```
 {
@@ -321,15 +321,7 @@
                 "title": "Test1",
                 "price": 500,
                 "discount_price": 110,
-                "product_weight": 11.0,
-                "images": [
-                    {
-                        "image": "http://localhost:8000/images/products/%D0%91%D0%B5%D0%B7%D1%8B%D0%BC%D1%8F%D0%BD%D0%BD%D1%8B%D0%B9.png"
-                    },
-                    {
-                        "image": "http://localhost:8000/images/products/AnomalyDX11AVX_2025-09-01_22-30-43.png"
-                    }
-                ]
+                "image": "http://localhost:8000/images/products/image"
             },
             "quantity": 1
         },
@@ -340,12 +332,7 @@
                 "title": "test2",
                 "price": 2222,
                 "discount_price": 22,
-                "product_weight": 2.0,
-                "images": [
-                    {
-                        "image": "http://localhost:8000/images/products/%D0%91%D0%B5%D1%81%D0%BA%D0%BE%D0%BD%D0%B5%D1%87%D0%BD%D0%BE%D0%B5-%D0%BB%D0%B5%D1%82%D0%BE-Soviet-Games-Ru-VN-%D0%98%D0%B3%D1%80%D1%8B-2233727.jpeg"
-                    }
-                ]
+                "image": "http://localhost:8000/images/products/image"
             },
             "quantity": 1
         }
@@ -357,7 +344,7 @@
 
 ### Добавление товара в корзину
 *Доступно только авторизированным пользователям.*
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/cart/`
+#### Пример запроса: **POST** `http://localhost:8000/api/cart/`
 ```
 {
     "product": 2,
@@ -372,13 +359,7 @@
         "title": "Второй",
         "price": 222,
         "discount_price": 22,
-        "product_weight": 22.0,
-        "images": [
-            {
-                "id": 2,
-                "image": "http://localhost:8000/images/products/minion_zxQh7Tg.png"
-            }
-        ]
+        "image": "http://localhost:8000/images/products/image"
     },
     "quantity": 2
 }
@@ -388,7 +369,7 @@
 
 ### Изменение количества товаров в корзине
 *Доступно только авторизированным пользователям.*
-#### Пример запроса: **PATCH** `http://127.0.0.1:8000/api/cart/2/`
+#### Пример запроса: **PATCH** `http://localhost:8000/api/cart/2/`
 ```
 {
     "quantity": 22
@@ -403,13 +384,7 @@
         "title": "Первый",
         "price": 10,
         "discount_price": 5,
-        "product_weight": 11.0,
-        "images": [
-            {
-                "id": 1,
-                "image": "http://localhost:8000/images/products/binds_90P5gOF.jpg"
-            }
-        ]
+        "image": "http://localhost:8000/images/products/image"
     },
     "quantity": 22
 }
@@ -419,7 +394,7 @@
 
 ### Удаление товара из корзины
 *Доступно только авторизированным пользователям.*
-#### Пример запроса: **DELETE** `http://127.0.0.1:8000/api/cart/2/`
+#### Пример запроса: **DELETE** `http://localhost:8000/api/cart/2/`
 #### Пример ответа: **204 No Content**
 
 ---
@@ -430,7 +405,7 @@
 *Доступно только авторизированным пользователям.*
 
 Возвращает все избранные товары текущего пользователя. Возможен запрос к конкретному товару в избранном по id.
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/favorites/`
+#### Пример запроса: **GET** `http://localhost:8000/api/favorites/`
 #### Пример ответа: **200 OK**
 ```
 {
@@ -445,13 +420,7 @@
                 "title": "Первый",
                 "price": 10,
                 "discount_price": 5,
-                "product_weight": 11.0,
-                "images": [
-                    {
-                        "id": 1,
-                        "image": "http://localhost:8000/images/products/binds_90P5gOF.jpg"
-                    }
-                ]
+                "image": "http://localhost:8000/images/products/image"
             }
         }
     ]
@@ -462,7 +431,7 @@
 
 ### Добавление товара в избранное
 *Доступно только авторизированным пользователям.*
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/favorites/`
+#### Пример запроса: **POST** `http://localhost:8000/api/favorites/`
 ```
 {
     "product": 2
@@ -476,13 +445,7 @@
         "title": "Второй",
         "price": 222,
         "discount_price": 22,
-        "product_weight": 22.0,
-        "images": [
-            {
-                "id": 2,
-                "image": "http://localhost:8000/images/products/minion_zxQh7Tg.png"
-            }
-        ]
+        "image": "http://localhost:8000/images/products/image"
     }
 }
 ```
@@ -493,13 +456,13 @@
 *Доступно только авторизированным пользователям.*
 
 Удаление по id избранного:
-#### Пример запроса: **DELETE** `http://127.0.0.1:8000/api/favorites/2/`
+#### Пример запроса: **DELETE** `http://localhost:8000/api/favorites/2/`
 #### Пример ответа: **204 No Content**
 
 ---
 
 Удаление по id продукта:
-#### Пример запроса: **DELETE** `http://127.0.0.1:8000/api/favorites/delete/?product=2`
+#### Пример запроса: **DELETE** `http://localhost:8000/api/favorites/delete/?product=2`
 #### Пример ответа: **204 No Content**
 ---
 
@@ -507,7 +470,7 @@
 
 ### Проверка промокода
 
-#### Прмер запроса: **GET** `http://127.0.0.1:8000/api/promo/{promo_name}/`
+#### Прмер запроса: **GET** `http://localhost:8000/api/promo/{promo_name}/`
 #### Пример ответа: **200 ОК**
 ```
 {
@@ -524,7 +487,7 @@
 *Доступно только авторизированным пользователям.*
 
 Возвращает список заказов текущего пользователя.
-#### Пример запроса: **GET** `http://127.0.0.1:8000/api/orders/`
+#### Пример запроса: **GET** `http://localhost:8000/api/orders/`
 #### Пример ответа: **200 OK**
 ```
 {
@@ -547,12 +510,7 @@
                         "title": "Test1",
                         "price": 1111,
                         "discount_price": 111,
-                        "product_weight": 11.0,
-                        "images": [
-                            {
-                                "image": "http://localhost:8000/images/products/image"
-                            },
-                        ]
+                        "image": "http://localhost:8000/images/products/image"
                     },
                     "quantity": 1
                 }
@@ -566,7 +524,7 @@
 *Доступно только авторизированным пользователям.*
 
 Создаёт заказ для текущего пользователя из товаров корзины, возвращает ссылку для оплаты заказа.
-#### Пример запроса: **POST** `http://127.0.0.1:8000/api/orders/`
+#### Пример запроса: **POST** `http://localhost:8000/api/orders/`
 ```
 {
     "shipping_address": "someadress",
