@@ -9,59 +9,102 @@ import exapmle1 from "../assets/example1.jpg";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
 import CdekWidgetReact from "../components/CdekWidgetReact.jsx";
-
 const API_BASE = import.meta.env.VITE_API_BASE;
+
+/**
+ * Универсальная функция для извлечения "красивого" текста ошибки из тела ответа бэкенда.
+ * Обрабатывает:
+ * - { "detail": "С е р в и с   в р е м е н н о   н е д о с т у п е н" }
+ * - { "non_field_errors": [...] }
+ * - { "any_key": ["msg1", "msg2"] }
+ * - { "any_key": "msg" }
+ * - просто строку
+ */
+const extractCleanError = (body) => {
+  if (!body) return 'Неизвестная ошибка';
+
+  let raw = body;
+
+  // Если body — строка, попробуем распарсить как JSON (на случай, если fetch вернул строку)
+  if (typeof body === 'string') {
+    try {
+      raw = JSON.parse(body);
+    } catch {
+      // Если не JSON — просто нормализуем строку
+      return body.trim().replace(/\s+/g, ' ');
+    }
+  }
+
+  if (typeof raw !== 'object') return 'Неизвестная ошибка';
+
+  let messages = [];
+
+  // 1. detail / message / non_field_errors — часто используется DRF
+  if (raw.detail) messages.push(raw.detail);
+  if (raw.message) messages.push(raw.message);
+  if (Array.isArray(raw.non_field_errors)) messages.push(...raw.non_field_errors);
+
+  // 2. Перебираем все остальные ключи
+  Object.entries(raw).forEach(([key, value]) => {
+    // Пропускаем уже обработанные
+    if (['detail', 'message', 'non_field_errors'].includes(key)) return;
+
+    if (Array.isArray(value)) {
+      messages.push(...value);
+    } else if (typeof value === 'string') {
+      messages.push(value);
+    }
+  });
+
+  // Если ничего не нашли — fallback
+  if (messages.length === 0) return 'Ошибка сервера';
+
+  // Нормализация: убираем лишние пробелы, включая "С е р в и с"
+  const clean = messages
+      .map(msg => String(msg).trim())
+      .filter(Boolean)
+      .map(msg => {
+        // Если в строке много пробелов (>35% от длины) — скорее всего буквы разделены
+        const spaceRatio = (msg.match(/ /g) || []).length / msg.length;
+        if (spaceRatio > 0.35) {
+          return msg.replace(/ /g, '');
+        }
+        return msg.replace(/\s+/g, ' ');
+      })
+      .join(' ');
+
+  return clean || 'Ошибка сервера';
+};
 
 export default function Cart() {
   const { user, isAuthenticated, updateProfile } = useAuth();
   const navigate = useNavigate();
-
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editQuantities, setEditQuantities] = useState({});
-
   // --- promo states ---
   const [promoCode, setPromoCode] = useState('');
   const [applyingPromo, setApplyingPromo] = useState(false);
   const [promo, setPromo] = useState(null);
   const [promoError, setPromoError] = useState(null);
-
   // --- checkout UI state ---
   const [isCheckout, setIsCheckout] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-
   // --- selected payload ---
   const [selectedShippingPayload, setSelectedShippingPayload] = useState(null);
-
   // --- validation/errors ---
   const [fieldErrors, setFieldErrors] = useState({});
   const [checkoutError, setCheckoutError] = useState(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
+  // --- backend totals ---
+  const [cartTotal, setCartTotal] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [totalPriceWithDelivery, setTotalPriceWithDelivery] = useState(0);
 
   // -------------------------
-  // helper: normalize backend keys/texts (handles keys/texts with weird spaces)
+  // API helper
   // -------------------------
-  const normalizeBackendKey = (key) => {
-    if (!key) return '';
-    return String(key).replace(/\s+/g, '').toLowerCase();
-  };
-
-  const normalizeErrorText = (text) => {
-    if (text == null) return '';
-    let t = String(text).trim();
-    // collapse repeating whitespace
-    t = t.replace(/\s+/g, ' ');
-    // heuristic: if the string contains an unusually high ratio of spaces (likely letters separated by spaces),
-    // remove all spaces to restore words
-    const spaces = (t.match(/ /g) || []).length;
-    const ratio = t.length > 0 ? spaces / t.length : 0;
-    if (ratio > 0.35) {
-      t = t.replace(/ /g, '');
-    }
-    return t;
-  };
-
   const apiFetch = async (path, options = {}) => {
     const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
     const opts = {
@@ -70,25 +113,20 @@ export default function Cart() {
       ...options,
     };
     const res = await fetch(url, opts);
-
     if (!res.ok) {
       const text = await res.text();
+      let body = null;
       try {
-        const body = text ? JSON.parse(text) : null;
-        const err = new Error(`HTTP ${res.status}`);
-        err.status = res.status;
-        err.body = body;
-        throw err;
+        body = text ? JSON.parse(text) : null;
       } catch {
-        const err = new Error(`HTTP ${res.status}: ${text}`);
-        err.status = res.status;
-        err.body = text;
-        throw err;
+        body = text;
       }
+      const err = new Error(`HTTP ${res.status}`);
+      err.status = res.status;
+      err.body = body;
+      throw err;
     }
-
     if (res.status === 204) return null;
-
     try {
       return await res.json();
     } catch {
@@ -96,16 +134,18 @@ export default function Cart() {
     }
   };
 
+  // -------------------------
+  // Cart item transformation
+  // -------------------------
   const transformServerItem = (serverItem) => {
     const product = serverItem.product_data || serverItem.product || {};
     const firstImageObj = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null;
     const image = (firstImageObj && (firstImageObj.image || firstImageObj.url)) || product.image || exapmle1;
-
     return {
       cartItemId: serverItem.id,
       productId: product.id,
       title: product.title || product.name || 'Без названия',
-      type: product.type || '',
+      type: product.pr_type || '',
       price: product.price ?? 0,
       discount_price: product.discount_price ?? product.price ?? 0,
       quantity: serverItem.quantity ?? 1,
@@ -117,40 +157,42 @@ export default function Cart() {
   const handleQtyInputChange = (cartItemId, value) => {
     setEditQuantities(prev => ({ ...prev, [cartItemId]: value }));
   };
-
   const commitQuantity = (cartItemId) => {
     const raw = editQuantities[cartItemId];
     let num = parseInt(raw, 10);
-
     if (isNaN(num) || num <= 0) num = 1;
     else if (num > 100) num = 100;
-
     setEditQuantities(prev => ({ ...prev, [cartItemId]: String(num) }));
-
     const item = items.find(i => i.cartItemId === cartItemId);
     if (!item) return;
-
     if (item.quantity !== num) {
       updateQuantity(cartItemId, num);
     }
   };
 
+  // -------------------------
+  // Fetch cart
+  // -------------------------
   const fetchCart = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await apiFetch('/cart/');
-      const list = Array.isArray(data) ? data : data.results || [];
+      const list = data.items || [];
       const transformed = list.map(transformServerItem);
       setItems(transformed);
-
-      // инициализируем editQuantities чтобы инпуты были синхронизированы
       const initialEdit = {};
-      transformed.forEach(it => { initialEdit[it.cartItemId] = String(it.quantity); });
+      transformed.forEach(it => {
+        initialEdit[it.cartItemId] = String(it.quantity);
+      });
       setEditQuantities(initialEdit);
+      setCartTotal(data.cart_total || 0);
+      setDeliveryFee(data.delivery_fee || 0);
+      setTotalPriceWithDelivery(data.total_price || 0);
     } catch (err) {
       console.error('fetchCart error', err);
-      setError('Не удалось загрузить корзину');
+      const cleanMsg = extractCleanError(err.body);
+      setError(cleanMsg);
     } finally {
       setIsLoading(false);
     }
@@ -161,6 +203,9 @@ export default function Cart() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // -------------------------
+  // Quantity update
+  // -------------------------
   const updateQuantity = async (cartItemId, newQty) => {
     setItems(prev => prev.map(it => it.cartItemId === cartItemId ? { ...it, quantity: newQty } : it));
     try {
@@ -168,9 +213,11 @@ export default function Cart() {
         method: 'PATCH',
         body: JSON.stringify({ quantity: newQty }),
       });
+      fetchCart();
     } catch (err) {
       console.error('updateQuantity failed', err);
-      setError('Не удалось обновить количество. Загружаю актуальные данные.');
+      const cleanMsg = extractCleanError(err.body);
+      setError(cleanMsg || 'Не удалось обновить количество');
       fetchCart();
     }
   };
@@ -182,7 +229,6 @@ export default function Cart() {
     setEditQuantities(prev => ({ ...prev, [cartItemId]: String(newQty) }));
     updateQuantity(cartItemId, newQty);
   };
-
   const decrementQty = (cartItemId) => {
     const item = items.find(i => i.cartItemId === cartItemId);
     if (!item || item.quantity <= 1) return;
@@ -191,15 +237,21 @@ export default function Cart() {
     updateQuantity(cartItemId, newQty);
   };
 
+  // -------------------------
+  // Remove / Clear
+  // -------------------------
   const removeItem = async (cartItemId) => {
     const prev = items;
     setItems(prevItems => prevItems.filter(i => i.cartItemId !== cartItemId));
     try {
       await apiFetch(`/cart/${cartItemId}/`, { method: 'DELETE' });
+      fetchCart();
     } catch (err) {
       console.error('removeItem failed', err);
-      setError('Не удалось удалить товар. Попробуйте снова.');
+      const cleanMsg = extractCleanError(err.body);
+      setError(cleanMsg || 'Не удалось удалить товар');
       setItems(prev);
+      fetchCart();
     }
   };
 
@@ -215,10 +267,13 @@ export default function Cart() {
       setPromo(null);
       setPromoCode('');
       setPromoError(null);
+      fetchCart();
     } catch (err) {
       console.error('clearCart failed', err);
-      setError('Не удалось очистить корзину полностью.');
+      const cleanMsg = extractCleanError(err.body);
+      setError(cleanMsg || 'Не удалось очистить корзину');
       setItems(prev);
+      fetchCart();
     } finally {
       setIsLoading(false);
     }
@@ -226,52 +281,43 @@ export default function Cart() {
 
   // --- Totals and promo ---
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalDiscountPrice = items.reduce((sum, item) => sum + item.discount_price * item.quantity, 0);
-  const totalDiscount = totalPrice - totalDiscountPrice;
+  const totalDiscount = totalPrice - cartTotal;
   const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const promoDiscountAmount = promo ? Number((cartTotal * (promo.percent / 100)).toFixed(2)) : 0;
+  const finalPriceWithPromo = promo ? Number((cartTotal - promoDiscountAmount).toFixed(2)) : cartTotal;
+  const grandTotal = promo ? finalPriceWithPromo + deliveryFee : totalPriceWithDelivery;
 
-  const promoDiscountAmount = promo ? Number((totalDiscountPrice * (promo.percent / 100)).toFixed(2)) : 0;
-  const finalPriceWithPromo = promo ? Number((totalDiscountPrice - promoDiscountAmount).toFixed(2)) : totalDiscountPrice;
-
+  // -------------------------
+  // Promo code
+  // -------------------------
   const applyPromo = async () => {
     setPromoError(null);
     setError(null);
-
     const code = promoCode.trim();
     if (!code) {
       setPromoError('Введите промокод');
       return;
     }
-
     if (items.length === 0) {
       setPromoError('Корзина пуста');
       return;
     }
-
     setApplyingPromo(true);
     try {
       const data = await apiFetch(`/promo/${encodeURIComponent(code)}/`);
       if (!data || typeof data.percent !== 'number') {
-        setPromoError('Неверный ответ от сервера по промокоду');
-        setApplyingPromo(false);
+        setPromoError('Неверный ответ от сервера');
         return;
       }
-
-      if (totalDiscountPrice < (data.min_price ?? 0)) {
-        setPromoError(`Минимальная сумма для промокода: ${data.min_price} ₽`);
-        setApplyingPromo(false);
+      if (cartTotal < (data.min_price ?? 0)) {
+        setPromoError(`Минимальная сумма: ${data.min_price} ₽`);
         return;
       }
-
       setPromo({ ...data, code });
-      setPromoError(null);
     } catch (err) {
       console.error('applyPromo failed', err);
-      if (err.status === 404) {
-        setPromoError('Промокод не найден');
-      } else {
-        setPromoError('Ошибка при проверке промокода');
-      }
+      const cleanMsg = extractCleanError(err.body);
+      setPromoError(cleanMsg);
     } finally {
       setApplyingPromo(false);
     }
@@ -307,56 +353,50 @@ export default function Cart() {
     e?.preventDefault?.();
     setCheckoutError(null);
     setError(null);
-
     if (items.length === 0) {
       setError('Корзина пуста');
       return;
     }
-
     if (promoError) {
       setError(promoError);
       return;
     }
-
     if (!isAuthenticated) {
       setShowAuth(true);
       return;
     }
-
     setIsCheckout(true);
   };
 
-  // validate checkout fields; returns true if ok, fills fieldErrors otherwise
+  // -------------------------
+  // Validation
+  // -------------------------
   const validateCheckout = () => {
     const errs = {};
-    if (!firstName || !firstName.trim()) errs.firstName = 'Введите имя';
-    if (!lastName || !lastName.trim()) errs.lastName = 'Введите фамилию';
-    if (!patronymic || !patronymic.trim()) errs.patronymic = 'Введите отчество';
-
+    if (!firstName?.trim()) errs.firstName = 'Введите имя';
+    if (!lastName?.trim()) errs.lastName = 'Введите фамилию';
+    if (!patronymic?.trim()) errs.patronymic = 'Введите отчество';
     const digits = String(phone || '').replace(/\D/g, '');
-    // expect Russian full number including leading country digit (7) -> total 11 digits
-    if (digits.length < 11) errs.phone = 'Введите корректный телефон (например +7...)';
-
+    if (digits.length < 11) errs.phone = 'Введите корректный телефон';
     if (!selectedShippingPayload) errs.shipping = 'Выберите адрес доставки';
-
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  // -------------------------
+  // Create order
+  // -------------------------
   const createOrder = async () => {
     setCheckoutError(null);
     setCreatingOrder(true);
     setFieldErrors({});
 
-    // client-side validation
-    const ok = validateCheckout();
-    if (!ok) {
+    if (!validateCheckout()) {
       setCreatingOrder(false);
       return;
     }
 
     try {
-      // try to update profile first
       await updateProfile({
         first_name: firstName,
         last_name: lastName,
@@ -365,40 +405,16 @@ export default function Cart() {
       });
     } catch (err) {
       console.error('updateProfile failed', err);
-      // if backend returned structured field errors, map them
-      if (err && err.body && typeof err.body === 'object') {
-        const map = {};
-        for (const key of Object.keys(err.body)) {
-          const normKey = normalizeBackendKey(key);
-          const rawVal = err.body[key];
-          const text = Array.isArray(rawVal) ? rawVal.join(' ') : String(rawVal);
-          const cleanText = normalizeErrorText(text);
-
-          if (normKey === 'first_name' || normKey === 'firstname') map.firstName = cleanText;
-          else if (normKey === 'last_name' || normKey === 'lastname') map.lastName = cleanText;
-          else if (normKey === 'phone') map.phone = cleanText;
-          else if (normKey === 'patronymic' || normKey === 'middle_name') map.patronymic = cleanText;
-          else {
-            // unknown — push to general
-            setCheckoutError(prev => (prev ? prev + ' ' + cleanText : cleanText));
-          }
-        }
-        if (Object.keys(map).length > 0) setFieldErrors(map);
-        if (!checkoutError) setCheckoutError('Ошибка в данных профиля');
-      } else {
-        setCheckoutError('Не удалось сохранить данные профиля');
-      }
+      const cleanMsg = extractCleanError(err.body);
+      setCheckoutError(cleanMsg || 'Ошибка сохранения профиля');
       setCreatingOrder(false);
       return;
     }
 
-    // формируем адрес
     const shipping_address_string = selectedShippingPayload?.address || selectedShippingPayload?.formatted || '';
 
     try {
-      const payload = {
-        shipping_address: shipping_address_string,
-      };
+      const payload = { shipping_address: shipping_address_string };
       if (promo?.code) payload.promo = promo.code;
 
       const data = await apiFetch('/orders/', {
@@ -406,42 +422,15 @@ export default function Cart() {
         body: JSON.stringify(payload),
       });
 
-      if (data && data.payment_link) {
+      if (data?.payment_link) {
         window.location.href = data.payment_link;
         return;
       }
-
       navigate('/orders');
     } catch (err) {
       console.error('createOrder failed', err);
-
-      // если бэк вернул объект с ошибками — отобразим их рядом с полями
-      if (err && err.body) {
-        const body = err.body;
-        const map = {};
-        for (const key of Object.keys(body)) {
-          const normKey = normalizeBackendKey(key);
-          const rawVal = body[key];
-          const text = Array.isArray(rawVal) ? rawVal.join(' ') : String(rawVal);
-          const cleanText = normalizeErrorText(text);
-
-          if (normKey === 'first_name' || normKey === 'firstname') map.firstName = cleanText;
-          else if (normKey === 'last_name' || normKey === 'lastname') map.lastName = cleanText;
-          else if (normKey === 'phone') map.phone = cleanText;
-          else if (normKey === 'patronymic' || normKey === 'middle_name') map.patronymic = cleanText;
-          else if (normKey === 'shipping_address' || normKey === 'city' || normKey === 'sdek_code' || normKey === 'shipping') {
-            map.shipping = (map.shipping ? map.shipping + ' ' : '') + cleanText;
-          } else if (normKey === 'non_field_errors' || normKey === 'detail' || normKey === 'message') {
-            setCheckoutError(prev => (prev ? prev + ' ' + cleanText : cleanText));
-          } else {
-            // unknown key — append to general checkoutError
-            setCheckoutError(prev => (prev ? prev + ' ' + cleanText : cleanText));
-          }
-        }
-        if (Object.keys(map).length > 0) setFieldErrors(map);
-      } else {
-        setCheckoutError('Не удалось создать заказ. Попробуйте ещё раз.');
-      }
+      const cleanMsg = extractCleanError(err.body);
+      setCheckoutError(cleanMsg);
     } finally {
       setCreatingOrder(false);
     }
@@ -450,40 +439,26 @@ export default function Cart() {
   const handleSummaryButton = async (e) => {
     e?.preventDefault?.();
     if (items.length === 0 || promoError) return;
-
     if (!isAuthenticated) {
       setShowAuth(true);
       return;
     }
-
     if (!isCheckout) {
       onStartCheckout();
       return;
     }
-
     await createOrder();
   };
 
-  // ------------------
-  // Mемоизация пропсов для CDEK виджета — чтобы не пересоздавать объекты при каждом рендере
-  // ------------------
-
-  const tariffsMemo = useMemo(() => ({
-    office: [136],
-    door: []
-  }), []);
-
-  const hideDeliveryOptionsMemo = useMemo(() => ({
-    office: false,
-    door: true
-  }), []);
-
+  // -------------------------
+  // CDEK Widget
+  // -------------------------
+  const tariffsMemo = useMemo(() => ({ office: [136], door: [] }), []);
+  const hideDeliveryOptionsMemo = useMemo(() => ({ office: false, door: true }), []);
   const handleShippingSelect = useCallback((payload) => {
-    console.log("Выбран пункт выдачи:", payload);
     setSelectedShippingPayload(payload);
-    // clear shipping field error on selection
     setFieldErrors(prev => ({ ...prev, shipping: undefined }));
-  }, [setSelectedShippingPayload]);
+  }, []);
 
   const cdekWidgetElement = useMemo(() => (
       <CdekWidgetReact
@@ -496,10 +471,8 @@ export default function Cart() {
       />
   ), [tariffsMemo, hideDeliveryOptionsMemo, handleShippingSelect]);
 
-  // helper to clear field error on change
   const clearFieldError = (field) => {
     setFieldErrors(prev => {
-      if (!prev || !prev[field]) return prev;
       const copy = { ...prev };
       delete copy[field];
       return copy;
@@ -507,34 +480,30 @@ export default function Cart() {
     setCheckoutError(null);
   };
 
-  // ------------------
+  // -------------------------
   // JSX
-  // ------------------
+  // -------------------------
   return (
       <main className='cart-page'>
-        {/* Products block */}
+        {/* Products */}
         {!isCheckout && (
             <div className='cart-products cart-box'>
               <div className="cart-header-row">
                 <h2 className='cart-header'>
-                  Товары
-                  <sup className="cart-items-count">{totalCount}</sup>
+                  Товары <sup className="cart-items-count">{totalCount}</sup>
                 </h2>
                 <button className="cart-clear-btn icon-button" onClick={clearCart} data-tooltip="Очистить корзину" disabled={isLoading}>
                   <img src={deleteIcon} alt="Очистить корзину" />
                 </button>
               </div>
-
               <div className="cart-items">
                 {isLoading && <p>Загрузка...</p>}
                 {!isLoading && items.length === 0 && <p className="empty-cart">Корзина пуста</p>}
-
                 {!isLoading && items.map(item => (
                     <div key={item.cartItemId} className="cart-item">
                       <a href={`/product/${item.productId}`} className="cart-item-link">
                         <img src={item.image} alt={item.title} className="cart-item-img" />
                       </a>
-
                       <div className="cart-item-info">
                         <h3 className="cart-item-title">
                           <a href={`/product/${item.productId}`} className="cart-item-title-link">{item.title}</a>
@@ -548,7 +517,6 @@ export default function Cart() {
                           <button onClick={() => decrementQty(item.cartItemId)} aria-label="Уменьшить">
                             <img src={minusIcon} alt="-" />
                           </button>
-
                           <input
                               type="number"
                               min="1"
@@ -557,25 +525,17 @@ export default function Cart() {
                               onChange={(e) => handleQtyInputChange(item.cartItemId, e.target.value)}
                               onBlur={() => commitQuantity(item.cartItemId)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.currentTarget.blur();
-                                } else if (e.key === 'ArrowUp') {
-                                  e.preventDefault();
-                                  incrementQty(item.cartItemId);
-                                } else if (e.key === 'ArrowDown') {
-                                  e.preventDefault();
-                                  decrementQty(item.cartItemId);
-                                }
+                                if (e.key === 'Enter') e.currentTarget.blur();
+                                else if (e.key === 'ArrowUp') { e.preventDefault(); incrementQty(item.cartItemId); }
+                                else if (e.key === 'ArrowDown') { e.preventDefault(); decrementQty(item.cartItemId); }
                               }}
                               className="cart-item-qty-input"
                           />
-
                           <button onClick={() => incrementQty(item.cartItemId)} aria-label="Увеличить">
                             <img src={plusIcon} alt="+" />
                           </button>
                         </div>
                       </div>
-
                       <button className="cart-item-remove" onClick={() => removeItem(item.cartItemId)}>×</button>
                     </div>
                 ))}
@@ -583,57 +543,38 @@ export default function Cart() {
             </div>
         )}
 
-
-        {/* Checkout form */}
+        {/* Checkout */}
         {isCheckout && (
             <div className="cart-products cart-box checkout-form">
               <div className="cart-header-row">
                 <h2 className='cart-header'>Оформление заказа</h2>
               </div>
-
               <div className="checkout-fields">
                 <div className="info-card">
                   <div className="user-info-group">
                     <div className="user-info-field">
                       <label>Имя</label>
-                      <input
-                          type="text"
-                          value={firstName}
-                          onChange={(e) => { setFirstName(e.target.value); clearFieldError('firstName'); }}
-                      />
+                      <input type="text" value={firstName} onChange={(e) => { setFirstName(e.target.value); clearFieldError('firstName'); }} />
                       {fieldErrors.firstName && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.firstName}</p>}
                     </div>
                     <div className="user-info-field">
                       <label>Фамилия</label>
-                      <input
-                          type="text"
-                          value={lastName}
-                          onChange={(e) => { setLastName(e.target.value); clearFieldError('lastName'); }}
-                      />
+                      <input type="text" value={lastName} onChange={(e) => { setLastName(e.target.value); clearFieldError('lastName'); }} />
                       {fieldErrors.lastName && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.lastName}</p>}
                     </div>
                     <div className="user-info-field">
                       <label>Отчество</label>
-                      <input
-                          type="text"
-                          value={patronymic}
-                          onChange={(e) => { setPatronymic(e.target.value); clearFieldError('patronymic'); }}
-                      />
+                      <input type="text" value={patronymic} onChange={(e) => { setPatronymic(e.target.value); clearFieldError('patronymic'); }} />
                       {fieldErrors.patronymic && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.patronymic}</p>}
                     </div>
                     <div className="user-info-field">
                       <label>Телефон</label>
-                      <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => { setPhone(e.target.value); clearFieldError('phone'); }}
-                      />
+                      <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); clearFieldError('phone'); }} />
                       {fieldErrors.phone && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.phone}</p>}
                     </div>
                   </div>
                 </div>
 
-                {/* --- CDEK Widget --- */}
                 <div className="cdek-widget-container" style={{ marginTop: 20 }}>
                   {cdekWidgetElement}
                 </div>
@@ -641,22 +582,16 @@ export default function Cart() {
                 <div style={{ marginTop: 15, fontWeight: 500 }}>
                   <span>Выбранный адрес доставки: </span>
                   <span>
-                        {selectedShippingPayload ? (
-                            `${selectedShippingPayload.city}, ${selectedShippingPayload.address || selectedShippingPayload.name}`
-                        ) : (
-                            'не выбран'
-                        )}
-                    </span>
+                {selectedShippingPayload
+                    ? `${selectedShippingPayload.city}, ${selectedShippingPayload.address || selectedShippingPayload.name}`
+                    : 'не выбран'}
+              </span>
                 </div>
-                {fieldErrors.shipping && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.shipping}</p>}
-
-                {checkoutError && <p className="error" style={{ color: 'crimson' }}>{checkoutError}</p>}
               </div>
             </div>
         )}
 
-
-        {/* Cart summary */}
+        {/* Summary */}
         <div className='cart-summary cart-box'>
           <div className="summary-header">
             <h2 className='cart-header'>Итог заказа</h2>
@@ -679,73 +614,58 @@ export default function Cart() {
                 </>
             ) : (
                 <div className="promo-applied">
-                  <span>Промокод применён: <strong>{promo.code}</strong> ({promo.percent}%)</span>
-                  <button className="remove-promo" onClick={removePromo} title="Удалить промокод">✕</button>
+                  <span>Промокод: <strong>{promo.code}</strong> ({promo.percent}%)</span>
+                  <button className="remove-promo" onClick={removePromo} title="Удалить">X</button>
                 </div>
             )}
-            {promoError && <p className="promo-error" style={{ color: 'crimson', marginTop: 6 }}>{promoError}</p>}
+            {promoError && <p style={{ color: 'crimson', marginTop: 6, fontSize: 14 }}>{promoError}</p>}
           </div>
 
           <div className="summary-line">
             <span>Товаров на сумму:</span>
             <span>{totalPrice} ₽</span>
           </div>
-
           <div className="summary-line">
-            <span>Ваша скидка (акции):</span>
+            <span>Скидка (акции):</span>
             <span>-{totalDiscount} ₽</span>
           </div>
+          <div className="summary-line">
+            <span>Доставка:</span>
+            <span>{deliveryFee} ₽</span>
+          </div>
 
-          {promo && !promoError ? (
+          {promo && !promoError && (
               <>
                 <div className="summary-line">
                   <span>Промоскидка ({promo.percent}%):</span>
                   <span>-{promoDiscountAmount} ₽</span>
                 </div>
-
                 <hr className="summary-divider" />
                 <div className="summary-total">
                   <span>Итого с промокодом:</span>
                   <span>{finalPriceWithPromo} ₽</span>
                 </div>
               </>
-          ) : (
-              <>
-                <hr className="summary-divider" />
-                <div className="summary-total">
-                  <span>Итого:</span>
-                  <span>{totalDiscountPrice} ₽</span>
-                </div>
-              </>
           )}
+
+          <hr className="summary-divider" />
+          <div className="summary-total">
+            <span>Всего к оплате:</span>
+            <span>{grandTotal} ₽</span>
+          </div>
 
           <button
               className="checkout-btn"
-              title={items.length === 0 ? 'Корзина пуста' : promoError ? promoError : (isCheckout ? 'Перейти к оплате' : 'Оформить заказ')}
               onClick={handleSummaryButton}
               disabled={creatingOrder || items.length === 0 || Boolean(promoError)}
           >
             {creatingOrder ? 'Создаём заказ...' : (isCheckout ? 'Перейти к оплате' : 'Оформить заказ')}
           </button>
 
-          {/* === NEW: общие ошибки под кнопкой оформления === */}
-          {(checkoutError || Object.keys(fieldErrors).length > 0) && (
-              <div className="checkout-errors" style={{ marginTop: 12 }}>
-                {checkoutError && <p style={{ color: 'crimson', margin: 0 }}>{checkoutError}</p>}
-
-                {/* Показываем все fieldErrors как список — избегаем дублирования пустых значений */}
-                {Object.keys(fieldErrors).length > 0 && (
-                    <ul style={{ color: 'crimson', marginTop: 8, paddingLeft: 18 }}>
-                      {Object.entries(fieldErrors).map(([key, msg]) => (
-                          msg ? <li key={key} style={{ fontSize: 13 }}>{msg}</li> : null
-                      ))}
-                    </ul>
-                )}
-              </div>
-          )}
-          {/* === END NEW === */}
-
-          {error && <p className="error">{error}</p>}
+          {/* Общие ошибки */}
+          {fieldErrors.shipping && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.shipping}</p>}
+          {checkoutError && <p style={{ color: 'crimson', marginTop: 12 }}>{checkoutError}</p>}
+          {error && <p style={{ color: 'crimson', marginTop: 12 }}>{error}</p>}
         </div>
 
         {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}

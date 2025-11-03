@@ -188,12 +188,12 @@
 }
 
 /* --- Иконки справа --- */
-.heaer-icons {
+.header-icons {
   display: flex;
   gap: 16px;
 }
 
-div.heaer-icons {
+div.header-icons {
   margin: 0;
 }
 
@@ -312,6 +312,26 @@ div.heaer-icons {
   }
 }
 
+/* --- Анимация для дропдауна каталога --- */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
 @media (max-width: 1024px) {
 
   .nav {
@@ -320,7 +340,7 @@ div.heaer-icons {
     padding: 0 10px 0 10px;
   }
 
-/* --- Responsive --- */
+  /* --- Responsive --- */
   @media (max-width: 768px) {
     .header {
       flex-direction: column;   /* элементы идут столбиком */
@@ -375,7 +395,7 @@ div.heaer-icons {
       margin: 6px auto 0 auto;  /* по центру */
     }
 
-    .heaer-icons {
+    .header-icons {
       order: 4;
       display: flex;
       justify-content: center;   /* центрируем иконки */
@@ -400,7 +420,7 @@ div.heaer-icons {
         justify-content: center;
         gap: 8px 12px;   /* центрируем пункты меню */
       }
-    
+
     }
 
     @media (max-width: 360px) {

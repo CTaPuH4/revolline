@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/catalog/CatalogDropdown.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-
-export default function CatalogDropdown() {
-    const [sections, setSections] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+const CatalogDropdown = forwardRef((props, ref) => {
+    const [sections, setSections] = React.useState([]);
+    const [selectedCategory, setSelectedCategory] = React.useState(null);
+    const [isTransitioning, setIsTransitioning] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState(null);
     const navigate = useNavigate();
 
-    useEffect(() => {
+    React.useEffect(() => {
         const fetchSections = async () => {
             try {
                 const response = await fetch(`${API_BASE}/sections/`);
@@ -42,15 +42,15 @@ export default function CatalogDropdown() {
     }, []);
 
     if (isLoading) {
-        return <div className="dropdown">Загрузка каталога...</div>;
+        return <div ref={ref} className="dropdown">Загрузка каталога...</div>;
     }
 
     if (error) {
-        return <div className="dropdown">Ошибка: {error}</div>;
+        return <div ref={ref} className="dropdown">Ошибка: {error}</div>;
     }
 
     if (sections.length === 0) {
-        return <div className="dropdown">Нет доступных разделов</div>;
+        return <div ref={ref} className="dropdown">Нет доступных разделов</div>;
     }
 
     const activeSection = sections.find(section => section.slug === selectedCategory) || sections[0];
@@ -62,15 +62,24 @@ export default function CatalogDropdown() {
         setSelectedCategory(section.slug);
     };
 
+    const onSectionHover = (section) => {
+        if (selectedCategory === section.slug) return;
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setSelectedCategory(section.slug);
+            setIsTransitioning(false);
+        }, 300); // Длительность анимации fade out
+    };
+
     return (
-        <div className="dropdown">
+        <div ref={ref} className="dropdown">
             <div className="dropdown-left">
                 <ul>
                     {sections.map((section) => (
                         <li
                             key={section.slug}
                             className={section.slug === activeSection.slug ? "active" : ""}
-                            onMouseEnter={() => setSelectedCategory(section.slug)} // превью по hover
+                            onMouseEnter={() => onSectionHover(section)} // анимация превью по hover
                             onClick={() => onSectionClick(section)} // переход по клику
                             role="button"
                             tabIndex={0}
@@ -82,7 +91,7 @@ export default function CatalogDropdown() {
                 </ul>
             </div>
 
-            <div className="dropdown-right">
+            <div className={`dropdown-right ${isTransitioning ? "transitioning" : ""}`}>
                 <ul>
                     {activeSection.categories?.map((cat) => (
                         <li key={cat.slug}>
@@ -99,4 +108,6 @@ export default function CatalogDropdown() {
             </div>
         </div>
     );
-}
+});
+
+export default CatalogDropdown;

@@ -39,9 +39,22 @@ export default function ResetPasswordModal({ onClose}) {
             const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                const text = data?.message || data?.detail || data || `Ошибка ${res.status}`;
+                let errorMsg = `Ошибка ${res.status}`;
+                if (data) {
+                    if (data.detail) errorMsg = data.detail;
+                    else if (data.message) errorMsg = data.message;
+                    else if (data.non_field_errors && Array.isArray(data.non_field_errors)) errorMsg = data.non_field_errors[0];
+                    else {
+                        const keys = Object.keys(data);
+                        if (keys.length > 0) {
+                            const val = data[keys[0]];
+                            if (Array.isArray(val) && val.length > 0) errorMsg = val[0];
+                            else if (typeof val === 'string') errorMsg = val;
+                        }
+                    }
+                }
                 setStatus("error");
-                setMessage(typeof text === "string" ? text : JSON.stringify(text));
+                setMessage(errorMsg);
             } else {
                 setStatus("ok");
                 setMessage(data?.message || "Письмо восстановления отправлено. Проверьте почту.");

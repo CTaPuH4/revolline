@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, forwardRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
 import RegisterModal from "../modals/Register/RegisterModal";
+import { CSSTransition } from "react-transition-group";
 import "../css/Header.css";
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search-icon.svg";
@@ -19,6 +20,7 @@ const Header = forwardRef((props, ref) => {
 
     const [showDropdown, setShowDropdown] = useState(false);
     const timeoutRef = useRef(null);
+    const dropdownRef = useRef(null);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [searchOpen, setSearchOpen] = useState(false);
@@ -129,7 +131,15 @@ const Header = forwardRef((props, ref) => {
                             onMouseLeave={handleMouseLeave}
                         >
                             <Link to="/catalog" className="nav-link">Каталог</Link>
-                            {showDropdown && <CatalogDropdown/>}
+                            <CSSTransition
+                                in={showDropdown}
+                                timeout={300}
+                                classNames="fade"
+                                unmountOnExit
+                                nodeRef={dropdownRef}
+                            >
+                                <CatalogDropdown ref={dropdownRef} />
+                            </CSSTransition>
                         </div>
                         <Link to="/new" className="nav-link">Новинки</Link>
                         <Link to="/sales" className="nav-link">Акции</Link>
@@ -198,10 +208,10 @@ const Header = forwardRef((props, ref) => {
                     </div>
 
                     {/* Иконки */}
-                    <div className="heaer-icons">
+                    <div className="header-icons">
                         {!searchOpen && (
                             <button
-                                className="search-toggle  icon-button"
+                                className="search-toggle icon-button"
                                 onClick={() => setSearchOpen(true)}
                                 aria-label="Открыть поиск"
                                 data-tooltip="Поиск"
