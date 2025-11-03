@@ -6,6 +6,10 @@ from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger('main')
 
+SENSITIVE_FIELDS = (
+    'password', 'password2', 'new_password', 'new_password2', 'token', 'uid'
+)
+
 
 class DetailedLoggingMiddleware(MiddlewareMixin):
     '''
@@ -24,8 +28,10 @@ class DetailedLoggingMiddleware(MiddlewareMixin):
             except Exception:
                 body = str(body)
 
-            if isinstance(body, dict) and 'password' in body:
-                body['password'] = '***'
+            if isinstance(body, dict):
+                for key in SENSITIVE_FIELDS:
+                    if key in body:
+                        body[key] = '***'
 
             request._log_body = body
         except Exception:

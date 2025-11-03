@@ -1,6 +1,7 @@
 import logging
 
 from django.db.models import F, Sum
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import decorators, filters, mixins, status, views, viewsets
@@ -66,7 +67,10 @@ class CartViewSet(viewsets.ModelViewSet):
         response = super().list(request, *args, **kwargs)
 
         cart_total = self.get_queryset().aggregate(
-            total=Sum(F('product__discount_price') * F('quantity'))
+            total=Sum(Coalesce(
+                F('product__discount_price'),
+                F('product__price')
+            ) * F('quantity'))
         )['total'] or 0
 
         if cart_total >= FREE_DELIVERY_TRESHOLD:
