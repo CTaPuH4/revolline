@@ -310,22 +310,40 @@
 #### Пример ответа: **200 OK**
 ```
 {
-    "count": 1,
-    "next": null,
-    "previous": null,
-    "results": [
+    "cart_total": 132,
+    "delivery_fee": 300,
+    "total_price": 432,
+    "items": [
         {
-            "id",
+            "id": 44,
             "product_data": {
                 "id": 1,
-                "title": "Первый",
-                "price": 10,
-                "discount_price": 5,
+                "title": "Test1",
+                "price": 500,
+                "discount_price": 110,
                 "product_weight": 11.0,
                 "images": [
                     {
-                        "id": 1,
-                        "image": "http://localhost:8000/images/products/binds_90P5gOF.jpg"
+                        "image": "http://localhost:8000/images/products/%D0%91%D0%B5%D0%B7%D1%8B%D0%BC%D1%8F%D0%BD%D0%BD%D1%8B%D0%B9.png"
+                    },
+                    {
+                        "image": "http://localhost:8000/images/products/AnomalyDX11AVX_2025-09-01_22-30-43.png"
+                    }
+                ]
+            },
+            "quantity": 1
+        },
+        {
+            "id": 45,
+            "product_data": {
+                "id": 2,
+                "title": "test2",
+                "price": 2222,
+                "discount_price": 22,
+                "product_weight": 2.0,
+                "images": [
+                    {
+                        "image": "http://localhost:8000/images/products/%D0%91%D0%B5%D1%81%D0%BA%D0%BE%D0%BD%D0%B5%D1%87%D0%BD%D0%BE%D0%B5-%D0%BB%D0%B5%D1%82%D0%BE-Soviet-Games-Ru-VN-%D0%98%D0%B3%D1%80%D1%8B-2233727.jpeg"
                     }
                 ]
             },
@@ -510,29 +528,36 @@
 #### Пример ответа: **200 OK**
 ```
 {
-    "id": 5,
-    "status": "N",
-    "created_at": "2025-09-07T23:09:15.179933+03:00",
-    "payment_link": "somelink",
-    "total_price": "1111.00",
-    "promo": "BRFF",
-    "shipping_address": "aboba",
-    "items": [
+    "count": 1,
+    "next": null,
+    "previous": null,
+    "results": [
         {
-            "product": {
-                "id": 1,
-                "title": "Test1",
-                "price": 1111,
-                "discount_price": 111,
-                "product_weight": 11.0,
-                "images": [
-                    {
-                        "image": "http://localhost:8000/images/products/image"
+            "id": 5,
+            "status": "N",
+            "created_at": "2025-09-07T23:09:15.179933+03:00",
+            "payment_link": "somelink",
+            "total_price": "1111.00",
+            "promo": "BRFF",
+            "shipping_address": "aboba",
+            "items": [
+                {
+                    "product": {
+                        "id": 1,
+                        "title": "Test1",
+                        "price": 1111,
+                        "discount_price": 111,
+                        "product_weight": 11.0,
+                        "images": [
+                            {
+                                "image": "http://localhost:8000/images/products/image"
+                            },
+                        ]
                     },
-                ]
-            },
-            "quantity": 1
-        }
+                    "quantity": 1
+                }
+            ]
+        },
     ]
 }
 ```

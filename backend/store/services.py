@@ -1,17 +1,16 @@
 import http.client
 import json
 import logging
+from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 import requests
 from decouple import config
+from django.utils import timezone
 
 from api.exceptions import ExternalAPIError
 from store.constants import DELIVERY_FEE, FREE_DELIVERY_TRESHOLD
 from store.models import Order
-
-from django.utils import timezone
-from datetime import timedelta
 
 logger = logging.getLogger('main')
 

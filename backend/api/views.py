@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import F, Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import decorators, filters, mixins, status, views, viewsets
@@ -13,6 +14,7 @@ from api.serializers import (CartSerializer, CategorySerializer,
                              FavoritesSerializer, OrdersSerializer,
                              ProductSerializer, PromocodeSerializer,
                              SectionSerializer)
+from store.constants import DELIVERY_FEE, FREE_DELIVERY_TRESHOLD
 from store.models import (Cart, Category, Favorites, Order, Product,
                           ProductOrder, Promocode, Section)
 from store.services import create_link, status_update
@@ -54,10 +56,32 @@ class ProductViewSet(mixins.RetrieveModelMixin,
 class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = None
 
     def get_queryset(self):
         return self.request.user.cart_items.select_related(
             'product').prefetch_related('product__images')
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+
+        cart_total = self.get_queryset().aggregate(
+            total=Sum(F('product__discount_price') * F('quantity'))
+        )['total'] or 0
+
+        if cart_total >= FREE_DELIVERY_TRESHOLD:
+            delivery_fee = 0
+        else:
+            delivery_fee = DELIVERY_FEE
+
+        response.data = {
+            'cart_total': cart_total,
+            'delivery_fee': delivery_fee,
+            'total_price': cart_total + delivery_fee,
+            'items': response.data
+        }
+
+        return response
 
     def perform_create(self, serializer):
         cart_item, created = Cart.objects.get_or_create(
@@ -141,7 +165,6 @@ class OrderViewSet(mixins.ListModelMixin,
                    viewsets.GenericViewSet):
     serializer_class = OrdersSerializer
     permission_classes = (IsAuthenticated,)
-    pagination_class = None
 
     def get_queryset(self):
         return self.request.user.orders.select_related(
