@@ -33,12 +33,19 @@ class PromocodeSerializer(serializers.ModelSerializer):
 
 
 class ShortProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = ('id', 'title', 'price',
-                  'discount_price', 'product_weight', 'images')
+                  'discount_price', 'image')
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        first_image = obj.images.first().image
+        if request:
+            return request.build_absolute_uri(first_image.url)
+        return first_image.url
 
 
 class ProductSerializer(serializers.ModelSerializer):
