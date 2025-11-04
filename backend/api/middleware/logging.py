@@ -20,22 +20,30 @@ class DetailedLoggingMiddleware(MiddlewareMixin):
     - не логируем HTML-страницы и бинарные ответы (картинки, файлы)
     '''
 
-    def process_request(self, request):
+    def _mask_sensitive_fields(self, data):
+        if isinstance(data, dict):
+            for key in SENSITIVE_FIELDS:
+                if key in data:
+                    data[key] = '***'
+        return data
+
+    def _parse_body(self, request):
+        ctype = request.META.get('CONTENT_TYPE', '').lower()
+        if ctype.startswith('multipart/form-data'):
+            return dict(request.POST)
         try:
             body = request.body.decode('utf-8')
             try:
-                body = json.loads(body)
+                return json.loads(body)
             except Exception:
-                body = str(body)
-
-            if isinstance(body, dict):
-                for key in SENSITIVE_FIELDS:
-                    if key in body:
-                        body[key] = '***'
-
-            request._log_body = body
+                return str(body)
         except Exception:
-            request._log_body = '<cannot decode body>'
+            return '<cannot decode body>'
+
+    def process_request(self, request):
+        body = self._parse_body(request)
+        body = self._mask_sensitive_fields(body)
+        request._log_body = body
 
     def _is_binary_or_html(self, response):
         '''
