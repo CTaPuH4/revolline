@@ -1,5 +1,5 @@
 // src/modals/Auth/AuthModal.js
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import '../../css/modals/AuthRegisterModal.css';
 import SalesPolicy from "../SalesPolicy";
@@ -12,14 +12,25 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
 
     const [showSalesPolicy, setShowSalesPolicy] = useState(false);
     const [showReset, setShowReset] = useState(false);
-
     const [errorMessage, setErrorMessage] = useState("");
+
+    const overlayRef = useRef(null);
+    const mouseDownInside = useRef(false);
 
     const openSalesPolicy = () => setShowSalesPolicy(true);
     const closeSalesPolicy = () => setShowSalesPolicy(false);
+    const openPrivacyPolicy = () => window.open("/privacy-policy", "_blank");
 
-    const openPrivacyPolicy = () => {
-        window.open("/privacy-policy", "_blank");
+    const handleMouseDown = (e) => {
+        // Проверяем, был ли mousedown внутри модалки
+        mouseDownInside.current = !overlayRef.current || e.target !== overlayRef.current;
+    };
+
+    const handleMouseUp = (e) => {
+        // Закрываем только если mousedown и mouseup оба были на оверлее
+        if (!mouseDownInside.current && e.target === overlayRef.current) {
+            onClose && onClose();
+        }
     };
 
     const handleLogin = async () => {
@@ -28,8 +39,6 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
         try {
             const resp = await login(email, password);
 
-            // Если login вернул объект с ошибкой
-            // Попробуем извлечь текст ошибки из нескольких возможных мест
             const respDetail =
                 resp?.data?.detail ||
                 resp?.detail ||
@@ -40,19 +49,15 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
                 return;
             }
 
-            // Если вернулся статус и он не 200 — выводим detail или общую ошибку
             if (resp && typeof resp === "object" && "status" in resp && resp.status !== 200) {
                 setErrorMessage(resp.data?.detail || "Ошибка входа");
                 return;
             }
 
-            // Если ничего из вышеперечисленного — считаем, что вход успешен
             onClose && onClose();
         } catch (err) {
-            // Ошибка из axios/fetch — обычно err.response.data.detail
             const catchDetail =
                 err?.response?.data?.detail ||
-                // иногда backend возвращает ошибку в err.response.data целиком
                 (typeof err?.response?.data === "string" ? err.response.data : null) ||
                 err?.message ||
                 "Ошибка при входе";
@@ -71,7 +76,12 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
     }
 
     return (
-        <div className="auth-overlay" onClick={onClose}>
+        <div
+            className="auth-overlay"
+            ref={overlayRef}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+        >
             <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="auth-close" onClick={onClose}>&times;</button>
 
@@ -99,30 +109,28 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
                     </div>
                 </div>
 
-                {errorMessage && (
-                    <p className="auth-error">{errorMessage}</p>
-                )}
+                {errorMessage && <p className="auth-error">{errorMessage}</p>}
 
                 <button className="auth-button" onClick={handleLogin}>Войти</button>
 
                 <div className="auth-links">
-          <span className="auth-link" onClick={() => setShowReset(true)} style={{ cursor: "pointer" }}>
-            Я забыл пароль
-          </span>
+                    <span className="auth-link" onClick={() => setShowReset(true)} style={{ cursor: "pointer" }}>
+                        Я забыл пароль
+                    </span>
                     <span className="auth-link" onClick={onRegisterClick} style={{ cursor: "pointer" }}>
-            Зарегистрироваться
-          </span>
+                        Зарегистрироваться
+                    </span>
                 </div>
 
                 <p className="auth-disclaimer">
                     Продолжая, вы соглашаетесь с{" "}
                     <span className="auth-link-inline" onClick={openSalesPolicy} style={{ cursor: "pointer" }}>
-            правилами продажи
-          </span>{" "}
+                        правилами продажи
+                    </span>{" "}
                     и{" "}
                     <span className="auth-link-inline" onClick={openPrivacyPolicy} style={{ cursor: "pointer" }}>
-            политикой обработки персональных данных
-          </span>
+                        политикой обработки персональных данных
+                    </span>
                 </p>
 
                 {showSalesPolicy && <SalesPolicy onClose={closeSalesPolicy} />}
