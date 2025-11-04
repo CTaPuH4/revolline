@@ -41,7 +41,7 @@
 }
 
 .order-card strong {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 /* Header карточки: две области (лево/право) */
@@ -110,14 +110,14 @@
 }
 
 .order-total {
-    font-size: 20px;
-    color: #aa0f4e;
-    font-weight: 500;
+  font-size: 20px;
+  color: #aa0f4e;
+  font-weight: 500;
 }
 
 .order-total strong {
-    font-size: 18px;
-    color: #000000;
+  font-size: 18px;
+  color: #000000;
 }
 
 /* Блок с товарами (скрываем/показываем) */
@@ -222,4 +222,30 @@
 /* Мелкие вспомогательные стили */
 .orders-list .order-card + .order-card {
   margin-top: 6px;
+}
+
+/* Styles for empty placeholder */
+.orders-empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 40px auto;
+  padding: 20px;
+  border: 2px  #aa0f4e;
+  border-radius: 15px;
+  background-color: #faf5f7;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  text-align: center;
+}
+
+.orders-suggestion {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.placeholder-btn {
+  /* Reuse order-toggle-btn styles if appropriate */
 }

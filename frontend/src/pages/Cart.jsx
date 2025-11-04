@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../css/Cart.css';
 import "../css/UserProfile.css";
 import deleteIcon from "../assets/icons/delete-icon.png";
@@ -9,28 +9,21 @@ import exapmle1 from "../assets/example1.jpg";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
 import CdekWidgetReact from "../components/CdekWidgetReact.jsx";
+
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 /**
  * Универсальная функция для извлечения "красивого" текста ошибки из тела ответа бэкенда.
- * Обрабатывает:
- * - { "detail": "С е р в и с   в р е м е н н о   н е д о с т у п е н" }
- * - { "non_field_errors": [...] }
- * - { "any_key": ["msg1", "msg2"] }
- * - { "any_key": "msg" }
- * - просто строку
  */
 const extractCleanError = (body) => {
   if (!body) return 'Неизвестная ошибка';
 
   let raw = body;
 
-  // Если body — строка, попробуем распарсить как JSON (на случай, если fetch вернул строку)
   if (typeof body === 'string') {
     try {
       raw = JSON.parse(body);
     } catch {
-      // Если не JSON — просто нормализуем строку
       return body.trim().replace(/\s+/g, ' ');
     }
   }
@@ -39,64 +32,57 @@ const extractCleanError = (body) => {
 
   let messages = [];
 
-  // 1. detail / message / non_field_errors — часто используется DRF
   if (raw.detail) messages.push(raw.detail);
   if (raw.message) messages.push(raw.message);
   if (Array.isArray(raw.non_field_errors)) messages.push(...raw.non_field_errors);
 
-  // 2. Перебираем все остальные ключи
   Object.entries(raw).forEach(([key, value]) => {
-    // Пропускаем уже обработанные
     if (['detail', 'message', 'non_field_errors'].includes(key)) return;
-
-    if (Array.isArray(value)) {
-      messages.push(...value);
-    } else if (typeof value === 'string') {
-      messages.push(value);
-    }
+    if (Array.isArray(value)) messages.push(...value);
+    else if (typeof value === 'string') messages.push(value);
   });
 
-  // Если ничего не нашли — fallback
   if (messages.length === 0) return 'Ошибка сервера';
 
-  // Нормализация: убираем лишние пробелы, включая "С е р в и с"
-  const clean = messages
-      .map(msg => String(msg).trim())
-      .filter(Boolean)
-      .map(msg => {
-        // Если в строке много пробелов (>35% от длины) — скорее всего буквы разделены
-        const spaceRatio = (msg.match(/ /g) || []).length / msg.length;
-        if (spaceRatio > 0.35) {
-          return msg.replace(/ /g, '');
-        }
-        return msg.replace(/\s+/g, ' ');
-      })
-      .join(' ');
-
-  return clean || 'Ошибка сервера';
+  return messages
+          .map(msg => String(msg).trim())
+          .filter(Boolean)
+          .map(msg => {
+            const spaceRatio = (msg.match(/ /g) || []).length / msg.length;
+            if (spaceRatio > 0.35) return msg.replace(/ /g, '');
+            return msg.replace(/\s+/g, ' ');
+          })
+          .join(' ')
+      || 'Ошибка сервера';
 };
 
 export default function Cart() {
   const { user, isAuthenticated, updateProfile } = useAuth();
   const navigate = useNavigate();
+
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editQuantities, setEditQuantities] = useState({});
+
   // --- promo states ---
   const [promoCode, setPromoCode] = useState('');
   const [applyingPromo, setApplyingPromo] = useState(false);
   const [promo, setPromo] = useState(null);
   const [promoError, setPromoError] = useState(null);
+
   // --- checkout UI state ---
   const [isCheckout, setIsCheckout] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+
   // --- selected payload ---
   const [selectedShippingPayload, setSelectedShippingPayload] = useState(null);
+
   // --- validation/errors ---
   const [fieldErrors, setFieldErrors] = useState({});
   const [checkoutError, setCheckoutError] = useState(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
+
   // --- backend totals ---
   const [cartTotal, setCartTotal] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
@@ -116,22 +102,14 @@ export default function Cart() {
     if (!res.ok) {
       const text = await res.text();
       let body = null;
-      try {
-        body = text ? JSON.parse(text) : null;
-      } catch {
-        body = text;
-      }
+      try { body = text ? JSON.parse(text) : null; } catch { body = text; }
       const err = new Error(`HTTP ${res.status}`);
       err.status = res.status;
       err.body = body;
       throw err;
     }
     if (res.status === 204) return null;
-    try {
-      return await res.json();
-    } catch {
-      return null;
-    }
+    try { return await res.json(); } catch { return null; }
   };
 
   // -------------------------
@@ -157,6 +135,7 @@ export default function Cart() {
   const handleQtyInputChange = (cartItemId, value) => {
     setEditQuantities(prev => ({ ...prev, [cartItemId]: value }));
   };
+
   const commitQuantity = (cartItemId) => {
     const raw = editQuantities[cartItemId];
     let num = parseInt(raw, 10);
@@ -165,9 +144,7 @@ export default function Cart() {
     setEditQuantities(prev => ({ ...prev, [cartItemId]: String(num) }));
     const item = items.find(i => i.cartItemId === cartItemId);
     if (!item) return;
-    if (item.quantity !== num) {
-      updateQuantity(cartItemId, num);
-    }
+    if (item.quantity !== num) updateQuantity(cartItemId, num);
   };
 
   // -------------------------
@@ -182,17 +159,14 @@ export default function Cart() {
       const transformed = list.map(transformServerItem);
       setItems(transformed);
       const initialEdit = {};
-      transformed.forEach(it => {
-        initialEdit[it.cartItemId] = String(it.quantity);
-      });
+      transformed.forEach(it => { initialEdit[it.cartItemId] = String(it.quantity); });
       setEditQuantities(initialEdit);
       setCartTotal(data.cart_total || 0);
       setDeliveryFee(data.delivery_fee || 0);
       setTotalPriceWithDelivery(data.total_price || 0);
     } catch (err) {
       console.error('fetchCart error', err);
-      const cleanMsg = extractCleanError(err.body);
-      setError(cleanMsg);
+      setError(extractCleanError(err.body));
     } finally {
       setIsLoading(false);
     }
@@ -216,8 +190,7 @@ export default function Cart() {
       fetchCart();
     } catch (err) {
       console.error('updateQuantity failed', err);
-      const cleanMsg = extractCleanError(err.body);
-      setError(cleanMsg || 'Не удалось обновить количество');
+      setError(extractCleanError(err.body) || 'Не удалось обновить количество');
       fetchCart();
     }
   };
@@ -229,6 +202,7 @@ export default function Cart() {
     setEditQuantities(prev => ({ ...prev, [cartItemId]: String(newQty) }));
     updateQuantity(cartItemId, newQty);
   };
+
   const decrementQty = (cartItemId) => {
     const item = items.find(i => i.cartItemId === cartItemId);
     if (!item || item.quantity <= 1) return;
@@ -248,8 +222,7 @@ export default function Cart() {
       fetchCart();
     } catch (err) {
       console.error('removeItem failed', err);
-      const cleanMsg = extractCleanError(err.body);
-      setError(cleanMsg || 'Не удалось удалить товар');
+      setError(extractCleanError(err.body) || 'Не удалось удалить товар');
       setItems(prev);
       fetchCart();
     }
@@ -270,8 +243,7 @@ export default function Cart() {
       fetchCart();
     } catch (err) {
       console.error('clearCart failed', err);
-      const cleanMsg = extractCleanError(err.body);
-      setError(cleanMsg || 'Не удалось очистить корзину');
+      setError(extractCleanError(err.body) || 'Не удалось очистить корзину');
       setItems(prev);
       fetchCart();
     } finally {
@@ -314,10 +286,10 @@ export default function Cart() {
         return;
       }
       setPromo({ ...data, code });
+      setPromoError(null); // успех — чистим ошибку
     } catch (err) {
       console.error('applyPromo failed', err);
-      const cleanMsg = extractCleanError(err.body);
-      setPromoError(cleanMsg);
+      setPromoError(extractCleanError(err.body));
     } finally {
       setApplyingPromo(false);
     }
@@ -326,6 +298,8 @@ export default function Cart() {
   const removePromo = () => {
     setPromo(null);
     setPromoError(null);
+    setPromoCode('');
+    setError(null);
   };
 
   // --- Checkout form states ---
@@ -355,10 +329,6 @@ export default function Cart() {
     setError(null);
     if (items.length === 0) {
       setError('Корзина пуста');
-      return;
-    }
-    if (promoError) {
-      setError(promoError);
       return;
     }
     if (!isAuthenticated) {
@@ -405,8 +375,7 @@ export default function Cart() {
       });
     } catch (err) {
       console.error('updateProfile failed', err);
-      const cleanMsg = extractCleanError(err.body);
-      setCheckoutError(cleanMsg || 'Ошибка сохранения профиля');
+      setCheckoutError(extractCleanError(err.body) || 'Ошибка сохранения профиля');
       setCreatingOrder(false);
       return;
     }
@@ -429,8 +398,7 @@ export default function Cart() {
       navigate('/orders');
     } catch (err) {
       console.error('createOrder failed', err);
-      const cleanMsg = extractCleanError(err.body);
-      setCheckoutError(cleanMsg);
+      setCheckoutError(extractCleanError(err.body));
     } finally {
       setCreatingOrder(false);
     }
@@ -438,15 +406,22 @@ export default function Cart() {
 
   const handleSummaryButton = async (e) => {
     e?.preventDefault?.();
-    if (items.length === 0 || promoError) return;
+
+    if (items.length === 0) {
+      setError('Корзина пуста');
+      return;
+    }
+
     if (!isAuthenticated) {
       setShowAuth(true);
       return;
     }
+
     if (!isCheckout) {
       onStartCheckout();
       return;
     }
+
     await createOrder();
   };
 
@@ -587,6 +562,8 @@ export default function Cart() {
                     : 'не выбран'}
               </span>
                 </div>
+
+
               </div>
             </div>
         )}
@@ -605,7 +582,10 @@ export default function Cart() {
                       type="text"
                       placeholder="Введите промокод"
                       value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        setPromoError(null); // сбрасываем ошибку при вводе
+                      }}
                       disabled={applyingPromo || items.length === 0}
                   />
                   <button onClick={applyPromo} disabled={applyingPromo || items.length === 0}>
@@ -654,16 +634,17 @@ export default function Cart() {
             <span>{grandTotal} ₽</span>
           </div>
 
+          {/* Убрана блокировка по promoError */}
           <button
               className="checkout-btn"
               onClick={handleSummaryButton}
-              disabled={creatingOrder || items.length === 0 || Boolean(promoError)}
+              disabled={creatingOrder || items.length === 0}
           >
             {creatingOrder ? 'Создаём заказ...' : (isCheckout ? 'Перейти к оплате' : 'Оформить заказ')}
           </button>
 
           {/* Общие ошибки */}
-          {fieldErrors.shipping && <p style={{ color: 'crimson', fontSize: 13, marginTop: 6 }}>{fieldErrors.shipping}</p>}
+          {fieldErrors.shipping && <p style={{ color: 'crimson', fontSize: 18, marginTop: 6 }}>{fieldErrors.shipping}</p>}
           {checkoutError && <p style={{ color: 'crimson', marginTop: 12 }}>{checkoutError}</p>}
           {error && <p style={{ color: 'crimson', marginTop: 12 }}>{error}</p>}
         </div>

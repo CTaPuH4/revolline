@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import '../css/Orders.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -14,10 +14,29 @@ const statusMap = {
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [nextPage, setNextPage] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
 
   // track which orders are expanded (by id)
   const [expandedOrderIds, setExpandedOrderIds] = useState(new Set());
+
+  const observer = useRef();
+
+  const lastOrderElementRef = useCallback(node => {
+    if (isLoadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        fetchOrders(currentPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [isLoadingMore, hasMore, currentPage]);
 
   const apiFetch = async (path, options = {}) => {
     const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
@@ -41,18 +60,29 @@ export default function Orders() {
     }
   };
 
-  const fetchOrders = async () => {
-    setIsLoading(true);
+  const fetchOrders = async (page = 1) => {
+    if (page === 1) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
     setError(null);
     try {
-      const data = await apiFetch('/orders/');
-      const list = Array.isArray(data) ? data : [data];
-      setOrders(list);
+      const data = await apiFetch(`/orders/?page=${page}`);
+      const newOrders = data.results || [];
+      setOrders(prevOrders => page === 1 ? newOrders : [...prevOrders, ...newOrders]);
+      setNextPage(data.next);
+      setHasMore(!!data.next);
+      setCurrentPage(page);
     } catch (err) {
       console.error('fetchOrders error', err);
       setError('Не удалось загрузить заказы');
     } finally {
-      setIsLoading(false);
+      if (page === 1) {
+        setIsLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
     }
   };
 
@@ -75,18 +105,33 @@ export default function Orders() {
 
         {isLoading && <p className="orders-info">Загрузка...</p>}
         {error && <p className="orders-error">{error}</p>}
-        {!isLoading && !error && orders.length === 0 && <p className="orders-empty">У вас пока нет заказов.</p>}
+        {!isLoading && !error && orders.length === 0 && (
+            <div className="orders-empty-placeholder">
+              <p className="orders-empty">Пока нет заказов</p>
+              <p className="orders-suggestion">Давайте пойдём за покупками!</p>
+              <a href="/catalog" className="order-toggle-btn placeholder-btn">
+                Перейти в каталог
+              </a>
+            </div>
+        )}
 
         <div className="orders-list">
-          {orders.map(order => {
+          {orders.map((order, index) => {
             const items = Array.isArray(order.items) ? order.items : [];
             const isOpen = expandedOrderIds.has(order.id);
 
             // Определяем текстовое представление статуса
             const statusText = statusMap[order.status] || order.status || '—';
 
+            const isLastElement = orders.length === index + 1;
+
             return (
-                <article key={order.id} className="order-card" aria-labelledby={`order-${order.id}-title`}>
+                <article
+                    ref={isLastElement ? lastOrderElementRef : null}
+                    key={order.id}
+                    className="order-card"
+                    aria-labelledby={`order-${order.id}-title`}
+                >
                   {/* Header: left = order id, right = status + date */}
                   <div className="order-card-header">
                     <div className="order-left">
@@ -101,10 +146,18 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  {/* Body: address, collapsible items */}
+                  {/* Body: address, promo, tracking_number, collapsible items */}
                   <div className="order-body">
                     <div className="order-address">
-                      <div><strong>Адрес доставки:</strong> {order.shipping_address || '—'}</div>
+                      {order.shipping_address && (
+                          <div><strong>Адрес доставки:</strong> {order.shipping_address}</div>
+                      )}
+                      {order.promo && (
+                          <div><strong>Промокод:</strong> {order.promo}</div>
+                      )}
+                      {order.tracking_number && (
+                          <div><strong>Трек-номер:</strong> {order.tracking_number}</div>
+                      )}
                     </div>
 
                     <div
@@ -115,7 +168,7 @@ export default function Orders() {
 
                       {items.map((it, idx) => {
                         const product = it.product || {};
-                        const img = product.images?.[0]?.image || '/no-image.png';
+                        const img = product.image || '/no-image.png';
                         return (
                             <div key={idx} className="order-item-card">
                               <div className="order-item-img-wrap">
@@ -125,8 +178,8 @@ export default function Orders() {
                               <div className="order-item-body">
                                 <a href={`/product/${product.id}`} className="order-item-title">{product.title || 'Без названия'}</a>
                                 <div className="order-item-sub">
-                                  <span>Цена: {product.discount_price ?? '—'} ₽</span>
-                                  {product.price && <span className="order-item-oldprice">({product.price} ₽)</span>}
+                                  <span>Цена: {product.discount_price ?? product.price ?? '—'} ₽</span>
+                                  {product.price && product.discount_price && <span className="order-item-oldprice">({product.price} ₽)</span>}
                                   <span>•</span>
                                   <span>Кол-во: {it.quantity}</span>
                                 </div>
@@ -138,6 +191,11 @@ export default function Orders() {
 
                     <div className="order-footer">
                       <div className="order-total"><strong>Сумма:</strong> {order.total_price ?? '—'} ₽</div>
+                      {order.status === 'N' && order.payment_link && (
+                          <a href={order.payment_link} className="order-payment-btn" target="_blank" rel="noopener noreferrer">
+                            Оплатить
+                          </a>
+                      )}
                       <button
                           type="button"
                           className="order-toggle-btn"
@@ -154,6 +212,12 @@ export default function Orders() {
                 </article>
             );
           })}
+          {isLoadingMore && hasMore && (
+              <div className="loader-container">
+                <div className="loader"></div>
+                <p className="orders-info">Загрузка дополнительных заказов...</p>
+              </div>
+          )}
         </div>
       </main>
   );
