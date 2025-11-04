@@ -1,9 +1,12 @@
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from store.models import (Cart, Category, Favorites, Order, Product,
                           ProductImage, ProductOrder, Promocode, Section)
+
+User = get_user_model()
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -97,12 +100,32 @@ class FavoritesSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
-        if not self.user.is_active:
+        username_field = self.username_field
+        credentials = {
+            username_field: attrs.get(username_field),
+            'password': attrs.get('password'),
+        }
+
+        user = authenticate(**credentials)
+
+        if user is None:
+            try:
+                existing_user = User.objects.get(
+                    **{username_field: attrs.get(username_field)}
+                )
+                if not existing_user.is_active:
+                    raise AuthenticationFailed(
+                        'Аккаунт неактивен. Подтвердите почту.',
+                        code='user_inactive'
+                    )
+            except User.DoesNotExist:
+                pass
             raise AuthenticationFailed(
-                'Аккаунт неактивен. Подтвердите почту.', code='user_inactive'
+                'Неверные учетные данные.',
+                code='invalid_credentials'
             )
-        return data
+
+        return super().validate(attrs)
 
 
 class FavDeleteSerializer(serializers.Serializer):
