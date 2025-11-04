@@ -1,5 +1,5 @@
 // src/modals/Register/RegisterModal.js
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import "../../css/modals/AuthRegisterModal.css";
 
@@ -11,6 +11,21 @@ export default function RegisterModal({ onClose, onBack }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const { register } = useAuth();
+
+  const overlayRef = useRef(null);
+  const mouseDownInside = useRef(false);
+
+  const handleMouseDown = (e) => {
+    // true — mousedown был внутри модалки (не на оверлее)
+    mouseDownInside.current = e.target !== overlayRef.current;
+  };
+
+  const handleMouseUp = (e) => {
+    // Закрываем только если и mousedown и mouseup были на оверлее (т.е. mouseDownInside false и target === overlay)
+    if (!mouseDownInside.current && e.target === overlayRef.current) {
+      onClose && onClose();
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,21 +40,27 @@ export default function RegisterModal({ onClose, onBack }) {
       await register(email, password, repeatPassword);
       setSuccess(true);
     } catch (err) {
-      if (err && err.response && typeof err.response === "object") {
-        const errors = err.response;
-        const messages = Object.values(errors).flatMap((msgs) =>
+      // Попробуем аккуратно извлечь сообщения об ошибке
+      const respData = err?.response?.data || err?.response || null;
+      if (respData && typeof respData === "object") {
+        // Составляем массив сообщений из всех полей
+        const messages = Object.values(respData).flatMap((msgs) =>
             Array.isArray(msgs) ? msgs : [msgs]
         );
         setErrorMessage(messages.join("\n"));
       } else {
-        setErrorMessage(err.message || "Ошибка регистрации");
+        setErrorMessage(err?.message || "Ошибка регистрации");
       }
     }
   };
 
-
   return (
-      <div className="auth-overlay" onClick={onClose}>
+      <div
+          className="auth-overlay"
+          ref={overlayRef}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+      >
         <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
           {success ? (
               <>
@@ -101,9 +122,10 @@ export default function RegisterModal({ onClose, onBack }) {
 
                   {errorMessage &&
                       errorMessage.split("\n").map((msg, idx) => (
-                          <p key={idx} className="auth-error">{msg}</p>
+                          <p key={idx} className="auth-error">
+                            {msg}
+                          </p>
                       ))}
-
 
                   <button type="submit" className="auth-button">
                     Зарегистрироваться

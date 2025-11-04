@@ -1,5 +1,5 @@
 // src/modals/ResetPassword/ResetPasswordModal.js
-import { useState } from "react";
+import { useState, useRef } from "react";
 import '../../css/modals/AuthRegisterModal.css';
 import SalesPolicy from "../SalesPolicy";
 
@@ -12,11 +12,26 @@ export default function ResetPasswordModal({ onClose}) {
     const [message, setMessage] = useState("");
     const [showSalesPolicy, setShowSalesPolicy] = useState(false);
 
+    const overlayRef = useRef(null);
+    const mouseDownInside = useRef(false);
+
     const openSalesPolicy = () => setShowSalesPolicy(true);
     const closeSalesPolicy = () => setShowSalesPolicy(false);
 
     const openPrivacyPolicy = () => {
         window.open("/privacy-policy", "_blank");
+    };
+
+    const handleMouseDown = (e) => {
+        // Если mousedown случился не на оверлее — пометим, что нажатие начато внутри (не закрывать по mouseup)
+        mouseDownInside.current = e.target !== overlayRef.current;
+    };
+
+    const handleMouseUp = (e) => {
+        // Закрываем только если и mousedown и mouseup были на оверлее
+        if (!mouseDownInside.current && e.target === overlayRef.current) {
+            onClose && onClose();
+        }
     };
 
     const handleSubmit = async () => {
@@ -69,7 +84,12 @@ export default function ResetPasswordModal({ onClose}) {
     };
 
     return (
-        <div className="auth-overlay" onClick={onClose}>
+        <div
+            className="auth-overlay"
+            ref={overlayRef}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+        >
             <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="auth-close" onClick={() => onClose && onClose()}>
                     &times;
