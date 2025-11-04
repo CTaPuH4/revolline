@@ -178,8 +178,6 @@ export default function Orders() {
                               <div className="order-item-body">
                                 <a href={`/product/${product.id}`} className="order-item-title">{product.title || 'Без названия'}</a>
                                 <div className="order-item-sub">
-                                  <span>Цена: {product.discount_price ?? product.price ?? '—'} ₽</span>
-                                  {product.price && product.discount_price && <span className="order-item-oldprice">({product.price} ₽)</span>}
                                   <span>•</span>
                                   <span>Кол-во: {it.quantity}</span>
                                 </div>
@@ -192,7 +190,7 @@ export default function Orders() {
                     <div className="order-footer">
                       <div className="order-total"><strong>Сумма:</strong> {order.total_price ?? '—'} ₽</div>
                       {order.status === 'N' && order.payment_link && (
-                          <a href={order.payment_link} className="order-payment-btn" target="_blank" rel="noopener noreferrer">
+                          <a href={order.payment_link} className="order-toggle-btn" target="_blank" rel="noopener noreferrer">
                             Оплатить
                           </a>
                       )}

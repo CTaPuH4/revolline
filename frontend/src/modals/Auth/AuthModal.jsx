@@ -30,14 +30,14 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
 
             // если login вернул статус != 200
             if (resp && typeof resp === "object" && "status" in resp && resp.status !== 200) {
-                setErrorMessage("Пользователь с такими данными не найден");
+                setErrorMessage(resp.data?.detail || resp.data?.non_field_errors?.[0] || resp.data?.error || "Пользователь с такими данными не найден");
                 return;
             }
 
             onClose && onClose();
         } catch (err) {
             if (err && err.response) {
-                setErrorMessage("Пользователь с такими данными не найден");
+                setErrorMessage(err.response.data?.detail || err.response.data?.non_field_errors?.[0] || err.response.data?.error || "Пользователь с такими данными не найден");
                 return;
             }
 
