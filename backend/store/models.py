@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from slugify import slugify
 
 from store.constants import (LONG_CHAR_MAX_LENGTH, MIN_VALUE,
                              PRODUCT_MAX_QUANTITY, SHORT_CHAR_MAX_LENGTH)
@@ -22,30 +23,48 @@ class AbstractModel(models.Model):
         ordering = ('title',)
 
 
-class Category(AbstractModel):
-    '''
-    Модель категорий.
-    '''
+class AbstractSlugModel(AbstractModel):
     slug = models.SlugField(
         'Слаг',
         help_text='Ссылка/Адрес категории',
         unique=True,
+        blank=True
     )
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug_candidate = base_slug
+            counter = 1
+
+            while Category.objects.filter(
+                slug=slug_candidate
+            ).exclude(id=self.id).exists():
+                slug_candidate = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug_candidate
+
+        super().save(*args, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
+class Category(AbstractSlugModel):
+    '''
+    Модель категорий.
+    '''
 
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
 
-class Section(AbstractModel):
+class Section(AbstractSlugModel):
     '''
     Модель разделов.
     '''
-    slug = models.SlugField(
-        'Слаг',
-        help_text='Ссылка/Адрес категории',
-        unique=True,
-    )
     categories = models.ManyToManyField(
         Category,
         related_name='sections',
@@ -89,6 +108,8 @@ class Product(AbstractModel):
     )
     ingredients = models.TextField(
         'Состав',
+        blank=True,
+        null=True,
     )
     country = models.CharField(
         'Страна производства',
@@ -121,14 +142,22 @@ class Product(AbstractModel):
         null=True
     )
     full_weight = models.FloatField(
-        'Вес',
+        'Вес, г.',
         validators=(MinValueValidator(MIN_VALUE),),
         blank=True,
         null=True
     )
     product_weight = models.FloatField(
-        'Вес/объём продукта',
-        validators=(MinValueValidator(MIN_VALUE),)
+        'Вес продукта, г.',
+        validators=(MinValueValidator(MIN_VALUE),),
+        blank=True,
+        null=True,
+    )
+    volume = models.FloatField(
+        'Объём продукта, мл.',
+        validators=(MinValueValidator(MIN_VALUE),),
+        blank=True,
+        null=True,
     )
     categories = models.ManyToManyField(
         Category,
@@ -163,6 +192,12 @@ class ProductImage(models.Model):
     image = models.ImageField(
         'Изображение',
         upload_to='products/',
+    )
+    file_hash = models.CharField(
+        'Хэш',
+        max_length=32,
+        blank=True,
+        null=True
     )
 
     class Meta:

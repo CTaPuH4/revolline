@@ -87,6 +87,7 @@
             "effect": null,
             "collection": null,
             "product_weight": 0.33,
+            "volume": 10.0,
             "categories": [
                 {
                     "slug": "first",
@@ -121,6 +122,7 @@
             "effect": null,
             "collection": null,
             "product_weight": 22.0,
+            "volume": 10.0,
             "categories": [
                 {
                     "slug": "first",

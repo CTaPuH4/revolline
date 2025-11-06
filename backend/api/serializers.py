@@ -62,7 +62,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   'discount_price', 'is_new', 'is_fav',
                   'ingredients', 'country', 'size', 'full_weight',
                   'color', 'effect', 'collection',
-                  'product_weight', 'categories', 'images')
+                  'product_weight', 'volume', 'categories', 'images')
 
     def get_is_fav(self, obj):
         user = self.context['request'].user

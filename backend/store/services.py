@@ -4,8 +4,10 @@ import logging
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
+import pandas as pd
 import requests
 from decouple import config
+from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from api.exceptions import ExternalAPIError
@@ -217,3 +219,27 @@ def status_update(orders):
             order.status = Order.Status.CANCELED
             order.save(update_fields=['status'])
             logger.info(f'Заказ {order.id} отменён по истечении 7 дней')
+
+
+def image_download(link, name=None):
+    '''
+    Скачивает изображение по URL.
+    '''
+    try:
+        response = requests.get(link)
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
+
+    if not name:
+        name = link.split('/')[-1]
+
+    return ContentFile(response.content, name=name)
+
+
+def clean_value(value, default=None):
+    if pd.isna(value):
+        return default
+    if isinstance(value, str):
+        return value.strip()
+    return value
