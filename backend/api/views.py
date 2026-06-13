@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from django.db.models import F, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
@@ -96,7 +97,8 @@ class CartViewSet(viewsets.ModelViewSet):
         if not created:
             cart_item.quantity = serializer.validated_data['quantity']
             cart_item.save()
-        return cart_item
+
+        serializer.instance = cart_item
 
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
@@ -121,7 +123,7 @@ class FavoritesViewSet(mixins.RetrieveModelMixin,
             user=self.request.user,
             product=serializer.validated_data['product'],
         )
-        return favorite_item
+        serializer.instance = favorite_item
 
     @decorators.action(detail=False, methods=('delete',))
     def delete(self, request):
@@ -182,7 +184,8 @@ class OrderViewSet(mixins.ListModelMixin,
         status_update(orders)
         return super().list(request, *args, **kwargs)
 
-    def perform_create(self, serializer):
+    @transaction.atomic
+    def perform_create(self, serializer):  # type: ignore[override]
         user = self.request.user
         promo = serializer.validated_data.get('promo')
         cart = user.cart_items.select_related('product')

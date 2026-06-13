@@ -40,8 +40,7 @@ class ShortProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'price',
-                  'discount_price', 'image')
+        fields = ('id', 'title', 'price', 'discount_price', 'image')
 
     def get_image(self, obj):
         request = self.context.get('request')
@@ -58,11 +57,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'description', 'pr_type', 'price',
-                  'discount_price', 'is_new', 'is_fav',
-                  'ingredients', 'country', 'size', 'full_weight',
-                  'color', 'effect', 'collection',
-                  'product_weight', 'volume', 'categories', 'images')
+        fields = ('id', 'title', 'description', 'pr_type', 'price', 'discount_price',
+                  'is_new', 'is_fav', 'ingredients', 'country', 'size', 'full_weight',
+                  'color', 'effect', 'collection', 'product_weight', 'volume',
+                  'categories', 'images')
 
     def get_is_fav(self, obj):
         user = self.context['request'].user
@@ -73,8 +71,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class FavCartSerializerMixin(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(),
-        write_only=True,
+        queryset=Product.objects.all(), write_only=True,
     )
     product_data = ShortProductSerializer(source='product', read_only=True)
 
@@ -84,12 +81,12 @@ class CartSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
         model = Cart
         fields = ('id', 'product', 'product_data', 'quantity')
 
-    def validate(self, data):
-        if self.instance and 'product' in data:
-            raise serializers.ValidationError({
-                'product': 'Изменение продукта в корзине запрещено.'
-            })
-        return data
+    def validate(self, attrs):
+        if self.instance and 'product' in attrs:
+            raise serializers.ValidationError(
+                {'product': 'Изменение продукта в корзине запрещено.'}
+            )
+        return attrs
 
 
 class FavoritesSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
@@ -115,14 +112,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 )
                 if not existing_user.is_active:
                     raise AuthenticationFailed(
-                        'Аккаунт неактивен. Подтвердите почту.',
-                        code='user_inactive'
+                        'Аккаунт неактивен. Подтвердите почту.', code='user_inactive'
                     )
             except User.DoesNotExist:
                 pass
             raise AuthenticationFailed(
-                'Неверные учетные данные.',
-                code='invalid_credentials'
+                'Неверные учетные данные.', code='invalid_credentials'
             )
 
         return super().validate(attrs)
@@ -130,8 +125,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class FavDeleteSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(),
-        required=True
+        queryset=Product.objects.all(), required=True
     )
 
 
