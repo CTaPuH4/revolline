@@ -1,0 +1,156 @@
+x-backend-env: &backend-env
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+  DJANGO_DEBUG: "0"
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1}
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1}
+  CSRF_COOKIE_SECURE: "1"
+  SESSION_COOKIE_SECURE: "1"
+  AUTH_COOKIE_SECURE: "1"
+  CSRF_COOKIE_SAMESITE: ${CSRF_COOKIE_SAMESITE:-Lax}
+  AUTH_COOKIE_SAMESITE: ${AUTH_COOKIE_SAMESITE:-Lax}
+  SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-0}
+  SECURE_PROXY_SSL_HEADER: "1"
+  SECURE_HSTS_SECONDS: ${SECURE_HSTS_SECONDS:-0}
+  SECURE_HSTS_INCLUDE_SUBDOMAINS: ${SECURE_HSTS_INCLUDE_SUBDOMAINS:-0}
+  SECURE_HSTS_PRELOAD: ${SECURE_HSTS_PRELOAD:-0}
+  FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_TO_FILE: ${LOG_TO_FILE:-0}
+  LOG_REQUEST_BODY: ${LOG_REQUEST_BODY:-0}
+  LOG_RESPONSE_BODY: ${LOG_RESPONSE_BODY:-0}
+  THROTTLE_ANON_RATE: ${THROTTLE_ANON_RATE:-120/min}
+  THROTTLE_USER_RATE: ${THROTTLE_USER_RATE:-600/min}
+  THROTTLE_AUTH_RATE: ${THROTTLE_AUTH_RATE:-20/min}
+  THROTTLE_PASSWORD_RESET_RATE: ${THROTTLE_PASSWORD_RESET_RATE:-5/min}
+  DB_ENGINE: postgres
+  POSTGRES_DB: ${POSTGRES_DB:-revolline}
+  POSTGRES_USER: ${POSTGRES_USER:-revolline}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+  POSTGRES_HOST: db
+  POSTGRES_PORT: 5432
+  CELERY_BROKER_URL: redis://redis:6379/0
+  CELERY_RESULT_BACKEND: redis://redis:6379/1
+  CACHE_URL: redis://redis:6379/2
+  ORDER_STATUS_SYNC_INTERVAL_SECONDS: ${ORDER_STATUS_SYNC_INTERVAL_SECONDS:-300}
+  EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+  EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+  EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+  ORDER_NOTIFICATION_EMAIL: ${ORDER_NOTIFICATION_EMAIL:-}
+  PAYMENT_ALERT_EMAIL: ${PAYMENT_ALERT_EMAIL:-}
+  PAYMENT_TOKEN: ${PAYMENT_TOKEN:-}
+  PHONE_NUMBER: ${PHONE_NUMBER:-}
+  PAYMENT_BASE_URL: ${PAYMENT_BASE_URL:-https://enter.tochka.com/uapi}
+  PAYMENT_SUCCESS_REDIRECT_URL: ${PAYMENT_SUCCESS_REDIRECT_URL:-${FRONTEND_URL:-http://localhost}/orders}
+  PAYMENT_FAIL_REDIRECT_URL: ${PAYMENT_FAIL_REDIRECT_URL:-${FRONTEND_URL:-http://localhost}/cart}
+  PAYMENT_CONNECT_TIMEOUT: ${PAYMENT_CONNECT_TIMEOUT:-5}
+  PAYMENT_READ_TIMEOUT: ${PAYMENT_READ_TIMEOUT:-20}
+  PAYMENT_WEBHOOK_PUBLIC_JWK: ${PAYMENT_WEBHOOK_PUBLIC_JWK:-}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-revolline}
+      POSTGRES_USER: ${POSTGRES_USER:-revolline}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: revolline-backend-prod:latest
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_media:/app/images
+      - backend_static:/app/staticfiles
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn revolline.wsgi:application --bind 0.0.0.0:8000 --workers $${GUNICORN_WORKERS:-3} --timeout $${GUNICORN_TIMEOUT:-60} --access-logfile - --error-logfile -"
+
+  celery-worker:
+    image: revolline-backend-prod:latest
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_media:/app/images
+    command: celery -A revolline worker --loglevel=info
+
+  celery-beat:
+    image: revolline-backend-prod:latest
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A revolline beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+
+  php-cdek:
+    image: revolline-php-cdek-prod:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.php.prod
+    restart: unless-stopped
+    environment:
+      CDEK_LOGIN: ${CDEK_LOGIN:?CDEK_LOGIN is required}
+      CDEK_SECRET: ${CDEK_SECRET:?CDEK_SECRET is required}
+      CDEK_BASE_URL: ${CDEK_BASE_URL:-https://api.edu.cdek.ru/v2}
+      CDEK_SSL_VERIFY: ${CDEK_SSL_VERIFY:-1}
+
+  frontend:
+    image: revolline-frontend-prod:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE: /api
+        VITE_YANDEX_API_KEY: ${VITE_YANDEX_API_KEY:-}
+        VITE_CDEK_SERVICE_PATH: /service.php
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - php-cdek
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - backend_media:/usr/share/nginx/media:ro
+      - backend_static:/usr/share/nginx/django-static:ro
+
+volumes:
+  postgres_data:
+  backend_media:
+  backend_static:

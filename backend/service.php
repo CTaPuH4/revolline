@@ -68,7 +68,8 @@ $service = new service(
      * Put your password for integration here
      */
     getenv('CDEK_SECRET') ?: '',
-    getenv('CDEK_BASE_URL') ?: 'https://api.edu.cdek.ru/v2'
+    getenv('CDEK_BASE_URL') ?: 'https://api.edu.cdek.ru/v2',
+    getenv('CDEK_SSL_VERIFY') !== '0'
 );
 
 $service->process($_GET, file_get_contents('php://input'));
@@ -88,6 +89,10 @@ class service
      */
     private $baseUrl;
     /**
+     * @var bool Verify upstream TLS certificates
+     */
+    private $sslVerify;
+    /**
      * @var string Auth Token
      */
     private $authToken;
@@ -98,11 +103,12 @@ class service
     /** @var array Request metrics */
     private $metrics;
 
-    public function __construct($login, $secret, $baseUrl = 'https://api.cdek.ru/v2')
+    public function __construct($login, $secret, $baseUrl = 'https://api.cdek.ru/v2', $sslVerify = true)
     {
         $this->login = $login;
         $this->secret = $secret;
         $this->baseUrl = $baseUrl;
+        $this->sslVerify = $sslVerify;
         $this->metrics = array();
     }
 
@@ -324,8 +330,8 @@ class service
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
-            CURLOPT_SSL_VERIFYPEER => false,  // временно
-            CURLOPT_SSL_VERIFYHOST => false,  // временно
+            CURLOPT_SSL_VERIFYPEER => $this->sslVerify,
+            CURLOPT_SSL_VERIFYHOST => $this->sslVerify ? 2 : 0,
         ));
 
 

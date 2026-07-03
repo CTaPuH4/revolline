@@ -8,6 +8,7 @@ django-filter==25.1
 django-phonenumber-field==8.1.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
+gunicorn==23.0.0
 idna==3.10
 isort==6.0.1
 phonenumbers==9.0.9
