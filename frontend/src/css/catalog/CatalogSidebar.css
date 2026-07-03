@@ -1,6 +1,7 @@
 /* CatalogSidebar.css */
 .sidebar-catalog {
   width: 240px;
+  flex: 0 0 240px;
   padding: 16px 0px;
   box-sizing: border-box;
 }
@@ -13,23 +14,33 @@
 
 .category-item {
   position: relative;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .category-link {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
   position: relative;
 }
 
 .category-link a {
+  flex: 1;
+  min-width: 0;
+  display: block;
   color: #000;
   text-decoration: none;
   font-family: 'CarismaClassic';
   font-size: 22px;
   font-weight: 400;
+  line-height: 1.45;
+  padding-bottom: 6px;
+  padding-right: 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   transition: all 0.2s;
 }
 
@@ -48,6 +59,8 @@
   justify-content: center;
   width: 20px;
   height: 20px;
+  flex: 0 0 20px;
+  margin-top: 8px;
 }
 
 .arrow {
@@ -66,7 +79,7 @@
 .divider { 
   height: 1px;
   background-color: #c2c2c2;
-  margin: 8px 0;
+  margin: 10px 0 0;
 }
 
 .subcategory-list {
@@ -97,6 +110,10 @@
   color: #555;
   text-decoration: none;
   font-family: 'CarismaClassic';
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   transition: all 0.2s;
 }
 

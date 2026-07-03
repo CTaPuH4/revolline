@@ -46,7 +46,7 @@ export default function FilterDropdown({
         const isString = typeof c === "string";
         const key = isString ? c : (c.id ?? c.slug ?? c.name ?? idx);
         const val = isString ? c : (c.slug ?? c.id ?? c.name ?? String(c));
-        const label = isString ? c : (c.name ?? c.slug ?? String(c.id) ?? String(c));
+        const label = isString ? c : (c.name ?? c.slug ?? c.id ?? String(c));
         return (
             <option key={String(key)} value={val || ""}>
                 {label}

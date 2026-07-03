@@ -1,6 +1,9 @@
+from uuid import uuid4
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.functions import Lower
 from slugify import slugify
 
 from store.constants import (LONG_CHAR_MAX_LENGTH, MIN_VALUE,
@@ -37,7 +40,7 @@ class AbstractSlugModel(AbstractModel):
             slug_candidate = base_slug
             counter = 1
 
-            while Category.objects.filter(
+            while self.__class__.objects.filter(
                 slug=slug_candidate
             ).exclude(id=self.id).exists():
                 slug_candidate = f"{base_slug}-{counter}"
@@ -87,14 +90,18 @@ class Product(AbstractModel):
         'Тип продукта',
         max_length=LONG_CHAR_MAX_LENGTH
     )
-    price = models.IntegerField(
+    price = models.DecimalField(
         'Цена',
+        max_digits=12,
+        decimal_places=2,
         validators=(
             MinValueValidator(MIN_VALUE),
         )
     )
-    discount_price = models.IntegerField(
-        'Цена по скидке',
+    old_price = models.DecimalField(
+        'Цена без скидки',
+        max_digits=12,
+        decimal_places=2,
         validators=(
             MinValueValidator(MIN_VALUE),
         ),
@@ -167,12 +174,16 @@ class Product(AbstractModel):
 
     def clean(self):
         super().clean()
-        if self.discount_price is not None and self.price is not None:
-            if self.discount_price > self.price:
+        if self.old_price is not None and self.price is not None:
+            if self.old_price <= self.price:
                 raise ValidationError({
-                    'discount_price':
-                    'Цена по скидке не может быть больше основной цены.'
+                    'old_price':
+                    'Цена без скидки должна быть больше актуальной цены.'
                 })
+
+    @property
+    def has_discount(self):
+        return self.old_price is not None and self.old_price > self.price
 
     class Meta:
         verbose_name = 'продукт'
@@ -282,6 +293,17 @@ class Promocode(models.Model):
         default=0
     )
 
+    def clean(self):
+        super().clean()
+
+        if self.code:
+            self.code = self.code.strip().lower()
+
+    def save(self, *args, **kwargs):
+        if self.code:
+            self.code = self.code.strip().lower()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.code} - {self.percent}% от {self.min_price}'
 
@@ -289,6 +311,12 @@ class Promocode(models.Model):
         verbose_name = 'Промокод'
         verbose_name_plural = 'Промокоды'
         ordering = ('percent',)
+        constraints = [
+            models.UniqueConstraint(
+                Lower('code'),
+                name='store_promocode_code_ci_unique',
+            ),
+        ]
 
 
 class Order(models.Model):
@@ -301,6 +329,29 @@ class Order(models.Model):
         SHIPPED = 'S', 'Отправлен'
         CANCELED = 'C', 'Отменён'
 
+    class PaymentStatus(models.TextChoices):
+        PENDING = 'pending', 'Создание платежа'
+        LINK_CREATED = 'link_created', 'Ссылка создана'
+        PAID = 'paid', 'Оплачен'
+        EXPIRED = 'expired', 'Истёк'
+        FAILED = 'failed', 'Ошибка создания'
+        UNKNOWN = 'unknown', 'Требует сверки'
+        REFUNDING = 'refunding', 'Возврат выполняется'
+        REFUNDED = 'refunded', 'Возвращён'
+
+    PAYMENT_LOCKED_STATUSES = (
+        PaymentStatus.PAID,
+        PaymentStatus.REFUNDING,
+        PaymentStatus.REFUNDED,
+    )
+    LOCKED_PROTECTED_FIELDS = (
+        'client_id',
+        'total_price',
+        'promo_id',
+        'shipping_address',
+        'idempotency_key',
+    )
+
     status = models.CharField(
         'Статус',
         max_length=1,
@@ -312,26 +363,56 @@ class Order(models.Model):
         auto_now_add=True,
         editable=False,
     )
+    idempotency_key = models.UUIDField(
+        'Ключ идемпотентности',
+        default=uuid4,
+        editable=False,
+        unique=True,
+    )
     client = models.ForeignKey(
         CustomUser,
-        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
         related_name='orders',
         verbose_name='Клиент',
     )
-    total_price = models.PositiveIntegerField(
+    total_price = models.DecimalField(
         'Сумма',
+        max_digits=12,
+        decimal_places=2,
     )
     operation_id = models.CharField(
         'ID операции',
+        blank=True,
         max_length=LONG_CHAR_MAX_LENGTH,
+        null=True,
+        unique=True,
     )
-    payment_link = models.CharField(
-        'Сслыка на оплату',
-        max_length=LONG_CHAR_MAX_LENGTH,
+    payment_link = models.URLField(
+        'Ссылка на оплату',
+        blank=True,
+        max_length=512,
+    )
+    payment_status = models.CharField(
+        'Статус платежа',
+        choices=PaymentStatus.choices,
+        db_index=True,
+        default=PaymentStatus.PENDING,
+        max_length=16,
+    )
+    provider_status = models.CharField(
+        'Статус платёжного провайдера',
+        blank=True,
+        max_length=32,
+    )
+    payment_status_updated_at = models.DateTimeField(
+        'Статус платежа обновлён',
+        auto_now=True,
     )
     promo = models.ForeignKey(
         Promocode,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='in_orders',
         null=True,
         blank=True,
@@ -356,10 +437,153 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ #{self.id} — {self.get_status_display()}'
 
+    @property
+    def is_payment_locked(self):
+        return self.payment_status in self.PAYMENT_LOCKED_STATUSES
+
+    def _validate_locked_order_changes(self):
+        if not self.pk:
+            return
+
+        old_order = (
+            type(self).objects
+            .filter(pk=self.pk)
+            .only(
+                'payment_status',
+                'status',
+                *self.LOCKED_PROTECTED_FIELDS,
+            )
+            .first()
+        )
+        if old_order is None or not old_order.is_payment_locked:
+            return
+
+        changed_fields = [
+            field
+            for field in self.LOCKED_PROTECTED_FIELDS
+            if getattr(old_order, field) != getattr(self, field)
+        ]
+        if changed_fields:
+            raise ValidationError(
+                'Оплаченный заказ нельзя менять по бизнес-полям: '
+                f'{", ".join(changed_fields)}.'
+            )
+
+        if old_order.status != self.Status.NEW and self.status == self.Status.NEW:
+            raise ValidationError(
+                'Оплаченный заказ нельзя вернуть в статус "Создан".'
+            )
+
+    def save(self, *args, **kwargs):
+        self._validate_locked_order_changes()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.is_payment_locked:
+            raise ValidationError('Оплаченный заказ нельзя удалить.')
+        return super().delete(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
         ordering = ('-pk',)
+
+
+class PaymentAttempt(models.Model):
+    '''
+    Попытка создания/оплаты платежа по заказу.
+    '''
+    ACTIVE_STATUSES = (
+        Order.PaymentStatus.PENDING,
+        Order.PaymentStatus.LINK_CREATED,
+        Order.PaymentStatus.UNKNOWN,
+        Order.PaymentStatus.REFUNDING,
+    )
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name='payment_attempts',
+        verbose_name='Заказ',
+    )
+    idempotency_key = models.UUIDField(
+        'Ключ идемпотентности',
+        editable=False,
+        unique=True,
+    )
+    operation_id = models.CharField(
+        'ID операции',
+        blank=True,
+        max_length=LONG_CHAR_MAX_LENGTH,
+        null=True,
+        unique=True,
+    )
+    payment_link = models.URLField(
+        'Ссылка на оплату',
+        blank=True,
+        max_length=512,
+    )
+    status = models.CharField(
+        'Статус попытки',
+        choices=Order.PaymentStatus.choices,
+        db_index=True,
+        default=Order.PaymentStatus.PENDING,
+        max_length=16,
+    )
+    provider_status = models.CharField(
+        'Статус платёжного провайдера',
+        blank=True,
+        max_length=32,
+    )
+    request_payload = models.JSONField(
+        'Запрос к провайдеру',
+        blank=True,
+        default=dict,
+    )
+    response_payload = models.JSONField(
+        'Ответ провайдера',
+        blank=True,
+        default=dict,
+    )
+    error_message = models.TextField(
+        'Ошибка',
+        blank=True,
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        'Дата обновления',
+        auto_now=True,
+    )
+
+    @property
+    def is_active(self):
+        return self.status in self.ACTIVE_STATUSES
+
+    def __str__(self):
+        return f'PaymentAttempt #{self.id} for order #{self.order_id}'
+
+    class Meta:
+        verbose_name = 'Попытка оплаты'
+        verbose_name_plural = 'Попытки оплаты'
+        ordering = ('-pk',)
+        indexes = (
+            models.Index(fields=('order', 'status')),
+        )
+        constraints = (
+            models.UniqueConstraint(
+                fields=('order',),
+                condition=models.Q(status__in=(
+                    Order.PaymentStatus.PENDING,
+                    Order.PaymentStatus.LINK_CREATED,
+                    Order.PaymentStatus.UNKNOWN,
+                    Order.PaymentStatus.REFUNDING,
+                )),
+                name='store_one_active_payment_attempt_per_order',
+            ),
+        )
 
 
 class ProductOrder(models.Model):
@@ -368,17 +592,52 @@ class ProductOrder(models.Model):
     '''
     product = models.ForeignKey(
         Product,
-        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
         related_name='in_orders'
     )
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE
     )
+    product_title = models.CharField(
+        'Название товара на момент заказа',
+        max_length=LONG_CHAR_MAX_LENGTH,
+        blank=True,
+    )
+    unit_price = models.DecimalField(
+        'Цена товара на момент заказа',
+        max_digits=12,
+        decimal_places=2,
+        validators=(MinValueValidator(MIN_VALUE),),
+    )
+    old_unit_price = models.DecimalField(
+        'Цена без скидки на момент заказа',
+        max_digits=12,
+        decimal_places=2,
+        validators=(MinValueValidator(MIN_VALUE),),
+        blank=True,
+        null=True,
+    )
     quantity = models.PositiveIntegerField(
         'Количество',
         validators=(MinValueValidator(1),)
     )
+
+    def _validate_order_is_mutable(self):
+        if self.order_id and self.order.is_payment_locked:
+            raise ValidationError(
+                'Состав оплаченного заказа нельзя менять.'
+            )
+
+    def save(self, *args, **kwargs):
+        self._validate_order_is_mutable()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._validate_order_is_mutable()
+        return super().delete(*args, **kwargs)
 
     class Meta:
         unique_together = ('order', 'product')

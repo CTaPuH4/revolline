@@ -21,4 +21,19 @@ def set_jwt_cookies(response: response.Response,
         secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
         samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
     )
+    response.set_cookie(
+        settings.SIMPLE_JWT['AUTH_STATE_COOKIE'],
+        '1',
+        max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+        httponly=False,
+        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+    )
+    return response
+
+
+def delete_jwt_cookies(response: response.Response) -> response.Response:
+    response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'])
+    response.delete_cookie(settings.SIMPLE_JWT['REFRESH_COOKIE'])
+    response.delete_cookie(settings.SIMPLE_JWT['AUTH_STATE_COOKIE'])
     return response

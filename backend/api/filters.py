@@ -8,8 +8,8 @@ class CharInFilter(filters.BaseInFilter, filters.CharFilter):
 
 
 class ProductFilter(filters.FilterSet):
-    price_min = filters.NumberFilter(field_name='discount_price', lookup_expr='gte')
-    price_max = filters.NumberFilter(field_name='discount_price', lookup_expr='lte')
+    price_min = filters.NumberFilter(field_name='price', lookup_expr='gte')
+    price_max = filters.NumberFilter(field_name='price', lookup_expr='lte')
     categories = CharInFilter(field_name='categories__slug', lookup_expr='in')
     has_discount = filters.BooleanFilter(method='filter_has_discount')
 
@@ -19,5 +19,5 @@ class ProductFilter(filters.FilterSet):
 
     def filter_has_discount(self, queryset, name, value):
         if value:
-            return queryset.filter(discount_price__isnull=False)
+            return queryset.filter(old_price__isnull=False)
         return queryset

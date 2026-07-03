@@ -1,4 +1,3 @@
-// src/pages/Sales.jsx
 import { useEffect, useState } from "react";
 import Breadcrumbs from "../components/Breadcrumbs";
 import MobileSidebarToggle from "../components/catalog/MobileSidebarToggle.jsx";
@@ -17,14 +16,13 @@ export default function Sales() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const itemsPerPage = 12; // соответствует настройке бэка
+    const itemsPerPage = 24;
 
-    // Получение товаров — только акции (has_discount=true)
     const fetchProducts = async (page = 1) => {
         setLoading(true);
         try {
             const base = apiUrl("/products/");
-            const url = `${base}?page=${page}&has_discount=true`;
+            const url = `${base}?page=${page}&page_size=${itemsPerPage}&has_discount=true`;
 
             const res = await fetch(url, { credentials: "include" });
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -45,9 +43,6 @@ export default function Sales() {
         fetchProducts(currentPage);
     }, [currentPage]);
 
-    const toggleFav = (id) =>
-        setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, is_fav: !p.is_fav } : p)));
-
     return (
         <main className="catalog-page">
             <Breadcrumbs />
@@ -60,6 +55,7 @@ export default function Sales() {
                         </div>
                         <MobileSidebarToggle />
                     </div>
+
                     <div className="catalog-scrollable">
                         {loading ? (
                             <div className="loading-indicator">Загрузка акций...</div>
@@ -68,13 +64,17 @@ export default function Sales() {
                         ) : (
                             <div className="products">
                                 {products.map((product) => (
-                                    <ProductCardMini key={product.id} product={product} onToggleFav={toggleFav} />
+                                    <ProductCardMini key={product.id} product={product} />
                                 ))}
                             </div>
                         )}
 
                         {products.length > 0 && (
-                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
                         )}
                     </div>
                 </div>

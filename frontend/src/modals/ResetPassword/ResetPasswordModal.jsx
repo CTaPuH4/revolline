@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import '../../css/modals/AuthRegisterModal.css';
 import SalesPolicy from "../SalesPolicy";
+import { csrfFetch } from "../../utils/api";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -45,7 +46,7 @@ export default function ResetPasswordModal({ onClose}) {
 
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/reset/request/`, {
+            const res = await csrfFetch(`${API_BASE}/reset/request/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),

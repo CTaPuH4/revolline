@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from store.models import Cart, Favorites
-from users.models import CustomUser
+from users.models import CustomUser, EmailMessageLog
 
 
 class CartInline(admin.TabularInline):
@@ -97,3 +97,31 @@ class CustomUserAdmin(UserAdmin):
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+
+@admin.register(EmailMessageLog)
+class EmailMessageLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'email_type',
+        'to_email',
+        'status',
+        'attempts',
+        'created_at',
+        'sent_at',
+    )
+    list_filter = ('email_type', 'status')
+    search_fields = ('to_email', 'subject', 'last_error', 'celery_task_id')
+    readonly_fields = (
+        'user',
+        'email_type',
+        'to_email',
+        'subject',
+        'status',
+        'attempts',
+        'last_error',
+        'celery_task_id',
+        'created_at',
+        'updated_at',
+        'sent_at',
+    )

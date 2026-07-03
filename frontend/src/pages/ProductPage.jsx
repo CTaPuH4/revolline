@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import ProductCard from "../components/ProductCard";
 import RecommendedSection from "../components/RecommendedSection";
+import "../css/ProductPage.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 

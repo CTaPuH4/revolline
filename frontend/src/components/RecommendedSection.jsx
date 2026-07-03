@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ProductCardMini from "../components/catalog/ProductCardMini";
-import Pagination from "../components/catalog/Pagination";
 import "../css/catalog/Catalog.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
-const itemsPerPage = 1;
+const RECOMMENDED_LIMIT = 6;
 
-export default function RecommendedSection({ categorySlug}) {
+export default function RecommendedSection({ categorySlug, currentProductId }) {
     const [recommended, setRecommended] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         if (!categorySlug) {
+            setRecommended([]);
             setLoading(false);
             return;
         }
@@ -23,30 +21,32 @@ export default function RecommendedSection({ categorySlug}) {
         const fetchRecommended = async () => {
             setLoading(true);
             setError(null);
+
             try {
                 const res = await axios.get(`${API_BASE}/products/`, {
                     params: {
-                        // Используем slug для фильтрации
                         categories: categorySlug,
-                        // exclude не поддерживается, так что уберем
-                        page: currentPage,
+                        page_size: RECOMMENDED_LIMIT + 1,
                     },
                     withCredentials: true,
                 });
 
-                // Обработка данных
-                setRecommended(res.data.results || []);
-                setTotalPages(Math.max(1, Math.ceil((res.data.count || 0) / itemsPerPage)));
+                const items = Array.isArray(res.data?.results) ? res.data.results : [];
+                const filtered = items
+                    .filter((product) => product.id !== currentProductId)
+                    .slice(0, RECOMMENDED_LIMIT);
+
+                setRecommended(filtered);
             } catch (err) {
-                console.error("Ошибка загрузки рекомендованных товаров:", err);
-                setError("Не удалось загрузить рекомендованные товары.");
+                console.error("Ошибка загрузки рекомендуемых товаров:", err);
+                setError("Не удалось загрузить рекомендуемые товары.");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchRecommended();
-    }, [categorySlug, currentPage]); // Зависим только от slug и страницы
+    }, [categorySlug, currentProductId]);
 
     if (loading) {
         return <div className="loading-indicator">Загрузка рекомендуемых товаров...</div>;
@@ -56,24 +56,18 @@ export default function RecommendedSection({ categorySlug}) {
         return <p className="error-message">{error}</p>;
     }
 
-    if (recommended.length === 0 && currentPage === 1) {
+    if (recommended.length === 0) {
         return null;
     }
 
     return (
-        <div className="catalog-page">
-            <h2>Рекомендуем также</h2>
-            <div className="products">
+        <section className="recommended-section">
+            <h2 className="recommended-title">Рекомендуем также</h2>
+            <div className="products recommended-products">
                 {recommended.map((product) => (
                     <ProductCardMini key={product.id} product={product} />
                 ))}
             </div>
-
-            <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-            />
-        </div>
+        </section>
     );
 }

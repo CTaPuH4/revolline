@@ -6,10 +6,14 @@ import React, {
     useCallback,
     useRef,
 } from "react";
+import {
+    clearAuthState,
+    csrfFetch,
+    ensureCsrfToken,
+    hasAuthState,
+} from "../utils/api";
 
 const AuthContext = createContext();
-
-const API_BASE = import.meta.env.VITE_API_BASE;
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -80,14 +84,16 @@ export const AuthProvider = ({ children }) => {
         if (isRefreshing.current) return false;
         isRefreshing.current = true;
         try {
-            const res = await fetch(`${API_BASE}/token/refresh/`, {
+            const res = await csrfFetch("/token/refresh/", {
                 method: "POST",
-                credentials: "include",
                 headers: { "Accept": "application/json", "Content-Type": "application/json" },
                 body: JSON.stringify({}),
             });
 
-            if (!res.ok) return false;
+            if (!res.ok) {
+                clearAuthState();
+                return false;
+            }
             await safeJson(res);
             return true;
         } catch (e) {
@@ -103,9 +109,8 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`${API_BASE}/users/me/`, {
+                const res = await csrfFetch("/users/me/", {
                     method: "GET",
-                    credentials: "include",
                     headers: { "Accept": "application/json" },
                 });
 
@@ -113,7 +118,8 @@ export const AuthProvider = ({ children }) => {
                     const ok = await refreshAccessToken();
                     if (!ok) {
                         setUser(null);
-                        throw new Error("Unauthorized");
+                        clearAuthState();
+                        return null;
                     }
                     return await fetchUser(false);
                 }
@@ -141,9 +147,8 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE}/login/`, {
+            const res = await csrfFetch("/login/", {
                 method: "POST",
-                credentials: "include",
                 headers: { "Accept": "application/json", "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
@@ -167,7 +172,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE}/users/`, {
+            const res = await csrfFetch("/users/", {
                 method: "POST",
                 headers: { "Accept": "application/json", "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password, password2 }),
@@ -191,9 +196,8 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            await fetch(`${API_BASE}/logout/`, {
+            await csrfFetch("/logout/", {
                 method: "POST",
-                credentials: "include",
                 headers: { "Accept": "application/json", "Content-Type": "application/json" },
                 body: JSON.stringify({}),
             });
@@ -201,6 +205,7 @@ export const AuthProvider = ({ children }) => {
             console.warn("Logout error", e);
         } finally {
             if (refreshInterval.current) clearInterval(refreshInterval.current);
+            clearAuthState();
             setUser(null);
             setLoading(false);
         }
@@ -211,9 +216,8 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`${API_BASE}/users/me/`, {
+                const res = await csrfFetch("/users/me/", {
                     method: "PATCH",
-                    credentials: "include",
                     headers: { "Accept": "application/json", "Content-Type": "application/json" },
                     body: JSON.stringify(fields),
                 });
@@ -222,9 +226,8 @@ export const AuthProvider = ({ children }) => {
                     const ok = await refreshAccessToken();
                     if (!ok) throw new Error("Unauthorized");
 
-                    const res2 = await fetch(`${API_BASE}/users/me/`, {
+                    const res2 = await csrfFetch("/users/me/", {
                         method: "PATCH",
-                        credentials: "include",
                         headers: { "Accept": "application/json", "Content-Type": "application/json" },
                         body: JSON.stringify(fields),
                     });
@@ -262,9 +265,8 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`${API_BASE}/users/me/change_password/`, {
+                const res = await csrfFetch("/users/me/change_password/", {
                     method: "POST",
-                    credentials: "include",
                     headers: { "Accept": "application/json", "Content-Type": "application/json" },
                     body: JSON.stringify({ password: oldP, new_password: newP, new_password2: newP2 }),
                 });
@@ -273,9 +275,8 @@ export const AuthProvider = ({ children }) => {
                     const ok = await refreshAccessToken();
                     if (!ok) throw new Error("Unauthorized");
 
-                    const res2 = await fetch(`${API_BASE}/users/me/change_password/`, {
+                    const res2 = await csrfFetch("/users/me/change_password/", {
                         method: "POST",
-                        credentials: "include",
                         headers: { "Accept": "application/json", "Content-Type": "application/json" },
                         body: JSON.stringify({ password: oldP, new_password: newP, new_password2: newP2 }),
                     });
@@ -306,14 +307,13 @@ export const AuthProvider = ({ children }) => {
 
     /**
      * authFetch - универсальная обёртка fetch, обрабатывающая 401:
-     * - добавляет API_BASE к относительным путям
+     * - добавляет базовый API URL к относительным путям
      * - по умолчанию ставит credentials: 'include' и Content-Type: application/json
      * - при 401 пытается вызвать refreshAccessToken() и повторить запрос один раз
      * - при неудаче вызывает logout() и выбрасывает ошибку с полезным сообщением
      */
     const authFetch = useCallback(
         async (path, options = {}, retry = true) => {
-            const url = path.startsWith("http") ? path : `${API_BASE}${path.startsWith("/") ? path : "/" + path}`;
             const defaultHeaders = { "Content-Type": "application/json" };
             const opts = {
                 credentials: "include",
@@ -324,13 +324,7 @@ export const AuthProvider = ({ children }) => {
                 },
             };
 
-            let res;
-            try {
-                res = await fetch(url, opts);
-            } catch (e) {
-                // сетевые ошибки пробрасываем дальше
-                throw e;
-            }
+            const res = await csrfFetch(path, opts);
 
             // если 401 — пробуем обновить токен и повторить запрос один раз
             if (res.status === 401 && retry) {
@@ -340,12 +334,12 @@ export const AuthProvider = ({ children }) => {
                         return await authFetch(path, options, false);
                     } else {
                         // refresh не сработал — разлогиниваемся и кидаем ошибку
-                        try { await logout(); } catch (_) { /* ignore */ }
+                        try { await logout(); } catch { /* ignore */ }
                         const data = await safeJson(res);
                         throw buildError(res, data);
                     }
                 } catch (e) {
-                    try { await logout(); } catch (_) { /* ignore */ }
+                    try { await logout(); } catch { /* ignore */ }
                     throw e;
                 }
             }
@@ -369,9 +363,19 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         (async () => {
             try {
-                await fetchUser();
+                await ensureCsrfToken();
+                if (hasAuthState()) {
+                    await fetchUser();
+                }
             } catch { /* empty */ }
         })();
+    }, [fetchUser]);
+
+    useEffect(() => {
+        if (!user) {
+            if (refreshInterval.current) clearInterval(refreshInterval.current);
+            return undefined;
+        }
 
         refreshInterval.current = setInterval(async () => {
             try {
@@ -385,7 +389,7 @@ export const AuthProvider = ({ children }) => {
         return () => {
             if (refreshInterval.current) clearInterval(refreshInterval.current);
         };
-    }, [fetchUser, refreshAccessToken, logout]);
+    }, [user, refreshAccessToken, logout]);
 
     return (
         <AuthContext.Provider

@@ -92,6 +92,11 @@
   transform: translateY(-2px);
   transform: scale(1.05);
 }
+.order-toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
 .order-toggle-btn .chev {
   transition: transform 160ms ease;
   display:inline-block;
@@ -197,6 +202,19 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.order-retry-error {
+  margin: 0;
+  color: #aa0f4e;
 }
 
 /* Адаптация для мобильных */
@@ -217,6 +235,15 @@
 
   .order-id { font-size: 16px; }
   .orders-header { font-size: 28px; }
+
+  .order-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .order-actions {
+    justify-content: flex-start;
+  }
 }
 
 /* Мелкие вспомогательные стили */
