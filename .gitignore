@@ -52,12 +52,14 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.packages*/
 
 # Translations
 *.mo
 *.pot
 
 # Django stuff:
+logs/
 *.log
 local_settings.py
 db.sqlite3

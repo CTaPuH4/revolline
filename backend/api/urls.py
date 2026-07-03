@@ -2,12 +2,13 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from api.views import (CartViewSet, CategoryViewSet, CountryListView,
-                       FavoritesViewSet, OrderViewSet, ProductViewSet,
-                       PromoViewSet, SectionViewSet)
+                       FavoritesViewSet, OrderViewSet, PaymentWebhookView,
+                       ProductViewSet, PromoViewSet, SectionViewSet)
 from users.views import (ActivateUserView, ChangePasswordView,
-                         CustomTokenObtainPairView, CustomTokenRefreshView,
-                         LogoutView, PasswordResetConfirmView,
-                         PasswordResetRequestView, UserViewSet)
+                         CsrfTokenView, CustomTokenObtainPairView,
+                         CustomTokenRefreshView, LogoutView,
+                         PasswordResetConfirmView, PasswordResetRequestView,
+                         UserViewSet)
 
 router = DefaultRouter()
 router.register('sections', SectionViewSet, basename='sections')
@@ -21,6 +22,7 @@ router.register('promo', PromoViewSet, basename='promo')
 
 
 urlpatterns = [
+    path('csrf/', CsrfTokenView.as_view(), name='csrf-token'),
     path('activate/<uidb64>/<token>/',
          ActivateUserView.as_view(), name='activate-user'),
     path('reset/request/',
@@ -41,5 +43,8 @@ urlpatterns = [
     path('countries/',
          CountryListView.as_view(),
          name='country-list'),
+    path('payments/tochka/webhook/',
+         PaymentWebhookView.as_view(),
+         name='payment-webhook'),
     path('', include(router.urls))
 ]

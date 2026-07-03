@@ -17,14 +17,14 @@ export default function NewProducts() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const itemsPerPage = 12;
+    const itemsPerPage = 24;
 
     // Получение товаров — только новинки
     const fetchProducts = async (page = 1) => {
         setLoading(true);
         try {
             const base = apiUrl("/products/");
-            const url = `${base}?page=${page}&is_new=true`;
+            const url = `${base}?page=${page}&page_size=${itemsPerPage}&is_new=true`;
 
             const res = await fetch(url, { credentials: "include" });
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);

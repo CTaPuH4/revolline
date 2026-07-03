@@ -61,14 +61,14 @@ $service = new service(
      * Вставьте свой аккаунт\идентификатор для интеграции
      * Put your account for integration here
      */
-    'wqGwiQx0gg8mLtiEKsUinjVSICCjtTEP',
+    getenv('CDEK_LOGIN') ?: '',
 
     /**
      * Вставьте свой пароль для интеграции
      * Put your password for integration here
      */
-    'RmAmgvSgSl1yirlz9QupbzOJVqhCxcP5',
-    'https://api.edu.cdek.ru/v2'
+    getenv('CDEK_SECRET') ?: '',
+    getenv('CDEK_BASE_URL') ?: 'https://api.edu.cdek.ru/v2'
 );
 
 $service->process($_GET, file_get_contents('php://input'));

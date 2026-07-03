@@ -89,6 +89,36 @@
     width: 400px;
 }
 
+.cdek-widget-wrapper {
+  width: 100%;
+}
+
+.cdek-widget-container {
+  width: 100%;
+}
+
+.cdek-widget-root {
+  width: 100%;
+  height: 500px;
+  min-height: 500px;
+}
+
+@media (max-width: 769px) {
+  .cdek-widget-root {
+    height: 420px;
+    min-height: 420px;
+  }
+}
+
+.cdek-widget-error {
+  padding: 16px;
+  border: 1px solid rgba(170,15,78,0.2);
+  border-radius: 8px;
+  background: #fff7f9;
+  color: #aa0f4e;
+  font-size: 15px;
+}
+
 /* Общий стиль для обоих блоков */
 .cart-box {
   margin-top: 40px;

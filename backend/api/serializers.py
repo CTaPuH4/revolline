@@ -9,6 +9,15 @@ from store.models import (Cart, Category, Favorites, Order, Product,
 User = get_user_model()
 
 
+class LowerSlugRelatedField(serializers.SlugRelatedField):
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            data = data.strip().lower()
+            if data == '' and self.allow_null:
+                return None
+        return super().to_internal_value(data)
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -37,44 +46,61 @@ class PromocodeSerializer(serializers.ModelSerializer):
 
 class ShortProductSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    price = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        coerce_to_string=False,
+    )
+    old_price = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        coerce_to_string=False,
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'price',
-                  'discount_price', 'image')
+        fields = ('id', 'title', 'price', 'old_price', 'has_discount', 'image')
 
     def get_image(self, obj):
         request = self.context.get('request')
-        first_image = obj.images.first().image
+        first_image = obj.images.first()
+        if not first_image:
+            return None
         if request:
-            return request.build_absolute_uri(first_image.url)
-        return first_image.url
+            return request.build_absolute_uri(first_image.image.url)
+        return first_image.image.url
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    is_fav = serializers.SerializerMethodField()
+    is_fav = serializers.BooleanField(read_only=True, default=False)
     images = ProductImageSerializer(many=True)
     categories = CategorySerializer(many=True)
+    price = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        coerce_to_string=False,
+    )
+    old_price = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        coerce_to_string=False,
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'description', 'pr_type', 'price',
-                  'discount_price', 'is_new', 'is_fav',
-                  'ingredients', 'country', 'size', 'full_weight',
-                  'color', 'effect', 'collection',
-                  'product_weight', 'volume', 'categories', 'images')
-
-    def get_is_fav(self, obj):
-        user = self.context['request'].user
-        if user.is_authenticated:
-            return user.fav.filter(id=obj.id).exists()
-        return False
+        fields = ('id', 'title', 'description', 'pr_type', 'price', 'old_price',
+                  'is_new', 'is_fav', 'ingredients', 'country', 'size', 'full_weight',
+                  'color', 'effect', 'collection', 'product_weight', 'volume',
+                  'categories', 'images', 'has_discount')
 
 
 class FavCartSerializerMixin(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(),
-        write_only=True,
+        queryset=Product.objects.all(), write_only=True,
     )
     product_data = ShortProductSerializer(source='product', read_only=True)
 
@@ -84,12 +110,12 @@ class CartSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
         model = Cart
         fields = ('id', 'product', 'product_data', 'quantity')
 
-    def validate(self, data):
-        if self.instance and 'product' in data:
-            raise serializers.ValidationError({
-                'product': 'Изменение продукта в корзине запрещено.'
-            })
-        return data
+    def validate(self, attrs):
+        if self.instance and 'product' in attrs:
+            raise serializers.ValidationError(
+                {'product': 'Изменение продукта в корзине запрещено.'}
+            )
+        return attrs
 
 
 class FavoritesSerializer(FavCartSerializerMixin, serializers.ModelSerializer):
@@ -115,14 +141,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 )
                 if not existing_user.is_active:
                     raise AuthenticationFailed(
-                        'Аккаунт неактивен. Подтвердите почту.',
-                        code='user_inactive'
+                        'Аккаунт неактивен. Подтвердите почту.', code='user_inactive'
                     )
             except User.DoesNotExist:
                 pass
             raise AuthenticationFailed(
-                'Неверные учетные данные.',
-                code='invalid_credentials'
+                'Неверные учетные данные.', code='invalid_credentials'
             )
 
         return super().validate(attrs)
@@ -130,23 +154,39 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class FavDeleteSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(),
-        required=True
+        queryset=Product.objects.all(), required=True
     )
 
 
 class ProductOrderSerializer(serializers.ModelSerializer):
-    product = ShortProductSerializer()
+    product = ShortProductSerializer(read_only=True, allow_null=True)
+    unit_price = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        coerce_to_string=False,
+    )
+    old_unit_price = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        coerce_to_string=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = ProductOrder
-        fields = ('product', 'quantity')
+        fields = (
+            'product',
+            'product_title',
+            'unit_price',
+            'old_unit_price',
+            'quantity',
+        )
 
 
 class OrdersSerializer(serializers.ModelSerializer):
-    promo = serializers.SlugRelatedField(
+    promo = LowerSlugRelatedField(
         slug_field='code',
-        queryset=Promocode.objects.all(),
+        queryset=Promocode.objects.filter(active=True),
         allow_null=True,
         required=False
     )
@@ -154,10 +194,17 @@ class OrdersSerializer(serializers.ModelSerializer):
         source='productorder_set', many=True, read_only=True
     )
     total_price = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        coerce_to_string=False,
     )
     final_price = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True
+        source='total_price',
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        coerce_to_string=False,
     )
 
     class Meta:
@@ -165,6 +212,7 @@ class OrdersSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
+            'payment_status',
             'created_at',
             'payment_link',
             'total_price',
@@ -177,6 +225,7 @@ class OrdersSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'id',
             'status',
+            'payment_status',
             'payment_link',
             'created_at',
             'tracking_number',

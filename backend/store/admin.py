@@ -1,19 +1,16 @@
 import logging
-from hashlib import md5
 
-import pandas as pd
 from django import forms
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 
-from store.models import (Category, Order, Product, ProductImage, ProductOrder,
-                          Promocode, Section)
-from store.services import clean_value, image_download, status_update
+from store.importers.products_excel import import_products_from_excel
+from store.models import (Category, Order, PaymentAttempt, Product,
+                          ProductImage, ProductOrder, Promocode, Section)
+from store.tasks import sync_pending_order_statuses
 
-from .models import Category, Product
-
-logger = logging.getLogger('main')
+logger = logging.getLogger(__name__)
 
 
 class ProductImageInline(admin.TabularInline):
@@ -24,7 +21,31 @@ class ProductImageInline(admin.TabularInline):
 
 class ProductOrderInline(admin.TabularInline):
     model = ProductOrder
-    readonly_fields = ('product', 'quantity')
+    readonly_fields = (
+        'product',
+        'product_title',
+        'unit_price',
+        'old_unit_price',
+        'quantity',
+    )
+    can_delete = False
+    extra = 0
+
+
+class PaymentAttemptInline(admin.TabularInline):
+    model = PaymentAttempt
+    readonly_fields = (
+        'id',
+        'idempotency_key',
+        'operation_id',
+        'payment_link',
+        'status',
+        'provider_status',
+        'error_message',
+        'created_at',
+        'updated_at',
+    )
+    fields = readonly_fields
     can_delete = False
     extra = 0
 
@@ -64,12 +85,12 @@ class ProductAdmin(admin.ModelAdmin):
         'title',
         'pr_type',
         'price',
-        'discount_price',
+        'old_price',
         'volume',
     )
     list_editable = (
         'price',
-        'discount_price',
+        'old_price',
     )
     search_fields = ('title', 'description', 'pr_type')
     list_filter = ('categories', 'country', 'is_new')
@@ -78,85 +99,29 @@ class ProductAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         from django.urls import path
+
         urls = super().get_urls()
         custom_urls = [
             path(
                 'import-excel/',
-                self.admin_site.admin_view(self.import_excel)
+                self.admin_site.admin_view(self.import_excel),
             ),
         ]
         return custom_urls + urls
 
     def import_excel(self, request):
-        '''Обработчик формы импорта'''
         if request.method == 'POST':
             form = ExcelImportForm(request.POST, request.FILES)
             if form.is_valid():
-                file = form.cleaned_data['file']
-                df = pd.read_excel(file)
-
-                imported = 0
-                for _, row in df.iterrows():
-                    product, _ = Product.objects.update_or_create(
-                        title=row['Название'],
-                        defaults={
-                            'description': clean_value(row['Описание']),
-                            'pr_type': clean_value(row['Тип']),
-                            'price': clean_value(row['Цена']),
-                            'discount_price': clean_value(
-                                row['Цена по скидке']
-                            ),
-                            'is_new': clean_value(
-                                bool(row['Новинка']),
-                                default=True
-                            ),
-                            'ingredients': clean_value(row['Состав']),
-                            'country': clean_value(row['Страна']),
-                            'size': clean_value(row['Размеры']),
-                            'effect': clean_value(row['Эффект']),
-                            'color': clean_value(row['Цвет']),
-                            'collection': clean_value(row['Коллекция']),
-                            'full_weight': clean_value(row['Вес полный']),
-                            'product_weight': clean_value(row['Вес продукта']),
-                            'volume': clean_value(row['Объём']),
-                        },
-                    )
-
-                    cat_titles = [
-                        x.strip().capitalize()
-                        for x in row['Категории'].split(',')
-                        if x.strip()
-                    ]
-                    categories = [
-                        Category.objects.get_or_create(
-                            title=title
-                        )[0] for title in cat_titles
-                    ]
-                    print(categories)
-                    product.categories.set(categories)
-
-                    links = [
-                        x.strip() for x in row['Фото'].split(',')
-                    ]
-                    for link in links:
-                        image_file = image_download(link)
-                        file_hash = md5(image_file.read()).hexdigest()
-                        image_file.seek(0)
-
-                        if not product.images.filter(
-                            file_hash=file_hash
-                        ).exists():
-                            ProductImage.objects.create(
-                                product=product,
-                                image=image_file,
-                                file_hash=file_hash
-                            )
-                    imported += 1
-
+                result = import_products_from_excel(form.cleaned_data['file'])
                 self.message_user(
                     request,
-                    f'Импортировано {imported} записей из Excel.',
-                    level=messages.SUCCESS,
+                    ' '.join(result.to_messages()),
+                    level=(
+                        messages.WARNING
+                        if result.has_warnings
+                        else messages.SUCCESS
+                    ),
                 )
                 return HttpResponseRedirect('../')
         else:
@@ -175,27 +140,111 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'status',
+        'payment_status',
+        'provider_status',
         'tracking_number',
         'total_price',
         'created_at',
         'client',
     )
-    list_editable = ('status', 'tracking_number',)
+    list_editable = ('status', 'tracking_number')
     readonly_fields = (
         'client',
         'total_price',
         'shipping_address',
         'operation_id',
+        'idempotency_key',
         'payment_link',
-        'promo'
+        'payment_status',
+        'provider_status',
+        'payment_status_updated_at',
+        'promo',
     )
-    list_filter = ('status',)
-    inlines = (ProductOrderInline,)
+    list_filter = ('status', 'payment_status', 'provider_status')
+    inlines = (ProductOrderInline, PaymentAttemptInline)
+    actions = ('enqueue_status_sync',)
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        status_update(qs.filter(status=Order.Status.NEW))
-        return qs
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.is_payment_locked:
+            return False
+        return super().has_delete_permission(request, obj)
+
+    @admin.action(description='Запустить синхронизацию статусов выбранных заказов')
+    def enqueue_status_sync(self, request, queryset):
+        order_ids = list(
+            queryset.filter(
+                payment_attempts__operation_id__isnull=False,
+                payment_attempts__status__in=(
+                    Order.PaymentStatus.LINK_CREATED,
+                    Order.PaymentStatus.UNKNOWN,
+                    Order.PaymentStatus.REFUNDING,
+                ),
+            ).exclude(
+                payment_attempts__operation_id='',
+            ).distinct().values_list('id', flat=True)
+        )
+        if not order_ids:
+            self.message_user(
+                request,
+                'Среди выбранных заказов нет платежей для синхронизации.',
+                level=messages.WARNING,
+            )
+            return
+
+        try:
+            task = sync_pending_order_statuses.delay(order_ids=order_ids)
+        except Exception as exc:
+            logger.exception('Could not enqueue order status sync')
+            self.message_user(
+                request,
+                f'Не удалось поставить задачу синхронизации: {exc}',
+                level=messages.ERROR,
+            )
+            return
+
+        self.message_user(
+            request,
+            f'Задача синхронизации поставлена: {task.id}.',
+            level=messages.SUCCESS,
+        )
+
+
+@admin.register(PaymentAttempt)
+class PaymentAttemptAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'order',
+        'status',
+        'provider_status',
+        'operation_id',
+        'created_at',
+        'updated_at',
+    )
+    readonly_fields = (
+        'order',
+        'idempotency_key',
+        'request_payload',
+        'response_payload',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = ('status', 'provider_status')
+    search_fields = ('operation_id', '=order__id', 'idempotency_key')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        order = obj.order
+        order.operation_id = obj.operation_id
+        order.payment_link = obj.payment_link
+        order.payment_status = obj.status
+        order.provider_status = obj.provider_status
+        order.save(update_fields=(
+            'operation_id',
+            'payment_link',
+            'payment_status',
+            'provider_status',
+            'payment_status_updated_at',
+        ))
 
 
 @admin.register(Promocode)
@@ -204,6 +253,6 @@ class PromocodeAdmin(admin.ModelAdmin):
         'code',
         'active',
         'percent',
-        'min_price'
+        'min_price',
     )
     list_editable = ('percent', 'active', 'min_price')

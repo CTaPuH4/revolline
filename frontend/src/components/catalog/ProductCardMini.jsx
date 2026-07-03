@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../css/catalog/ProductCardMini.css";
 import { useAuth } from "../../context/AuthContext";
 import AuthModal from "../../modals/Auth/AuthModal";
+import { csrfFetch } from "../../utils/api";
 
 import heart from '../../assets/icons/heart.png'
 import heartFilled from '../../assets/icons/heart-filled.png'
@@ -29,6 +30,7 @@ export default function ProductCardMini({ product }) {
 
     const [isFav, setIsFav] = useState(false);
     const [showAuth, setShowAuth] = useState(false);
+    const productType = product.pr_type || product.type || "";
 
     useEffect(() => {
         setIsFav(product.is_fav || false);
@@ -46,13 +48,13 @@ export default function ProductCardMini({ product }) {
         try {
             if (prevFav) {
                 // Удаляем из избранного
-                await fetch(`${API_BASE}/favorites/delete/?product=${product.id}`, {
+                await csrfFetch(`${API_BASE}/favorites/delete/?product=${product.id}`, {
                     method: "DELETE",
                     credentials: "include",
                 });
             } else {
                 // Добавляем в избранное
-                await fetch(`${API_BASE}/favorites/`, {
+                await csrfFetch(`${API_BASE}/favorites/`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
@@ -85,12 +87,12 @@ export default function ProductCardMini({ product }) {
                         )}
                     </div>
                     <div className="product-mini-title">{product.title}</div>
-                    <div className="product-mini-type">{product.type}</div>
+                    {productType && <div className="product-mini-type">{productType}</div>}
                     <div className="product-mini-price">
-                        {product.discount_price ? (
+                        {product.old_price ? (
                             <>
-                                <span className="old-price">{product.price}₽</span>
-                                <span className="new-price">{product.discount_price}₽</span>
+                                <span className="old-price">{product.old_price}₽</span>
+                                <span className="new-price">{product.price}₽</span>
                             </>
                         ) : (
                             <span className="new-price">{product.price}₽</span>

@@ -2,9 +2,11 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.db import transaction
+from django.middleware.csrf import get_token
+from django.utils.http import urlsafe_base64_decode
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -16,13 +18,24 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 
 from api.serializers import CustomTokenObtainPairSerializer
-from users.models import CustomUser
+from users.models import CustomUser, EmailMessageLog
 from users.permissions import IsAnonymous
 from users.serializers import (ChangePasswordSerializer,
                                PasswordResetConfirmSerializer,
                                PasswordResetRequestSerializer,
                                UserRegistrationSerializer, UserSerializer)
-from users.utils import set_jwt_cookies
+from users.auth import enforce_csrf
+from users.tasks import enqueue_user_email, enqueue_user_email_on_commit
+from users.utils import delete_jwt_cookies, set_jwt_cookies
+
+
+class CsrfTokenView(views.APIView):
+    authentication_classes = ()
+    permission_classes = ()
+
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        return Response({'csrfToken': get_token(request)})
 
 
 class ActivateUserView(views.APIView):
@@ -48,6 +61,8 @@ class ActivateUserView(views.APIView):
 
 
 class PasswordResetRequestView(views.APIView):
+    throttle_scope = 'password_reset'
+
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -60,21 +75,9 @@ class PasswordResetRequestView(views.APIView):
                     status=status.HTTP_200_OK
                 )
 
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-
-            reset_link = (
-                f'{settings.FRONTEND_URL}/reset/?uid={uid}&token={token}'
-            )
-
-            send_mail(
-                subject='Revolline. Восстановление пароля.',
-                message=(
-                    f'Cсылка для восстановления пароля:\n{reset_link}'
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+            enqueue_user_email(
+                user.id,
+                EmailMessageLog.EmailType.PASSWORD_RESET,
             )
 
             return Response(
@@ -88,6 +91,8 @@ class PasswordResetConfirmView(views.APIView):
     '''
     Вью восстановления пароля.
     '''
+    throttle_scope = 'password_reset'
+
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if not serializer.is_valid():
@@ -140,6 +145,11 @@ class UserViewSet(viewsets.GenericViewSet):
             return (IsAnonymous(),)
         return (permissions.IsAuthenticated(),)
 
+    def get_throttles(self):
+        if self.action == 'create':
+            self.throttle_scope = 'auth'
+        return super().get_throttles()
+
     def get_serializer_class(self):
         if self.action == 'create':
             return UserRegistrationSerializer
@@ -148,7 +158,12 @@ class UserViewSet(viewsets.GenericViewSet):
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        with transaction.atomic():
+            user = serializer.save()
+            enqueue_user_email_on_commit(
+                user.id,
+                EmailMessageLog.EmailType.ACTIVATION,
+            )
         return Response({'detail': 'Пользователь создан. Подтвердите email.'},
                         status=status.HTTP_201_CREATED)
 
@@ -175,6 +190,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     authentication_classes = ()
     permission_classes = ()
+    throttle_scope = 'auth'
 
     def post(self, request: Request, *args, **kwargs) -> Response:
         response = super().post(request, *args, **kwargs)
@@ -196,7 +212,11 @@ class CustomTokenRefreshView(JWTAuthentication, TokenRefreshView):
     '''
     Вью для обновления токенов.
     '''
+    throttle_scope = 'auth'
+
     def post(self, request: Request, *args, **kwargs) -> Response:
+        enforce_csrf(request)
+
         raw_refresh_token = request.COOKIES.get(
             settings.SIMPLE_JWT['REFRESH_COOKIE']) or None
         data = {'refresh': raw_refresh_token}
@@ -244,9 +264,7 @@ class LogoutView(views.APIView):
 
         response = Response(status=status.HTTP_205_RESET_CONTENT)
 
-        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'])
-        response.delete_cookie(settings.SIMPLE_JWT['REFRESH_COOKIE'])
-        return response
+        return delete_jwt_cookies(response)
 
 
 class ChangePasswordView(views.APIView):
@@ -254,6 +272,7 @@ class ChangePasswordView(views.APIView):
     Вью для смены пароля.
     '''
     permission_classes = (permissions.IsAuthenticated,)
+    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data,

@@ -1,76 +1,101 @@
 .offer {
-  width: 90%;  
+  width: 90%;
   display: flex;
-  flex-direction: row; 
-  justify-content: center; 
-  gap: 0px 150px;      
+  flex-direction: row;
+  justify-content: center;
+  gap: 0 150px;
   margin: 0 auto;
   padding: 0;
   align-items: stretch;
 }
 
 .offer-photo {
-    display: flex;
-    align-items: flex-end;
-    text-align: center;
-    margin: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  flex: 0 1 420px;
+}
+
+.offer-photo img {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  max-height: 560px;
+  object-fit: contain;
 }
 
 .offer-textblock {
-    text-align: center;
-    max-width: 500px;
-    padding: 15px;
+  text-align: left;
+  max-width: 520px;
+  padding: 15px;
 }
 
-.offer p {
-  font-family: 'CarismaClassic';
+.offer p,
+.offer a {
+  font-family: "CarismaClassic";
   font-weight: 400;
   font-style: normal;
 }
 
-.offer-title { 
+.offer-title {
   margin: 0;
   font-size: 40px;
   border: none;
   outline: none;
 }
 
+.offer-title-secondary {
+  margin-top: 28px;
+}
+
 .offer-text {
-    font-size: 20px;
-    margin-top: 10px;
+  font-size: 20px;
+  margin-top: 10px;
+  line-height: 1.45;
+  color: #222;
 }
 
 .offer-link {
+  display: inline-block;
   font-size: 16px;
-  color: #7B7B7B;
+  color: #aa0f4e;
+  text-decoration: none;
   margin-top: 10px;
-  margin-bottom: 5x;
+  margin-bottom: 5px;
 }
 
 .offer-link:hover {
-  transform: scale(1.15);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
   .offer {
-    flex-direction: column; /* Сначала текст, потом фото */
-    gap: 40px 0; /* вертикальный отступ между блоками */
-    align-items: center; /* центрируем по горизонтали */
+    flex-direction: column;
+    gap: 36px 0;
+    align-items: center;
   }
 
   .offer-photo {
-    order: 2; /* Явно указываем, что фото должно быть после текста */
+    order: 2;
     justify-content: center;
+    width: 100%;
+  }
+
+  .offer-photo img {
+    max-width: 320px;
+    max-height: 420px;
   }
 
   .offer-textblock {
-    order: 1; /* Текст сверху */
+    order: 1;
     padding: 10px;
-    text-align: center;
+    text-align: left;
   }
 
   .offer-title {
-    margin: 0 auto;
+    margin: 0 auto 0 0;
     font-size: 28px;
   }
 
@@ -80,10 +105,5 @@
 
   .offer-link {
     font-size: 14px;
-  }
-
-  .offer-photo img {
-    max-width: 100%;
-    height: auto;
   }
 }

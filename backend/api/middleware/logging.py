@@ -1,110 +1,172 @@
 import json
 import logging
+import time
+from uuid import uuid4
 
+from django.conf import settings
 from django.http import FileResponse, StreamingHttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
-logger = logging.getLogger('main')
+logger = logging.getLogger('api.request')
 
-SENSITIVE_FIELDS = (
-    'password', 'password2', 'new_password', 'new_password2', 'token', 'uid'
-)
+SENSITIVE_FIELDS = {
+    'access',
+    'access_token',
+    'authorization',
+    'cookie',
+    'csrfmiddlewaretoken',
+    'email',
+    'new_password',
+    'new_password2',
+    'password',
+    'password2',
+    'phone',
+    'refresh',
+    'refresh_token',
+    'secret',
+    'token',
+    'uid',
+}
 
 
 class DetailedLoggingMiddleware(MiddlewareMixin):
     '''
-    Логируем:
-    - успешные запросы коротко (метод, URL, статус)
-    - ошибки подробно (метод, URL, тело запроса, статус, тело ответа)
-    Исключения:
-    - не логируем HTML-страницы и бинарные ответы (картинки, файлы)
+    Production-oriented request logging:
+    - adds X-Request-ID to every response;
+    - logs method/path/status/duration/size/user/ip;
+    - does not log request/response bodies unless explicitly enabled;
+    - masks sensitive fields recursively.
     '''
 
-    def _mask_sensitive_fields(self, data):
-        if isinstance(data, dict):
-            for key in SENSITIVE_FIELDS:
-                if key in data:
-                    data[key] = '***'
-        return data
-
-    def _parse_body(self, request):
-        ctype = request.META.get('CONTENT_TYPE', '').lower()
-        if ctype.startswith('multipart/form-data'):
-            return dict(request.POST)
-        try:
-            body = request.body.decode('utf-8')
-            try:
-                return json.loads(body)
-            except Exception:
-                return str(body)
-        except Exception:
-            return '<cannot decode body>'
-
     def process_request(self, request):
-        body = self._parse_body(request)
-        body = self._mask_sensitive_fields(body)
-        request._log_body = body
-
-    def _is_binary_or_html(self, response):
-        '''
-        Проверяем, является ли ответ бинарным (картинка, файл) или HTML
-        '''
-        if isinstance(response, (FileResponse, StreamingHttpResponse)):
-            return True
-
-        ctype = response.get('Content-Type', '').lower()
-        if any(ctype.startswith(t) for t in
-               ['image/', 'application/octet-stream']):
-            return True
-
-        if 'text/html' in ctype:
-            return True
-
-        return False
+        request.request_id = (
+            request.headers.get('X-Request-ID')
+            or request.headers.get('X-Correlation-ID')
+            or uuid4().hex
+        )
+        request._log_started_at = time.monotonic()
 
     def process_response(self, request, response):
-        if self._is_binary_or_html(response):
-            logger.info(
-                '"%s %s" %s [binary/html response]',
-                request.method,
-                request.get_full_path(),
-                response.status_code,
-            )
-            return response
+        request_id = getattr(request, 'request_id', uuid4().hex)
+        response['X-Request-ID'] = request_id
 
-        if 200 <= response.status_code < 400:
-            size = (
-                len(response.content) if hasattr(response, "content") else -1
-            )
-            logger.info(
-                '"%s %s" %s %s',
-                request.method,
-                request.get_full_path(),
-                response.status_code,
-                size,
-            )
+        status_code = response.status_code
+        duration_ms = self._duration_ms(request)
+        size = self._response_size(response)
+        user_id = self._user_id(request)
+        remote_addr = self._remote_addr(request)
+
+        extra = ''
+        if status_code >= 500 and settings.LOG_RESPONSE_BODY:
+            extra = f' response_body={self._response_body(response)}'
+        elif status_code >= 400 and settings.LOG_REQUEST_BODY:
+            extra = f' request_body={self._request_body(request)}'
+
+        message = (
+            'request_id=%s method=%s path="%s" status=%s duration_ms=%s '
+            'size=%s user_id=%s remote_addr=%s%s'
+        )
+        args = (
+            request_id,
+            request.method,
+            request.get_full_path(),
+            status_code,
+            duration_ms,
+            size,
+            user_id,
+            remote_addr,
+            extra,
+        )
+
+        if status_code >= 500:
+            logger.error(message, *args)
+        elif status_code in (400, 408, 409, 422, 429):
+            logger.warning(message, *args)
         else:
-            try:
-                content = response.content.decode('utf-8')
-                try:
-                    content = json.loads(content)
-                except Exception:
-                    pass
-            except Exception:
-                content = '<cannot decode response>'
-
-            logger.error(
-                f'ERROR {request.method} {request.get_full_path()} '
-                f'Status={response.status_code} '
-                f'RequestBody={getattr(request, "_log_body", "<no body>")} '
-                f'ResponseBody={content}'
-            )
+            logger.info(message, *args)
 
         return response
 
     def process_exception(self, request, exception):
         logger.exception(
-            f'Unhandled exception {request.method} {request.get_full_path()} '
-            f'RequestBody={getattr(request, "_log_body", "<no body>")}'
+            'request_id=%s method=%s path="%s" user_id=%s remote_addr=%s '
+            'unhandled_exception=%s request_body=%s',
+            getattr(request, 'request_id', '<missing>'),
+            request.method,
+            request.get_full_path(),
+            self._user_id(request),
+            self._remote_addr(request),
+            exception.__class__.__name__,
+            self._request_body(request) if settings.LOG_REQUEST_BODY else '<disabled>',
         )
         return None
+
+    def _duration_ms(self, request):
+        started_at = getattr(request, '_log_started_at', None)
+        if started_at is None:
+            return -1
+        return round((time.monotonic() - started_at) * 1000, 2)
+
+    def _response_size(self, response):
+        if isinstance(response, (FileResponse, StreamingHttpResponse)):
+            return -1
+        if hasattr(response, 'content'):
+            return len(response.content)
+        return -1
+
+    def _user_id(self, request):
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated:
+            return user.pk
+        return '-'
+
+    def _remote_addr(self, request):
+        forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if forwarded_for:
+            return forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', '-')
+
+    def _request_body(self, request):
+        ctype = request.META.get('CONTENT_TYPE', '').lower()
+        if ctype.startswith('multipart/form-data'):
+            return '<multipart>'
+
+        try:
+            raw_body = request.body.decode('utf-8')
+        except Exception:
+            return '<cannot decode body>'
+
+        if not raw_body:
+            return ''
+
+        try:
+            return self._mask_sensitive_fields(json.loads(raw_body))
+        except Exception:
+            return '<non-json body>'
+
+    def _response_body(self, response):
+        if isinstance(response, (FileResponse, StreamingHttpResponse)):
+            return '<streaming>'
+        ctype = response.get('Content-Type', '').lower()
+        if 'json' not in ctype:
+            return '<non-json response>'
+
+        try:
+            body = response.content.decode('utf-8')
+            return self._mask_sensitive_fields(json.loads(body))
+        except Exception:
+            return '<cannot decode response>'
+
+    def _mask_sensitive_fields(self, data):
+        if isinstance(data, dict):
+            return {
+                key: (
+                    '***'
+                    if key.lower() in SENSITIVE_FIELDS
+                    else self._mask_sensitive_fields(value)
+                )
+                for key, value in data.items()
+            }
+        if isinstance(data, list):
+            return [self._mask_sensitive_fields(item) for item in data]
+        return data

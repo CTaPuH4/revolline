@@ -1,0 +1,39 @@
+.product-page-container {
+    padding-bottom: 56px;
+}
+
+.product-page-container .recommended-section {
+    margin: 56px 8% 0;
+    padding: 28px 32px 36px;
+    background: #fff;
+}
+
+.product-page-container .recommended-title {
+    margin-bottom: 28px;
+}
+
+.product-page-container .recommended-products {
+    padding-top: 0;
+}
+
+@media (max-width: 1023px) {
+    .product-page-container .recommended-section {
+        margin: 36px 5% 0;
+        padding: 22px 20px 28px;
+    }
+}
+
+@media (max-width: 768px) {
+    .product-page-container {
+        padding-bottom: 36px;
+    }
+
+    .product-page-container .recommended-section {
+        margin: 28px 16px 0;
+        padding: 18px 0 0;
+    }
+
+    .product-page-container .recommended-title {
+        margin-bottom: 18px;
+    }
+}

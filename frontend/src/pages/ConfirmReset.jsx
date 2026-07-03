@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import '../css/home/ConfirmReset.css';
+import { csrfFetch } from '../utils/api';
 const API_BASE = import.meta.env.VITE_API_BASE;
 const ConfirmReset = () => {
     // Получаем uid и token из query-параметров: /reset/?uid=...&token=...
@@ -27,7 +28,7 @@ const ConfirmReset = () => {
             credentials: 'include',
             ...options,
         };
-        const res = await fetch(url, opts);
+        const res = await csrfFetch(url, opts);
         if (!res.ok) {
             const text = await res.text();
             try {
@@ -84,11 +85,13 @@ const ConfirmReset = () => {
             if (typeof body === 'string') {
                 try {
                     body = JSON.parse(body);
-                } catch {}
+                } catch {
+                    body = err.body;
+                }
             }
             let errorMsgs = [];
             if (body && typeof body === 'object') {
-                Object.entries(body).forEach(([key, value]) => {
+                Object.values(body).forEach((value) => {
                     if (Array.isArray(value)) {
                         errorMsgs.push(...value);
                     } else if (typeof value === 'string') {

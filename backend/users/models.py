@@ -1,11 +1,6 @@
-from django.conf import settings
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.db import models
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from phonenumber_field.modelfields import PhoneNumberField
 
 from users.constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
@@ -27,7 +22,6 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save()
 
-        self.send_confirmation_email(user)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
@@ -35,25 +29,6 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
-
-    def send_confirmation_email(self, user):
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        activation_link = (
-            f'{settings.FRONTEND_URL}/activate/{uid}/{token}/'
-        )
-
-        send_mail(
-            subject='Revolline. Подтверждение аккаунта.',
-            message=(
-                f'Cсылка для подтверждения email:\n{activation_link}'
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     '''
@@ -88,7 +63,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(
         'Статус',
         help_text='Если выключено, пользователь не может войти в аккаунт',
-        default=True,
+        default=False,
     )
     is_staff = models.BooleanField(
         'Статус администратора',
@@ -122,3 +97,43 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ordering = ('pk',)
         verbose_name = ('Пользователь')
         verbose_name_plural = ('Пользователи')
+
+
+class EmailMessageLog(models.Model):
+    class EmailType(models.TextChoices):
+        ACTIVATION = 'activation', 'Activation'
+        PASSWORD_RESET = 'password_reset', 'Password reset'
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        SENDING = 'sending', 'Sending'
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        related_name='email_logs',
+        null=True,
+        blank=True,
+    )
+    email_type = models.CharField(max_length=32, choices=EmailType.choices)
+    to_email = models.EmailField(max_length=EMAIL_MAX_LENGTH)
+    subject = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    celery_task_id = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.email_type} -> {self.to_email} ({self.status})'
+
+    class Meta:
+        ordering = ('-created_at',)

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../css/home/Activate.css';  // Адаптированный CSS
+import { csrfFetch } from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -21,7 +22,7 @@ const Activate = () => {
             credentials: 'include',
             ...options,
         };
-        const res = await fetch(url, opts);
+        const res = await csrfFetch(url, opts);
 
         if (!res.ok) {
             const text = await res.text();

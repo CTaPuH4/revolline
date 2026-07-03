@@ -26,7 +26,7 @@ export default function Catalog() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const itemsPerPage = 16;
+  const itemsPerPage = 20;
 
   const [ordering, setOrdering] = useState("");
 
@@ -66,8 +66,8 @@ export default function Catalog() {
     try {
       const base = apiUrl("/products/");
       const url = queryString
-          ? `${base}?page=${page}&${queryString}`
-          : `${base}?page=${page}`;
+          ? `${base}?page=${page}&page_size=${itemsPerPage}&${queryString}`
+          : `${base}?page=${page}&page_size=${itemsPerPage}`;
 
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);

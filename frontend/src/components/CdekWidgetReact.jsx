@@ -1,108 +1,118 @@
-// src/components/CdekWidgetReact.jsx
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef } from "react";
 
-const CDN_SRC = "https://cdn.jsdelivr.net/npm/@cdek-it/widget@3";
+const CDN_SRC = "https://cdn.jsdelivr.net/npm/@cdek-it/widget@3.11.1";
+const DEFAULT_LOCATION = "Москва";
+const DEFAULT_HIDE_FILTERS = {
+    have_cash: false,
+    have_cashless: false,
+    is_dressing_room: false,
+    type: false,
+};
+const DEFAULT_HIDE_DELIVERY_OPTIONS = { office: false, door: true };
 
 export default function CdekWidgetReact({
-                                            apiKey,
-                                            servicePath,
-                                            defaultLocation = "Москва",
-                                            from = { city: "Москва" },
-                                            goods = [{ width: 10, height: 10, length: 10, weight: 1 }],
-                                            tariffs, // allow undefined
-                                            hideFilters = { have_cash: false, have_cashless: false, is_dressing_room: false, type: false },
-                                            hideDeliveryOptions = { office: false, door: false },
-                                            onShippingSelect,
-                                        }) {
-    const containerRef = useRef(null);
+    apiKey,
+    servicePath,
+    defaultLocation = DEFAULT_LOCATION,
+    hideFilters = DEFAULT_HIDE_FILTERS,
+    hideDeliveryOptions = DEFAULT_HIDE_DELIVERY_OPTIONS,
+    onShippingSelect,
+}) {
     const widgetRef = useRef(null);
-    // генерируем уникальный id на каждый экземпляр (без внешней зависимости)
     const rootIdRef = useRef(`cdek-map-${Math.random().toString(36).slice(2, 9)}`);
 
-    // стабилизируем объекты, чтобы эффект не перезапускался каждый рендер
-    const memoGoods = useMemo(() => goods, [JSON.stringify(goods)]);
-    const memoHideFilters = useMemo(() => hideFilters, [JSON.stringify(hideFilters)]);
-    const memoHideDeliveryOptions = useMemo(() => hideDeliveryOptions, [JSON.stringify(hideDeliveryOptions)]);
-    const memoTariffs = useMemo(() => (Array.isArray(tariffs?.office) || Array.isArray(tariffs?.door) || Array.isArray(tariffs?.pickup) ? tariffs : undefined), [JSON.stringify(tariffs || {})]);
-
     useEffect(() => {
-        let mounted = true;
+        if (!apiKey || !servicePath) {
+            return undefined;
+        }
 
-        const loadScript = () =>
-            new Promise((resolve, reject) => {
-                if (typeof window !== "undefined" && window.CDEKWidget) return resolve(window.CDEKWidget);
+        let cancelled = false;
+        const rootId = rootIdRef.current;
 
-                const existing = document.querySelector(`script[src="${CDN_SRC}"]`);
-                if (existing) {
-                    existing.addEventListener("load", () => resolve(window.CDEKWidget));
-                    existing.addEventListener("error", reject);
-                    return;
-                }
-
-                const s = document.createElement("script");
-                s.src = CDN_SRC;
-                s.async = true;
-                s.onload = () => resolve(window.CDEKWidget);
-                s.onerror = reject;
-                document.head.appendChild(s);
-            });
-
-        (async () => {
-            try {
-                const CDEKWidget = await loadScript();
-                if (!mounted) return;
-
-                // указываем root как id элемента
-                widgetRef.current = new CDEKWidget({
-                    root: rootIdRef.current,
-                    apiKey,
-                    servicePath,
-                    defaultLocation,
-                    canChoose: true,
-                    // передаём tariffs только если он задан и непустой
-                    ...(memoTariffs ? { tariffs: memoTariffs } : {}),
-                    hideFilters: memoHideFilters,
-                    hideDeliveryOptions: memoHideDeliveryOptions,
-
-                    onReady: () => {
-                        console.debug("CDEK ready");
-                    },
-                    onCalculate: (tariffsResp, address) => {
-                        console.debug("CDEK calculate", tariffsResp, address);
-                    },
-                    onChoose: (mode, tariff, address) => {
-                        console.debug("CDEK choose", { mode, tariff, address });
-                        // ВАЖНО: передаём в callback именно объект address (чтобы parent мог делать payload.address / payload.name)
-                        if (typeof onShippingSelect === "function") {
-                            onShippingSelect(address, { mode, tariff, rawAddress: address });
-                        }
-                    },
-                });
-            } catch (err) {
-                console.error("Failed to load CDEK widget", err);
+        const mountWidget = () => {
+            if (cancelled || !window.CDEKWidget) {
+                return;
             }
-        })();
+
+            try {
+                widgetRef.current?.destroy?.();
+            } catch {
+                // ignore
+            }
+
+            widgetRef.current = new window.CDEKWidget({
+                root: rootId,
+                apiKey,
+                servicePath,
+                defaultLocation,
+                lang: "rus",
+                canChoose: true,
+                hideFilters,
+                hideDeliveryOptions,
+                onChoose: (mode, tariff, address) => {
+                    if (typeof onShippingSelect === "function") {
+                        onShippingSelect(address, { mode, tariff, rawAddress: address });
+                    }
+                },
+            });
+        };
+
+        const existingScript = document.querySelector(`script[src="${CDN_SRC}"]`);
+        if (window.CDEKWidget) {
+            mountWidget();
+        } else if (existingScript) {
+            existingScript.addEventListener("load", mountWidget, { once: true });
+        } else {
+            const script = document.createElement("script");
+            script.src = CDN_SRC;
+            script.async = true;
+            script.onload = mountWidget;
+            document.head.appendChild(script);
+        }
 
         return () => {
-            mounted = false;
+            cancelled = true;
             try {
-                if (widgetRef.current?.destroy) widgetRef.current.destroy();
-            } catch (e) {
-                /* ignore */
+                widgetRef.current?.destroy?.();
+            } catch {
+                // ignore
             }
-            // очистим контейнер
-            const el = document.getElementById(rootIdRef.current);
-            if (el) el.innerHTML = "";
+            widgetRef.current = null;
+
+            const element = document.getElementById(rootId);
+            if (element) {
+                element.innerHTML = "";
+            }
         };
-    }, [apiKey, servicePath, from, defaultLocation, memoGoods, memoTariffs, memoHideFilters, memoHideDeliveryOptions, onShippingSelect]);
+    }, [
+        apiKey,
+        servicePath,
+        defaultLocation,
+        hideFilters,
+        hideDeliveryOptions,
+        onShippingSelect,
+    ]);
+
+    if (!apiKey || !servicePath) {
+        return (
+            <div className="cdek-widget-wrapper">
+                <div className="cdek-widget-header">
+                    <h3>Доставка и пункты выдачи</h3>
+                </div>
+                <div className="cdek-widget-error">
+                    Не настроен CDEK widget: проверьте `VITE_YANDEX_API_KEY` и
+                    `VITE_CDEK_SERVICE_PATH`.
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="cdek-widget-wrapper">
             <div className="cdek-widget-header">
                 <h3>Доставка и пункты выдачи</h3>
             </div>
-            {/* используем уникальный id */}
-            <div id={rootIdRef.current} ref={containerRef} style={{ height: "500px" }} />
+            <div id={rootIdRef.current} className="cdek-widget-root" />
         </div>
     );
 }
