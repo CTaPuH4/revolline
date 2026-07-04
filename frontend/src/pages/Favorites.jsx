@@ -2,9 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import '../css/Favorites.css';
 import deleteIcon from "../assets/icons/delete-icon.png";
 import fallbackImage from "../assets/logo.png";
-import { csrfFetch } from "../utils/api";
-
-const API_BASE = import.meta.env.VITE_API_BASE;
+import { useAuth } from "../context/AuthContext";
 
 function AddToCartButton({ productId, apiFetch }) {
     const [inCart, setInCart] = useState(false);
@@ -60,6 +58,7 @@ function AddToCartButton({ productId, apiFetch }) {
 }
 
 export default function Favorites() {
+    const { authFetch, isAuthenticated } = useAuth();
     const [items, setItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -69,22 +68,8 @@ export default function Favorites() {
     const observer = useRef();
 
     const apiFetch = useCallback(async (path, options = {}) => {
-        const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
-        const opts = { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...options };
-        const res = await csrfFetch(url, opts);
-        if (!res.ok) {
-            const text = await res.text();
-            const err = new Error(`HTTP ${res.status}: ${text}`);
-            err.status = res.status;
-            throw err;
-        }
-        if (res.status === 204) return null;
-        try {
-            return await res.json();
-        } catch {
-            return null;
-        }
-    }, []);
+        return authFetch(path, options);
+    }, [authFetch]);
 
     const transformFav = useCallback((favItem) => {
         const prod = favItem.product_data || favItem.product || {};
@@ -103,6 +88,15 @@ export default function Favorites() {
     }, []);
 
     const fetchFavorites = useCallback(async (page = 1) => {
+        if (!isAuthenticated) {
+            setItems([]);
+            setHasMore(false);
+            setCurrentPage(1);
+            setIsLoading(false);
+            setIsLoadingMore(false);
+            return;
+        }
+
         if (page === 1) {
             setIsLoading(true);
         } else {
@@ -127,7 +121,7 @@ export default function Favorites() {
                 setIsLoadingMore(false);
             }
         }
-    }, [apiFetch, transformFav]);
+    }, [apiFetch, isAuthenticated, transformFav]);
 
     const lastItemElementRef = useCallback(node => {
         if (isLoadingMore) return;

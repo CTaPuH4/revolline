@@ -9,9 +9,7 @@ import fallbackImage from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../modals/Auth/AuthModal";
 import CdekWidgetReact from "../components/CdekWidgetReact.jsx";
-import { csrfFetch } from "../utils/api";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
 const PROMO_STORAGE_KEY = 'revolline_checkout_promo_code';
 const CHECKOUT_ID_STORAGE_KEY = 'revolline_checkout_idempotency_key';
 
@@ -56,8 +54,10 @@ const extractCleanError = (body) => {
     || 'Ошибка сервера';
 };
 
+const getErrorPayload = (err) => err?.body ?? err?.response ?? err?.data ?? err?.message ?? null;
+
 export default function Cart() {
-  const { user, isAuthenticated, updateProfile } = useAuth();
+  const { user, isAuthenticated, updateProfile, authFetch } = useAuth();
   const navigate = useNavigate();
   const shouldRestorePromoRef = useRef(false);
   const checkoutIdRef = useRef(
@@ -117,33 +117,8 @@ export default function Cart() {
   };
 
   const apiFetch = useCallback(async (path, options = {}) => {
-    const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
-    const opts = {
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      ...options,
-    };
-    const res = await csrfFetch(url, opts);
-    if (!res.ok) {
-      const text = await res.text();
-      let body = null;
-      try {
-        body = text ? JSON.parse(text) : null;
-      } catch {
-        body = text;
-      }
-      const err = new Error(`HTTP ${res.status}`);
-      err.status = res.status;
-      err.body = body;
-      throw err;
-    }
-    if (res.status === 204) return null;
-    try {
-      return await res.json();
-    } catch {
-      return null;
-    }
-  }, []);
+    return authFetch(path, options);
+  }, [authFetch]);
 
   const transformServerItem = useCallback((serverItem) => {
     const product = serverItem.product_data || serverItem.product || {};
@@ -179,6 +154,16 @@ export default function Cart() {
   };
 
   const fetchCart = useCallback(async () => {
+    if (!isAuthenticated) {
+      setItems([]);
+      setEditQuantities({});
+      setCartTotal(0);
+      setDeliveryFee(0);
+      setTotalPriceWithDelivery(0);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -199,11 +184,11 @@ export default function Cart() {
       setTotalPriceWithDelivery(Number(data.total_price || 0));
     } catch (err) {
       console.error('fetchCart error', err);
-      setError(extractCleanError(err.body));
+      setError(extractCleanError(getErrorPayload(err)));
     } finally {
       setIsLoading(false);
     }
-  }, [apiFetch, transformServerItem]);
+  }, [apiFetch, isAuthenticated, transformServerItem]);
 
   useEffect(() => {
     fetchCart();
@@ -227,7 +212,7 @@ export default function Cart() {
       fetchCart();
     } catch (err) {
       console.error('updateQuantity failed', err);
-      setError(extractCleanError(err.body) || 'Не удалось обновить количество');
+      setError(extractCleanError(getErrorPayload(err)) || 'Не удалось обновить количество');
       fetchCart();
     }
   };
@@ -256,7 +241,7 @@ export default function Cart() {
       fetchCart();
     } catch (err) {
       console.error('removeItem failed', err);
-      setError(extractCleanError(err.body) || 'Не удалось удалить товар');
+      setError(extractCleanError(getErrorPayload(err)) || 'Не удалось удалить товар');
       setItems(prev);
       fetchCart();
     }
@@ -278,7 +263,7 @@ export default function Cart() {
       fetchCart();
     } catch (err) {
       console.error('clearCart failed', err);
-      setError(extractCleanError(err.body) || 'Не удалось очистить корзину');
+      setError(extractCleanError(getErrorPayload(err)) || 'Не удалось очистить корзину');
       setItems(prev);
       fetchCart();
     } finally {
@@ -325,7 +310,7 @@ export default function Cart() {
       setPromoError(null);
     } catch (err) {
       console.error('applyPromo failed', err);
-      setPromoError(extractCleanError(err.body));
+      setPromoError(extractCleanError(getErrorPayload(err)));
     } finally {
       setApplyingPromo(false);
     }
@@ -416,7 +401,7 @@ export default function Cart() {
       });
     } catch (err) {
       console.error('updateProfile failed', err);
-      setCheckoutError(extractCleanError(err.body) || 'Ошибка сохранения профиля');
+      setCheckoutError(extractCleanError(getErrorPayload(err)) || 'Ошибка сохранения профиля');
       setCreatingOrder(false);
       return;
     }
@@ -459,7 +444,7 @@ export default function Cart() {
       navigate('/orders');
     } catch (err) {
       console.error('createOrder failed', err);
-      setCheckoutError(extractCleanError(err.body));
+      setCheckoutError(extractCleanError(getErrorPayload(err)));
     } finally {
       setCreatingOrder(false);
     }

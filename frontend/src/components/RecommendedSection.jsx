@@ -3,7 +3,7 @@ import axios from "axios";
 import ProductCardMini from "../components/catalog/ProductCardMini";
 import "../css/catalog/Catalog.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 const RECOMMENDED_LIMIT = 6;
 
 export default function RecommendedSection({ categorySlug, currentProductId }) {

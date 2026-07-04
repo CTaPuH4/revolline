@@ -6,7 +6,7 @@ import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 import "../css/catalog/Catalog.css";
 import "../css/catalog/CatalogSidebar.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 const apiUrl = (path = "") =>
     `${String(API_BASE).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
 

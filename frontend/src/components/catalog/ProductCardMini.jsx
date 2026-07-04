@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom";
 import "../../css/catalog/ProductCardMini.css";
 import { useAuth } from "../../context/AuthContext";
 import AuthModal from "../../modals/Auth/AuthModal";
-import { csrfFetch } from "../../utils/api";
 
 import heart from '../../assets/icons/heart.png'
 import heartFilled from '../../assets/icons/heart-filled.png'
-
-const API_BASE = import.meta.env.VITE_API_BASE;
 
 const HeartIcon = ({ filled, onClick }) => (
     <span
@@ -25,7 +22,7 @@ const HeartIcon = ({ filled, onClick }) => (
 );
 
 export default function ProductCardMini({ product }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, authFetch } = useAuth();
     const navigate = useNavigate();
 
     const [isFav, setIsFav] = useState(false);
@@ -48,15 +45,13 @@ export default function ProductCardMini({ product }) {
         try {
             if (prevFav) {
                 // Удаляем из избранного
-                await csrfFetch(`${API_BASE}/favorites/delete/?product=${product.id}`, {
+                await authFetch(`/favorites/delete/?product=${product.id}`, {
                     method: "DELETE",
-                    credentials: "include",
                 });
             } else {
                 // Добавляем в избранное
-                await csrfFetch(`${API_BASE}/favorites/`, {
+                await authFetch("/favorites/", {
                     method: "POST",
-                    credentials: "include",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ product: product.id }),
                 });

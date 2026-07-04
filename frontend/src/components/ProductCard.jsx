@@ -7,14 +7,12 @@ import "../css/ProductCard.css";
 import heart from "../assets/icons/heart-card.png";
 import heartFilled from "../assets/icons/heart-filled-card.png";
 import share from "../assets/icons/share.png";
-import { csrfFetch } from "../utils/api";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
 const DESCRIPTION_PREVIEW_LIMIT = 420;
 const THUMBNAIL_SCROLL_STEP = 140;
 
 export default function ProductCard({ product }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, authFetch } = useAuth();
     const [activeTab, setActiveTab] = useState("");
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [isFav, setIsFav] = useState(Boolean(product.is_fav));
@@ -27,37 +25,14 @@ export default function ProductCard({ product }) {
     const tabContentRef = useRef(null);
     const thumbnailListRef = useRef(null);
 
-    const apiFetch = useCallback(async (path, options = {}) => {
-        const url = path.startsWith("http")
-            ? path
-            : `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
-
-        const opts = {
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            ...options,
-        };
-
-        const res = await csrfFetch(url, opts);
-        if (!res.ok) {
-            const text = await res.text();
-            const err = new Error(`HTTP ${res.status}: ${text}`);
-            err.status = res.status;
-            throw err;
-        }
-
-        if (res.status === 204) {
-            return null;
-        }
-
-        try {
-            return await res.json();
-        } catch {
-            return null;
-        }
-    }, []);
+    const apiFetch = useCallback((path, options = {}) => authFetch(path, options), [authFetch]);
 
     const fetchCart = useCallback(async () => {
+        if (!isAuthenticated) {
+            setInCart(false);
+            return;
+        }
+
         try {
             const data = await apiFetch("/cart/");
             const list = data.items || [];
@@ -70,7 +45,7 @@ export default function ProductCard({ product }) {
         } catch (err) {
             console.warn("fetchCart failed", err);
         }
-    }, [apiFetch, product.id]);
+    }, [apiFetch, isAuthenticated, product.id]);
 
     useEffect(() => {
         setIsFav(Boolean(product.is_fav));
@@ -127,15 +102,13 @@ export default function ProductCard({ product }) {
 
         try {
             if (prev) {
-                await csrfFetch(`${API_BASE}/favorites/delete/?product=${product.id}`, {
+                await apiFetch(`/favorites/delete/?product=${product.id}`, {
                     method: "DELETE",
-                    credentials: "include",
                 });
             } else {
                 await apiFetch("/favorites/", {
                     method: "POST",
                     body: JSON.stringify({ product: product.id }),
-                    credentials: "include",
                 });
             }
         } catch (err) {

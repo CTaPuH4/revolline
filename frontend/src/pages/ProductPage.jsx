@@ -5,7 +5,7 @@ import ProductCard from "../components/ProductCard";
 import RecommendedSection from "../components/RecommendedSection";
 import "../css/ProductPage.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 export default function ProductPage() {
     const { id } = useParams();

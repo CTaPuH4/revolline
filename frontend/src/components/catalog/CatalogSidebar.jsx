@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import '../../css/catalog/CatalogSidebar.css';
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 export default function SidebarCatalog() {
     const { pathname } = useLocation();
     const [expanded, setExpanded] = useState(null); // индекс открытoго подменю

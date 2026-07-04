@@ -19,7 +19,7 @@ const AuthModal = ({ onClose, onRegisterClick }) => {
 
     const openSalesPolicy = () => setShowSalesPolicy(true);
     const closeSalesPolicy = () => setShowSalesPolicy(false);
-    const openPrivacyPolicy = () => window.open("/privacy-policy", "_blank");
+    const openPrivacyPolicy = () => window.open("/info/privacy", "_blank");
 
     const handleMouseDown = (e) => {
         // Проверяем, был ли mousedown внутри модалки

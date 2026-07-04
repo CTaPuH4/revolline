@@ -12,7 +12,7 @@ import cartIcon from "../assets/icons/cart-icon.svg";
 import UserMenu from "./UserMenu";
 import CatalogDropdown from "./catalog/CatalogDropdown";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 const Header = forwardRef((props, ref) => {
     const { user } = useAuth();

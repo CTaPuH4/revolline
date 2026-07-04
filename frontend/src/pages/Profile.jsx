@@ -33,11 +33,11 @@ export default function UserProfile() {
 
   // Если не авторизованы — редиректим
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       logout();
-      navigate("/login");
+      navigate("/");
     }
-  }, [isAuthenticated, logout, navigate]);
+  }, [isAuthenticated, loading, logout, navigate]);
 
   // Когда подтянулся контекстный user — заполняем поля
   useEffect(() => {

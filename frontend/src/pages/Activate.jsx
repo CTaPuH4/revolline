@@ -4,8 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import '../css/home/Activate.css';  // Адаптированный CSS
 import { csrfFetch } from '../utils/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE;
-
 const Activate = () => {
     const { uidb64, token } = useParams();
     const navigate = useNavigate();
@@ -16,13 +14,12 @@ const Activate = () => {
 
     // apiFetch (как в Cart, с обработкой 400)
     const apiFetch = async (path, options = {}) => {
-        const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
         const opts = {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             ...options,
         };
-        const res = await csrfFetch(url, opts);
+        const res = await csrfFetch(path, opts);
 
         if (!res.ok) {
             const text = await res.text();

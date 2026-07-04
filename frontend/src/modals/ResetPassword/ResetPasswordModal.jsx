@@ -4,8 +4,6 @@ import '../../css/modals/AuthRegisterModal.css';
 import SalesPolicy from "../SalesPolicy";
 import { csrfFetch } from "../../utils/api";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
-
 export default function ResetPasswordModal({ onClose}) {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
@@ -20,7 +18,7 @@ export default function ResetPasswordModal({ onClose}) {
     const closeSalesPolicy = () => setShowSalesPolicy(false);
 
     const openPrivacyPolicy = () => {
-        window.open("/privacy-policy", "_blank");
+        window.open("/info/privacy", "_blank");
     };
 
     const handleMouseDown = (e) => {
@@ -46,7 +44,7 @@ export default function ResetPasswordModal({ onClose}) {
 
         setLoading(true);
         try {
-            const res = await csrfFetch(`${API_BASE}/reset/request/`, {
+            const res = await csrfFetch("/reset/request/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),

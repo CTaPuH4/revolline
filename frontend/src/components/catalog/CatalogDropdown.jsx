@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/catalog/CatalogDropdown.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 const CatalogDropdown = forwardRef((props, ref) => {
     const [sections, setSections] = React.useState([]);

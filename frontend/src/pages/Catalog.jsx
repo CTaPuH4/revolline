@@ -11,7 +11,7 @@ import FilterDropdown from "../components/catalog/FilterDropdown.jsx";
 import SortDropdown from "../components/catalog/SortDropdown.jsx";
 import ProductCardMini from "../components/catalog/ProductCardMini.jsx";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 const apiUrl = (path = "") =>
     `${String(API_BASE).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
 

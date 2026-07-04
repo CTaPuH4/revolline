@@ -17,10 +17,10 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(() => hasAuthState());
     const [error, setError] = useState(null);
 
-    const isRefreshing = useRef(false);
+    const refreshPromise = useRef(null);
     const refreshInterval = useRef(null);
 
     const handleError = (e) => {
@@ -81,27 +81,31 @@ export const AuthProvider = ({ children }) => {
     };
 
     const refreshAccessToken = useCallback(async () => {
-        if (isRefreshing.current) return false;
-        isRefreshing.current = true;
-        try {
-            const res = await csrfFetch("/token/refresh/", {
-                method: "POST",
-                headers: { "Accept": "application/json", "Content-Type": "application/json" },
-                body: JSON.stringify({}),
-            });
+        if (!refreshPromise.current) {
+            refreshPromise.current = (async () => {
+                try {
+                    const res = await csrfFetch("/token/refresh/", {
+                        method: "POST",
+                        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                        body: JSON.stringify({}),
+                    });
 
-            if (!res.ok) {
-                clearAuthState();
-                return false;
-            }
-            await safeJson(res);
-            return true;
-        } catch (e) {
-            console.warn("refreshAccessToken error", e);
-            return false;
-        } finally {
-            isRefreshing.current = false;
+                    if (!res.ok) {
+                        clearAuthState();
+                        return false;
+                    }
+                    await safeJson(res);
+                    return true;
+                } catch (e) {
+                    console.warn("refreshAccessToken error", e);
+                    return false;
+                } finally {
+                    refreshPromise.current = null;
+                }
+            })();
         }
+
+        return refreshPromise.current;
     }, []);
 
     const fetchUser = useCallback(
@@ -328,20 +332,14 @@ export const AuthProvider = ({ children }) => {
 
             // если 401 — пробуем обновить токен и повторить запрос один раз
             if (res.status === 401 && retry) {
-                try {
-                    const refreshed = await refreshAccessToken();
-                    if (refreshed) {
-                        return await authFetch(path, options, false);
-                    } else {
-                        // refresh не сработал — разлогиниваемся и кидаем ошибку
-                        try { await logout(); } catch { /* ignore */ }
-                        const data = await safeJson(res);
-                        throw buildError(res, data);
-                    }
-                } catch (e) {
-                    try { await logout(); } catch { /* ignore */ }
-                    throw e;
+                const refreshed = await refreshAccessToken();
+                if (refreshed) {
+                    return await authFetch(path, options, false);
                 }
+
+                try { await logout(); } catch { /* ignore */ }
+                const data = await safeJson(res);
+                throw buildError(res, data);
             }
 
             if (!res.ok) {

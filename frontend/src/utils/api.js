@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 const CSRF_COOKIE_NAME = "csrftoken";
 const AUTH_STATE_COOKIE_NAME = "auth_state";
 const CSRF_HEADER_NAME = "X-CSRFToken";
@@ -8,8 +8,21 @@ let csrfToken = null;
 let csrfRequest = null;
 
 export const apiUrl = (path = "") => {
-    if (String(path).startsWith("http")) return path;
-    return `${String(API_BASE).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
+    const rawPath = String(path);
+    if (rawPath.startsWith("http")) return rawPath;
+
+    const base = String(API_BASE).replace(/\/+$/, "");
+    const normalizedPath = rawPath.replace(/^\/+/, "");
+    const normalizedBase = base.replace(/^\/+/, "");
+
+    if (
+        !base.startsWith("http")
+        && (normalizedPath === normalizedBase || normalizedPath.startsWith(`${normalizedBase}/`))
+    ) {
+        return `/${normalizedPath}`;
+    }
+
+    return `${base}/${normalizedPath}`;
 };
 
 export const getCookie = (name) => {
