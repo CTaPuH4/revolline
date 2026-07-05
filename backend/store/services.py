@@ -78,10 +78,12 @@ def _payment_api_request(method, path, **kwargs):
 
     if response.status_code != 200:
         logger.warning(
-            'Payment API returned an error: method=%s path=%s status=%s',
+            'Payment API returned an error: method=%s path=%s status=%s '
+            'response_body=%s',
             method,
             path,
             response.status_code,
+            response.text[:1000],
         )
         raise ExternalAPIError()
 

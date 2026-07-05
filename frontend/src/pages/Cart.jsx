@@ -56,6 +56,24 @@ const extractCleanError = (body) => {
 
 const getErrorPayload = (err) => err?.body ?? err?.response ?? err?.data ?? err?.message ?? null;
 
+const getPromoErrorMessage = (err) => {
+  if (err?.status === 404) return 'Промокод не найден';
+
+  const message = extractCleanError(getErrorPayload(err));
+  if (!message) return 'Не удалось проверить промокод';
+
+  const lowerMessage = message.toLowerCase();
+  if (
+    lowerMessage.includes('not found')
+    || lowerMessage.includes('no promocode')
+    || lowerMessage.includes('не найден')
+  ) {
+    return 'Промокод не найден';
+  }
+
+  return message;
+};
+
 export default function Cart() {
   const { user, isAuthenticated, updateProfile, authFetch } = useAuth();
   const navigate = useNavigate();
@@ -284,7 +302,10 @@ export default function Cart() {
   const applyPromo = useCallback(async (promoCodeValue = promoCode) => {
     setPromoError(null);
     setError(null);
-    const code = String(promoCodeValue || '').trim();
+    const value = promoCodeValue && typeof promoCodeValue === 'object'
+      ? promoCode
+      : promoCodeValue;
+    const code = String(value || '').trim();
     if (!code) {
       setPromoError('Введите промокод');
       return;
@@ -310,7 +331,7 @@ export default function Cart() {
       setPromoError(null);
     } catch (err) {
       console.error('applyPromo failed', err);
-      setPromoError(extractCleanError(getErrorPayload(err)));
+      setPromoError(getPromoErrorMessage(err));
     } finally {
       setApplyingPromo(false);
     }
@@ -617,7 +638,7 @@ export default function Cart() {
 
         <div className="promo-code">
           {!promo ? (
-            <>
+            <div className="promo-code-controls">
               <input
                 type="text"
                 placeholder="Введите промокод"
@@ -628,17 +649,17 @@ export default function Cart() {
                 }}
                 disabled={applyingPromo || items.length === 0}
               />
-              <button onClick={applyPromo} disabled={applyingPromo || items.length === 0}>
+              <button onClick={() => applyPromo()} disabled={applyingPromo || items.length === 0}>
                 {applyingPromo ? 'Проверка...' : 'OK'}
               </button>
-            </>
+            </div>
           ) : (
             <div className="promo-applied">
               <span>Промокод: <strong>{promo.code}</strong> ({promo.percent}%)</span>
               <button className="remove-promo" onClick={removePromo} title="Удалить">X</button>
             </div>
           )}
-          {promoError && <p style={{ color: 'crimson', marginTop: 6, fontSize: 14 }}>{promoError}</p>}
+          {promoError && <p className="promo-error">{promoError}</p>}
         </div>
 
         <div className="summary-line">

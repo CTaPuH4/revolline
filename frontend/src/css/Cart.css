@@ -141,8 +141,15 @@
    ========================= */
 .promo-code {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-bottom: 16px;
+  align-items: stretch;
+}
+
+.promo-code-controls {
+  display: flex;
+  gap: 10px;
   align-items: center;
 }
 
@@ -261,9 +268,10 @@
 /* Promo error / hint */
 .promo-error {
   color: crimson;
-  margin-top: 8px;
+  margin: 0;
   font-size: 14px;
   font-weight: 500;
+  line-height: 1.25;
 }
 
 /* Subtle success message style (if needed) */
