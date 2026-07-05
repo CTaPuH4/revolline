@@ -232,6 +232,7 @@
 /* Applied promo — pill with remove control */
 .promo-applied {
   width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -243,6 +244,12 @@
   font-family: 'CarismaClassic', sans-serif;
   font-size: 15px;
   color: #111;
+}
+
+.promo-applied span {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
 }
 
 /* bold promo code */
