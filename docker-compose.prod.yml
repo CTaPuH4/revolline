@@ -78,7 +78,9 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
-    environment: *backend-env
+    environment:
+      <<: *backend-env
+      PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
     depends_on:
       db:
         condition: service_healthy
@@ -88,9 +90,40 @@ services:
       - backend_media:/app/images
       - backend_static:/app/staticfiles
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "rm -rf /tmp/prometheus && mkdir -p /tmp/prometheus &&
+             python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn revolline.wsgi:application --bind 0.0.0.0:8000 --workers $${GUNICORN_WORKERS:-3} --timeout $${GUNICORN_TIMEOUT:-60} --access-logfile - --error-logfile -"
+             gunicorn revolline.wsgi:application -c gunicorn.conf.py --bind 0.0.0.0:8000 --workers $${GUNICORN_WORKERS:-3} --timeout $${GUNICORN_TIMEOUT:-60} --access-logfile - --error-logfile -"
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
 
   celery-worker:
     image: revolline-backend-prod:latest
@@ -155,3 +188,5 @@ volumes:
   postgres_data:
   backend_media:
   backend_static:
+  prometheus_data:
+  grafana_data:

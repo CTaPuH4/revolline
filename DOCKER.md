@@ -196,6 +196,28 @@ THROTTLE_PASSWORD_RESET_RATE=5/min
 По умолчанию логи идут в stdout/stderr. Тело request/response не логируется,
 чтобы случайно не записывать персональные данные и токены.
 
+## Мониторинг API
+
+Prometheus собирает метрики Django каждые 15 секунд, а Grafana автоматически
+загружает дашборд `ReVolline API Overview`.
+
+В локальном окружении:
+
+- Grafana: `http://localhost:3000` (по умолчанию `admin` / `admin`);
+- Prometheus: `http://localhost:9090`;
+- метрики backend: `http://localhost:8000/metrics/`.
+
+В production обязательно задайте `GRAFANA_ADMIN_PASSWORD`. Grafana слушает
+только `127.0.0.1:${GRAFANA_PORT:-3000}` сервера; для доступа используйте SSH
+туннель:
+
+```bash
+ssh -L 3000:127.0.0.1:3000 user@server
+```
+
+После этого откройте `http://localhost:3000`. Сам endpoint метрик в production
+доступен только Prometheus во внутренней Docker-сети.
+
 ## Проверки
 
 Перед финальным коммитом:
