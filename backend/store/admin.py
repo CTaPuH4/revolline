@@ -12,9 +12,27 @@ from store.tasks import sync_pending_order_statuses
 
 logger = logging.getLogger(__name__)
 
+PRODUCT_IMAGE_MAX_SIZE = 20 * 1024 * 1024
+
+
+class ProductImageAdminForm(forms.ModelForm):
+    class Meta:
+        model = ProductImage
+        fields = '__all__'
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image and image.size > PRODUCT_IMAGE_MAX_SIZE:
+            raise forms.ValidationError(
+                'Размер изображения не должен превышать 20 МБ. '
+                'Уменьшите разрешение или сожмите файл.'
+            )
+        return image
+
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
+    form = ProductImageAdminForm
     extra = 0
     min_num = 1
 
