@@ -2,6 +2,7 @@ import logging
 
 from django import forms
 from django.contrib import admin, messages
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 
@@ -113,7 +114,58 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'pr_type')
     list_filter = ('categories', 'country', 'is_new')
     inlines = (ProductImageInline,)
+    actions = ('duplicate_products',)
     change_list_template = 'admin/import_products.html'
+
+    @admin.action(description='Дублировать выбранные товары')
+    def duplicate_products(self, request, queryset):
+        created_count = 0
+
+        with transaction.atomic():
+            for product in queryset.prefetch_related('categories', 'images'):
+                categories = list(product.categories.all())
+                images = list(product.images.all())
+                values = {
+                    field.name: getattr(product, field.name)
+                    for field in Product._meta.concrete_fields
+                    if not field.primary_key and field.name != 'title'
+                }
+                product_copy = Product.objects.create(
+                    title=self._get_copy_title(product.title),
+                    **values,
+                )
+                product_copy.categories.set(categories)
+                ProductImage.objects.bulk_create([
+                    ProductImage(
+                        product=product_copy,
+                        image=image.image.name,
+                        file_hash=image.file_hash,
+                    )
+                    for image in images
+                ])
+                created_count += 1
+
+        self.message_user(
+            request,
+            f'Создано копий товаров: {created_count}.',
+            level=messages.SUCCESS,
+        )
+
+    @staticmethod
+    def _get_copy_title(title):
+        max_length = Product._meta.get_field('title').max_length
+        copy_number = 1
+
+        while True:
+            suffix = (
+                ' (копия)'
+                if copy_number == 1
+                else f' (копия {copy_number})'
+            )
+            candidate = f'{title[:max_length - len(suffix)]}{suffix}'
+            if not Product.objects.filter(title=candidate).exists():
+                return candidate
+            copy_number += 1
 
     def get_urls(self):
         from django.urls import path

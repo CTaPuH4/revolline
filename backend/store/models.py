@@ -86,6 +86,9 @@ class Product(AbstractModel):
     description = models.TextField(
         'Описание',
     )
+    how_to_use = models.TextField(
+        'Описание',
+    )
     pr_type = models.CharField(
         'Тип продукта',
         max_length=LONG_CHAR_MAX_LENGTH
