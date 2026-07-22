@@ -145,6 +145,7 @@ export default function ProductCard({ product }) {
     if (product.description) availableTabs.push("Описание");
     if (hasAnyCharacteristics) availableTabs.push("Характеристики");
     if (product.ingredients) availableTabs.push("Состав");
+    if (product.how_to_use) availableTabs.push("Применение");
 
     useEffect(() => {
         if (availableTabs.length === 0) {
@@ -420,6 +421,10 @@ export default function ProductCard({ product }) {
 
                                         {activeTab === "Состав" && (
                                             <p>{product.ingredients || "—"}</p>
+                                        )}
+
+                                        {activeTab === "Применение" && (
+                                            <p>{product.how_to_use || "—"}</p>
                                         )}
                                     </div>
                                 </CSSTransition>

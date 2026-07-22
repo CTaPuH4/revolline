@@ -87,7 +87,9 @@ class Product(AbstractModel):
         'Описание',
     )
     how_to_use = models.TextField(
-        'Описание',
+        'Применение',
+        blank=True,
+        null=True,
     )
     pr_type = models.CharField(
         'Тип продукта',
